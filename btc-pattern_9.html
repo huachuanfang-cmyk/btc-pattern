@@ -8,12 +8,12 @@
 <meta property="og:title" content="BTC Pattern — Bitcoin Historical Event Lookup">
 <meta property="og:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only. You decide.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://btcpattern.com">
-<meta property="og:image" content="https://btcpattern.com/og-image.png">
+<meta property="og:url" content="https://btc-pattern.pages.dev">
+<meta property="og:image" content="https://btc-pattern.pages.dev/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="BTC Pattern — Bitcoin Historical Event Lookup">
 <meta name="twitter:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only.">
-<meta name="twitter:image" content="https://btcpattern.com/og-image.png">
+<meta name="twitter:image" content="https://btc-pattern.pages.dev/og-image.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -233,7 +233,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   <div class="hero-tag" data-i="heroTag">FACTS ONLY · YOU DECIDE</div>
   <h1 data-i="heroH1">When Bitcoin drops <span class="hl">10%</span> in a day —<br>what happened next?</h1>
   <p class="hero-sub" data-i="heroSub">Real data 2017–2026. No predictions. Look up the pattern, decide for yourself.</p>
-  <p class="hero-note" data-i="heroNote">Yahoo Finance BTC-USD · UTC daily candles · 2017-01-01 to 2026-05-11</p>
+  <p class="hero-note" id="hero-note" data-i="heroNote">Yahoo Finance BTC-USD · UTC daily candles · data updates daily</p>
 </div>
 
 <div class="qwrap">
@@ -431,7 +431,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     <div class="dsgrid">
       <div class="dsitem"><div class="dslbl" data-i="ds1">Daily OHLC</div>Yahoo Finance BTC-USD<br><a href="https://finance.yahoo.com/quote/BTC-USD" target="_blank">yahoo finance →</a></div>
       <div class="dsitem"><div class="dslbl" data-i="ds2">Volume</div>Yahoo Finance BTC-USD<br><a href="https://finance.yahoo.com/quote/BTC-USD" target="_blank">yahoo finance →</a></div>
-      <div class="dsitem"><div class="dslbl" data-i="ds3">Range</div>2017-01-01 → 2026-05-11<br><span style="color:var(--ink3);font-size:11px" data-i="ds3note">Pre-2017 excluded</span></div>
+      <div class="dsitem"><div class="dslbl" data-i="ds3">Range</div><span id="ds-range">2017-01-01 → latest</span><br><span style="color:var(--ink3);font-size:11px" data-i="ds3note">Pre-2017 excluded</span></div>
       <div class="dsitem"><div class="dslbl" data-i="ds4">Live Price</div>CoinGecko API · 60s<br><a href="https://www.coingecko.com" target="_blank">coingecko.com →</a></div>
     </div>
   </div>
@@ -551,7 +551,7 @@ en:{
   heroTag:'FACTS ONLY · YOU DECIDE',
   heroH1:'When Bitcoin drops <span class="hl">10%</span> in a day —<br>what happened next?',
   heroSub:'Real data 2017–2026. No predictions. Look up the pattern, decide for yourself.',
-  heroNote:'Yahoo Finance BTC-USD · UTC daily candles · 2017-01-01 to 2026-05-11',
+  heroNote:'Yahoo Finance BTC-USD · UTC daily candles · data updates daily',
   qTitle:'QUERY HISTORICAL EVENTS',
   ql1:'When BTC',ql2:'in a single day:',
   oDrop:'closes DOWN more than',oRise:'closes UP more than',oRange:'swings (High→Low) more than',
@@ -600,7 +600,7 @@ zh:{
   heroTag:'只看数据 · 自己判断',
   heroH1:'比特币单日暴跌 <span class="hl">10%</span>，<br>历史上接下来会怎样？',
   heroSub:'基于2017年至今真实数据。无预测，无建议。查规律，自己判断。',
-  heroNote:'数据来源：Yahoo Finance BTC-USD · UTC日线 · 2017-01-01 至 2026-05-11',
+  heroNote:'数据来源：Yahoo Finance BTC-USD · UTC日线 · 每日自动更新',
   qTitle:'历史事件查询',
   ql1:'当BTC',ql2:'时，历史上发生了什么？',
   oDrop:'单日收盘下跌超过',oRise:'单日收盘上涨超过',oRange:'单日振幅（最高→最低）超过',
@@ -644,7 +644,8 @@ zh:{
   }
 }};
 
-let lang='en', qtype='drop', thresh=8;
+const savedLang = localStorage.getItem('btcPatternLang');
+let lang=savedLang === 'zh' ? 'zh' : 'en', qtype='drop', thresh=8;
 let allRows=[], shown=20;
 let shareText='';
 const ATH=124723, NEXT_HALF=new Date('2028-04-17').getTime();
@@ -821,6 +822,7 @@ function updateCB() {
 }
 function setLang(l){
   lang=l;
+  localStorage.setItem('btcPatternLang', l);
   document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',
     (l==='en'&&b.textContent==='EN')||(l==='zh'&&b.textContent==='中文')));
   applyLang();
@@ -828,6 +830,8 @@ function setLang(l){
 }
 function applyLang(){
   const L=T[lang];
+  document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',
+    (lang==='en'&&b.textContent==='EN')||(lang==='zh'&&b.textContent==='中文')));
   document.querySelectorAll('[data-i]').forEach(el=>{
     const k=el.getAttribute('data-i');
     if(L[k]!==undefined){
@@ -837,6 +841,24 @@ function applyLang(){
   });
   const sel=document.getElementById('qtype');
   sel.options[0].text=L.oDrop; sel.options[1].text=L.oRise; sel.options[2].text=L.oRange;
+  sel.options[3].text=L.oWick;
+  updateDynamicCopy();
+}
+
+function updateDynamicCopy(){
+  const start = DAILY_SERIES[0]?.date || '2017-01-01';
+  const end = BTC_DATA.data_through || DAILY_SERIES[DAILY_SERIES.length - 1]?.date || '';
+  const range = `${start} → ${end}`;
+  const heroNote = document.getElementById('hero-note');
+  if(heroNote){
+    heroNote.textContent = lang === 'zh'
+      ? `数据来源：Yahoo Finance BTC-USD · UTC日线 · ${range} · 每日自动更新`
+      : `Yahoo Finance BTC-USD · UTC daily candles · ${range} · updates daily`;
+  }
+  const dsRange = document.getElementById('ds-range');
+  if(dsRange) dsRange.textContent = range;
+  const startInput = document.getElementById('cb-start');
+  if(startInput && end) startInput.max = end;
 }
 
 function onType(){
