@@ -8,15 +8,17 @@
 <meta property="og:title" content="My BTC Box — Crypto Historical Event Lookup">
 <meta property="og:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only. You decide.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.mybtcbox.com">
-<meta property="og:image" content="https://www.mybtcbox.com/og-image.png">
+<meta property="og:site_name" content="My BTC Box">
+<meta property="og:url" content="https://www.mybtcbox.com/?v=20260514">
+<meta property="og:image" content="https://www.mybtcbox.com/og-image.png?v=20260514">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="My BTC Box — Crypto Historical Event Lookup">
 <meta name="twitter:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only.">
-<meta name="twitter:image" content="https://www.mybtcbox.com/og-image.png">
+<meta name="twitter:image" content="https://www.mybtcbox.com/og-image.png?v=20260514">
 <meta name="twitter:image:alt" content="My BTC Box crypto historical pattern and backtest report">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f7931a'/%3E%3Ctext x='32' y='42' font-size='34' text-anchor='middle' font-family='Arial' font-weight='700' fill='%23080b10'%3E%E2%82%BF%3C/text%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -694,6 +696,12 @@ const savedLang = localStorage.getItem('btcPatternLang');
 let lang=savedLang === 'zh' ? 'zh' : 'en', qtype='drop', thresh=8;
 let allRows=[], shown=20;
 let shareText='';
+const SITE_URL='https://www.mybtcbox.com';
+const OG_VERSION='20260514';
+function shareUrl(kind='event'){
+  const params=new URLSearchParams({ref:'x',asset:activeCoin.toLowerCase(),kind,v:OG_VERSION});
+  return `${SITE_URL}/?${params.toString()}`;
+}
 const ATH=124723, NEXT_HALF=new Date('2028-04-17').getTime();
 
 
@@ -1282,10 +1290,10 @@ function openReport(){
   shareText = zh
     ? `我查了 ${activeCoin} 历史上「单日${qtype==='drop'?'下跌':qtype==='rise'?'上涨':'振幅'} > ${thresh}%」之后的表现：\n\n共 ${stats.count} 次\n次日上涨率 ${stats.up1_pct}% · 7日后 ${stats.up7_pct}% · 30日后 ${stats.up30_pct}%`
       +(stats.ltc_up_pct?`\n最低价→收盘回升率 ${stats.ltc_up_pct}%`:'')
-      +`\n\n历史数据，不是预测。你会测哪个条件？\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`
+      +`\n\n历史数据，不是预测。你会测哪个条件？\n${shareUrl('event')} #${activeCoin} #Crypto`
     : `I checked every time ${activeCoin} moved > ${thresh}% in a day.\n\n${stats.count} events\nNext day up: ${stats.up1_pct}% · 7d: ${stats.up7_pct}% · 30d: ${stats.up30_pct}%`
       +(stats.ltc_up_pct?`\nLow→close recovered: ${stats.ltc_up_pct}%`:'')
-      +`\n\nPast data, not a prediction. What would you test next?\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`;
+      +`\n\nPast data, not a prediction. What would you test next?\n${shareUrl('event')} #${activeCoin} #Crypto`;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -1375,8 +1383,8 @@ function openBacktestReport(){
 </div>`;
 
   shareText = zh
-    ? `我回测了 ${activeCoin}：${tiered?'分层买入':'条件买入'} vs 每周定投\n\n规则：${ruleText}\n区间：${startDay.date} → ${LATEST_DAILY.date}\n\n条件：${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投：${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n你会怎么调规则？\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`
-    : `I backtested ${activeCoin}: ${tiered?'tiered buying':'conditional buying'} vs weekly DCA.\n\nRule: ${ruleText}\nRange: ${startDay.date} → ${LATEST_DAILY.date}\n\nConditional: ${tx('cb-btc')} · ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} · ${tx('cb-dca-roi')}\n\nWhat rule should I test next?\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`;
+    ? `我回测了 ${activeCoin}：${tiered?'分层买入':'条件买入'} vs 每周定投\n\n规则：${ruleText}\n区间：${startDay.date} → ${LATEST_DAILY.date}\n\n条件：${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投：${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n你会怎么调规则？\n${shareUrl('backtest')} #${activeCoin} #Crypto`
+    : `I backtested ${activeCoin}: ${tiered?'tiered buying':'conditional buying'} vs weekly DCA.\n\nRule: ${ruleText}\nRange: ${startDay.date} → ${LATEST_DAILY.date}\n\nConditional: ${tx('cb-btc')} · ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} · ${tx('cb-dca-roi')}\n\nWhat rule should I test next?\n${shareUrl('backtest')} #${activeCoin} #Crypto`;
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
