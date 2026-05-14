@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BTC Pattern — Bitcoin Historical Event Lookup</title>
-<meta name="description" content="Look up how Bitcoin behaved after big drops, surges, or spike days. Real data 2017–2026. No predictions.">
-<meta property="og:title" content="BTC Pattern — Bitcoin Historical Event Lookup">
+<title>My BTC Box — Crypto Historical Event Lookup</title>
+<meta name="description" content="Look up how major crypto assets behaved after big drops, surges, or spike days. Real data since 2017. No predictions.">
+<meta property="og:title" content="My BTC Box — Crypto Historical Event Lookup">
 <meta property="og:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only. You decide.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://btc-pattern.pages.dev">
-<meta property="og:image" content="https://btc-pattern.pages.dev/og-image.png">
+<meta property="og:url" content="https://www.mybtcbox.com">
+<meta property="og:image" content="https://www.mybtcbox.com/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="BTC Pattern — Bitcoin Historical Event Lookup">
+<meta name="twitter:title" content="My BTC Box — Crypto Historical Event Lookup">
 <meta name="twitter:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only.">
-<meta name="twitter:image" content="https://btc-pattern.pages.dev/og-image.png">
+<meta name="twitter:image" content="https://www.mybtcbox.com/og-image.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -224,7 +224,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
 <header>
   <div class="brand">
     <div class="bmark">₿</div>
-    <span>BTC Pattern</span>
+    <span>My BTC Box</span>
     <span class="bsub" data-i="tagline">/ bitcoin historical event lookup</span>
   </div>
   <div class="lang-wrap">
@@ -472,7 +472,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   </div>
 </div>
 
-<footer>© 2026 BTC Pattern · <span data-i="foot">Facts only · You decide · Yahoo Finance OHLCV</span></footer>
+<footer>© 2026 My BTC Box · <span data-i="foot">Facts only · You decide · Yahoo Finance OHLCV</span> · www.mybtcbox.com</footer>
 <div class="toast" id="toast"></div>
 
 <script src="data/btc.daily.js"></script>
@@ -1168,7 +1168,7 @@ function openReport(){
 
   <!-- HEADER -->
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08)">
-    <span style="font-size:16px;font-weight:800;color:#f7931a;letter-spacing:.05em">₿ BTC PATTERN · ${activeCoin}</span>
+    <span style="font-size:16px;font-weight:800;color:#f7931a;letter-spacing:.05em">₿ MY BTC BOX · ${activeCoin}</span>
     <span style="font-size:11px;color:#475569;font-weight:500">${todayStr}</span>
   </div>
 
@@ -1258,16 +1258,16 @@ function openReport(){
   <!-- FOOTER -->
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">
     <div style="font-size:9px;color:#334155;max-width:320px;line-height:1.5">${zh?"历史数据，不构成投资建议。历史OHLCV：Yahoo Finance；实时价格：CoinGecko":"Historical data only. Not investment advice. Historical OHLCV: Yahoo Finance; live price: CoinGecko"}</div>
-    <div style="font-size:13px;font-weight:800;color:#f7931a;flex-shrink:0;margin-left:12px">btcpattern.com</div>
+    <div style="font-size:13px;font-weight:800;color:#f7931a;flex-shrink:0;margin-left:12px">www.mybtcbox.com</div>
   </div>
 </div>`;
   shareText = zh
     ? `${activeCoin} ${qtype==='drop'?'暴跌':qtype==='rise'?'暴涨':'插针'} > ${thresh}% 共发生${stats.count}次\n\n次日上涨: ${stats.up1_pct}% | 7日: ${stats.up7_pct}% | 30日: ${stats.up30_pct}%`
       +(stats.ltc_up_pct?`\n插针抄底当日回升: ${stats.ltc_up_pct}%`:'')
-      +`\n\n当前 Day ${daysHalving} | ${livePriceText} | ATH: ${athPct}\n\nbtcpattern.com #${activeCoin}`
+      +`\n\n当前 Day ${daysHalving} | ${livePriceText} | ATH: ${athPct}\n\nhttps://www.mybtcbox.com #${activeCoin}`
     : `${activeCoin} ${qtype==='drop'?'drops':qtype==='rise'?'surges':'swings'} > ${thresh}% — ${stats.count}x\n\nNext day up: ${stats.up1_pct}% | 7d: ${stats.up7_pct}% | 30d: ${stats.up30_pct}%`
       +(stats.ltc_up_pct?`\nSpike low recovered: ${stats.ltc_up_pct}%`:'')
-      +`\n\n${BTC_DAILY_RAW.symbol} · ${BTC_DATA.date_range}\n\nbtcpattern.com #${activeCoin}`;
+      +`\n\n${BTC_DAILY_RAW.symbol} · ${BTC_DATA.date_range}\n\nhttps://www.mybtcbox.com #${activeCoin}`;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -1311,7 +1311,7 @@ function openBacktestReport(){
   document.getElementById('rcard').innerHTML = `
 <div style="background:#08090f;border-radius:10px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e2e8f0;min-width:560px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)">
-    <span style="font-size:16px;font-weight:900;color:#f7931a;letter-spacing:.05em">₿ BTC PATTERN · ${activeCoin}</span>
+    <span style="font-size:16px;font-weight:900;color:#f7931a;letter-spacing:.05em">₿ MY BTC BOX · ${activeCoin}</span>
     <span style="font-size:11px;color:#475569;font-weight:600">${todayStr}</span>
   </div>
 
@@ -1352,13 +1352,13 @@ function openBacktestReport(){
 
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
     <div style="font-size:9px;color:#334155;max-width:350px;line-height:1.5">${zh?'历史回测，不构成投资建议。数据截止':'Historical backtest only. Not investment advice. Data through'} ${LATEST_DAILY.date}. ${zh?'不含手续费和滑点。':'Fees and slippage not included.'}</div>
-    <div style="font-size:13px;font-weight:900;color:#f7931a;flex-shrink:0;margin-left:12px">btcpattern.com</div>
+    <div style="font-size:13px;font-weight:900;color:#f7931a;flex-shrink:0;margin-left:12px">www.mybtcbox.com</div>
   </div>
 </div>`;
 
   shareText = zh
-    ? `${activeCoin} 回测报告\n${tiered?'分层买入':'条件买入'} vs 每周定投\n区间: ${startDay.date} → ${LATEST_DAILY.date}\n规则: ${ruleText}\n\n条件买入: ${tx('cb-btc')} | 盈利 ${tx('cb-profit')} | 收益率 ${tx('cb-roi')}\n每周定投: ${tx('cb-dca-btc')} | 盈利 ${tx('cb-dca-profit')} | 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n\nbtcpattern.com #${activeCoin}`
-    : `${activeCoin} backtest report\n${tiered?'Tiered buying':'Conditional buying'} vs Weekly DCA\nRange: ${startDay.date} → ${LATEST_DAILY.date}\nRule: ${ruleText}\n\nConditional: ${tx('cb-btc')} | Profit ${tx('cb-profit')} | Return ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} | Profit ${tx('cb-dca-profit')} | Return ${tx('cb-dca-roi')}\n\n${conclusion}\n\nbtcpattern.com #${activeCoin}`;
+    ? `${activeCoin} 回测报告\n${tiered?'分层买入':'条件买入'} vs 每周定投\n区间: ${startDay.date} → ${LATEST_DAILY.date}\n规则: ${ruleText}\n\n条件买入: ${tx('cb-btc')} | 盈利 ${tx('cb-profit')} | 收益率 ${tx('cb-roi')}\n每周定投: ${tx('cb-dca-btc')} | 盈利 ${tx('cb-dca-profit')} | 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n\nhttps://www.mybtcbox.com #${activeCoin}`
+    : `${activeCoin} backtest report\n${tiered?'Tiered buying':'Conditional buying'} vs Weekly DCA\nRange: ${startDay.date} → ${LATEST_DAILY.date}\nRule: ${ruleText}\n\nConditional: ${tx('cb-btc')} | Profit ${tx('cb-profit')} | Return ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} | Profit ${tx('cb-dca-profit')} | Return ${tx('cb-dca-roi')}\n\n${conclusion}\n\nhttps://www.mybtcbox.com #${activeCoin}`;
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }

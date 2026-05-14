@@ -1,6 +1,8 @@
-# BTC Pattern
+# My BTC Box
 
 Static crypto historical pattern and backtest tool. Current assets: BTC, ETH, SOL, DOGE, and BNB.
+
+Production site: https://www.mybtcbox.com
 
 ## Local data update
 
