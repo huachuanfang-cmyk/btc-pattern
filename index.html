@@ -10,10 +10,13 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.mybtcbox.com">
 <meta property="og:image" content="https://www.mybtcbox.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="My BTC Box — Crypto Historical Event Lookup">
 <meta name="twitter:description" content="When BTC drops 10% in a day — what happened next? Real data 2017–2026. Facts only.">
 <meta name="twitter:image" content="https://www.mybtcbox.com/og-image.png">
+<meta name="twitter:image:alt" content="My BTC Box crypto historical pattern and backtest report">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -488,6 +491,20 @@ let activeCoin = 'BTC';
 let BTC_DAILY_RAW = RAW_COINS[activeCoin];
 function bRound(n, d=2){ return n == null || !Number.isFinite(n) ? null : Math.round(n * 10**d) / 10**d; }
 function bPct(a,b){ return !a || !b ? null : bRound((a / b - 1) * 100, 2); }
+function priceRound(n){
+  if(n == null || !Number.isFinite(n)) return null;
+  const a = Math.abs(n);
+  const d = a >= 1000 ? 2 : a >= 1 ? 4 : a >= 0.1 ? 5 : a >= 0.01 ? 6 : 8;
+  return bRound(n, d);
+}
+function fmtPrice(v){
+  if(v == null || !Number.isFinite(v)) return '—';
+  const n = Number(v);
+  const a = Math.abs(n);
+  const d = a >= 1000 ? 0 : a >= 1 ? 2 : a >= 0.1 ? 4 : a >= 0.01 ? 5 : a >= 0.001 ? 6 : 8;
+  return (n < 0 ? '-' : '') + '$' + a.toLocaleString('en-US', { minimumFractionDigits:d, maximumFractionDigits:d });
+}
+function fmtDollars(v){ return v == null || !Number.isFinite(v) ? '—' : '$' + Math.round(v).toLocaleString('en-US'); }
 function buildBtcData(source){
   const rows = source.daily.map(d => ({
     date: d.date,
@@ -510,7 +527,7 @@ function buildBtcData(source){
 
   const future = (i,n) => rows[i+n] ? bPct(rows[i+n].close, rows[i].close) : null;
   const base = (d,i) => ({
-    date:d.date, open:bRound(d.open), high:bRound(d.high), low:bRound(d.low), close:bRound(d.close),
+    date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
     pct:d.pct, next1:future(i,1), next7:future(i,7), next30:future(i,30),
     low_to_close:d.low_to_close, drop_to_low:d.drop_to_low, volume:Math.round(d.volume || 0)
   });
@@ -519,12 +536,12 @@ function buildBtcData(source){
   const drops = daily.filter(d => d.pct != null && d.pct < 0).sort(desc);
   const rises = daily.filter(d => d.pct != null && d.pct >= 0).sort(desc);
   const intraday = rows.map((d,i)=>({
-    date:d.date, open:bRound(d.open), high:bRound(d.high), low:bRound(d.low), close:bRound(d.close),
+    date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
     close_pct:d.close_pct, range_pct:d.range_pct, low_to_close:d.low_to_close, drop_to_low:d.drop_to_low,
     next1:future(i,1), next7:future(i,7), next30:future(i,30), volume:Math.round(d.volume || 0)
   })).filter(d => d.range_pct >= 5).sort(desc);
   const wickEvents = rows.map((d,i)=>({
-    date:d.date, low:bRound(d.low), close:bRound(d.close), wick_depth:d.wick_depth, range_pct:d.range_pct,
+    date:d.date, low:priceRound(d.low), close:priceRound(d.close), wick_depth:d.wick_depth, range_pct:d.range_pct,
     day_pct:d.pct, next1:future(i,1), next7:future(i,7), next30:future(i,30), volume:Math.round(d.volume || 0)
   })).filter(d => d.wick_depth >= 3).sort(desc);
 
@@ -849,7 +866,8 @@ function updateCB() {
   const dca = calcBuyStats(weeklyRows, amount);
 
   const years = Math.max(1/365, (new Date(LATEST_DAILY.date) - new Date(startDay.date)) / 31557600000);
-  const fp = v => '$' + Math.round(v).toLocaleString('en-US');
+  const fp = fmtDollars;
+  const fprice = fmtPrice;
   const fcoin = v => v.toFixed(4) + ' ' + activeCoin;
   const froi = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
 
@@ -857,7 +875,7 @@ function updateCB() {
   document.getElementById('cb-freq').textContent = ((tiered ? d.buys : d.count) / years).toFixed(1) + (lang==='zh'?' 次/年':' times/yr');
   document.getElementById('cb-invested').textContent = fp(d.invested);
   document.getElementById('cb-btc').textContent = fcoin(d.btc);
-  document.getElementById('cb-avg').textContent = d.avgBuy ? fp(d.avgBuy) : '—';
+  document.getElementById('cb-avg').textContent = d.avgBuy ? fprice(d.avgBuy) : '—';
   document.getElementById('cb-value').textContent = fp(d.currentValue);
   const profitEl = document.getElementById('cb-profit');
   if(profitEl){ profitEl.textContent = d.invested ? fp(d.currentValue - d.invested) : '—'; profitEl.className = 'v ' + ((d.currentValue - d.invested) >= 0 ? 'up' : 'dn'); }
@@ -869,7 +887,7 @@ function updateCB() {
   if(wks) wks.innerHTML = dca.count + ' <span style="color:var(--ink3);font-size:11px">wks</span>';
   document.getElementById('cb-dca-inv').textContent = fp(dca.invested);
   document.getElementById('cb-dca-btc').textContent = fcoin(dca.btc);
-  document.getElementById('cb-dca-avg').textContent = dca.avgBuy ? fp(dca.avgBuy) : '—';
+  document.getElementById('cb-dca-avg').textContent = dca.avgBuy ? fprice(dca.avgBuy) : '—';
   document.getElementById('cb-dca-val').textContent = fp(dca.currentValue);
   const dcaProfitEl = document.getElementById('cb-dca-profit');
   if(dcaProfitEl){ dcaProfitEl.textContent = fp(dca.currentValue - dca.invested); dcaProfitEl.className = 'v ' + ((dca.currentValue - dca.invested) >= 0 ? 'up' : 'dn'); }
@@ -984,7 +1002,7 @@ function setT(t){
   document.getElementById('warn').style.display = (t<=5 || qtype==='range'&&t<=5) ? 'block':'none';
 }
 
-const fp=p=>p==null?'—':'$'+Math.round(p).toLocaleString('en-US');
+const fp=fmtPrice;
 const pc=(p,s=true)=>p==null?'—':(s&&p>0?'+':'')+p.toFixed(2)+'%';
 const badge=p=>{if(p==null)return'<span style="color:var(--ink3)">—</span>';
   return`<span class="bdg ${p>0?'up':'dn'}">${p>0?'+':''}${p.toFixed(2)}%</span>`;};
@@ -1145,7 +1163,7 @@ function openReport(){
 
   // ── C2/C3 parallel ──
   const p2=c2p(daysHalving), p3=c3p(daysHalving);
-  const fp=v=>'$'+Math.round(v).toLocaleString('en-US');
+  const fp=fmtPrice;
   const pp=(v,s=true)=>(s&&v>0?'+':'')+v.toFixed(1)+'%';
 
   const fh2=pp((p2-650)/650*100), fh3=pp((p3-8821)/8821*100);
@@ -1262,12 +1280,12 @@ function openReport(){
   </div>
 </div>`;
   shareText = zh
-    ? `${activeCoin} ${qtype==='drop'?'暴跌':qtype==='rise'?'暴涨':'插针'} > ${thresh}% 共发生${stats.count}次\n\n次日上涨: ${stats.up1_pct}% | 7日: ${stats.up7_pct}% | 30日: ${stats.up30_pct}%`
-      +(stats.ltc_up_pct?`\n插针抄底当日回升: ${stats.ltc_up_pct}%`:'')
-      +`\n\n当前 Day ${daysHalving} | ${livePriceText} | ATH: ${athPct}\n\nhttps://www.mybtcbox.com #${activeCoin}`
-    : `${activeCoin} ${qtype==='drop'?'drops':qtype==='rise'?'surges':'swings'} > ${thresh}% — ${stats.count}x\n\nNext day up: ${stats.up1_pct}% | 7d: ${stats.up7_pct}% | 30d: ${stats.up30_pct}%`
-      +(stats.ltc_up_pct?`\nSpike low recovered: ${stats.ltc_up_pct}%`:'')
-      +`\n\n${BTC_DAILY_RAW.symbol} · ${BTC_DATA.date_range}\n\nhttps://www.mybtcbox.com #${activeCoin}`;
+    ? `我查了 ${activeCoin} 历史上「单日${qtype==='drop'?'下跌':qtype==='rise'?'上涨':'振幅'} > ${thresh}%」之后的表现：\n\n共 ${stats.count} 次\n次日上涨率 ${stats.up1_pct}% · 7日后 ${stats.up7_pct}% · 30日后 ${stats.up30_pct}%`
+      +(stats.ltc_up_pct?`\n最低价→收盘回升率 ${stats.ltc_up_pct}%`:'')
+      +`\n\n历史数据，不是预测。你会测哪个条件？\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`
+    : `I checked every time ${activeCoin} moved > ${thresh}% in a day.\n\n${stats.count} events\nNext day up: ${stats.up1_pct}% · 7d: ${stats.up7_pct}% · 30d: ${stats.up30_pct}%`
+      +(stats.ltc_up_pct?`\nLow→close recovered: ${stats.ltc_up_pct}%`:'')
+      +`\n\nPast data, not a prediction. What would you test next?\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -1279,7 +1297,7 @@ function openBacktestReport(){
   const startDay = nearestDaily(document.getElementById('cb-start')?.value || '2017-01-01') || DAILY_SERIES[0];
   const tiered = !!document.getElementById('cb-tiered')?.checked;
   const amount = Math.max(1, parseFloat(document.getElementById('cb-amount')?.value) || 100);
-  const fp = v => '$' + Math.round(v).toLocaleString('en-US');
+  const fp = fmtDollars;
   const ruleText = tiered
     ? getTierRules().map(r => `${r.threshold}% / ${fp(r.amount)}`).join(' + ')
     : `${Number.isInteger(cbThresh)?cbThresh:cbThresh.toFixed(1)}% / ${fp(amount)}`;
@@ -1357,8 +1375,8 @@ function openBacktestReport(){
 </div>`;
 
   shareText = zh
-    ? `${activeCoin} 回测报告\n${tiered?'分层买入':'条件买入'} vs 每周定投\n区间: ${startDay.date} → ${LATEST_DAILY.date}\n规则: ${ruleText}\n\n条件买入: ${tx('cb-btc')} | 盈利 ${tx('cb-profit')} | 收益率 ${tx('cb-roi')}\n每周定投: ${tx('cb-dca-btc')} | 盈利 ${tx('cb-dca-profit')} | 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n\nhttps://www.mybtcbox.com #${activeCoin}`
-    : `${activeCoin} backtest report\n${tiered?'Tiered buying':'Conditional buying'} vs Weekly DCA\nRange: ${startDay.date} → ${LATEST_DAILY.date}\nRule: ${ruleText}\n\nConditional: ${tx('cb-btc')} | Profit ${tx('cb-profit')} | Return ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} | Profit ${tx('cb-dca-profit')} | Return ${tx('cb-dca-roi')}\n\n${conclusion}\n\nhttps://www.mybtcbox.com #${activeCoin}`;
+    ? `我回测了 ${activeCoin}：${tiered?'分层买入':'条件买入'} vs 每周定投\n\n规则：${ruleText}\n区间：${startDay.date} → ${LATEST_DAILY.date}\n\n条件：${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投：${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n你会怎么调规则？\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`
+    : `I backtested ${activeCoin}: ${tiered?'tiered buying':'conditional buying'} vs weekly DCA.\n\nRule: ${ruleText}\nRange: ${startDay.date} → ${LATEST_DAILY.date}\n\nConditional: ${tx('cb-btc')} · ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} · ${tx('cb-dca-roi')}\n\nWhat rule should I test next?\nhttps://www.mybtcbox.com #${activeCoin} #Crypto`;
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }

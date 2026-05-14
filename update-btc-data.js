@@ -25,6 +25,10 @@ function round(n, d = 2) {
   return n == null || !Number.isFinite(n) ? null : Math.round(n * 10 ** d) / 10 ** d;
 }
 
+function roundPrice(n) {
+  return n == null || !Number.isFinite(n) ? null : Number(n.toFixed(8));
+}
+
 function pct(a, b) {
   return !a || !b ? null : round((a / b - 1) * 100, 2);
 }
@@ -57,10 +61,10 @@ async function fetchYahooDaily(symbol) {
 
     rows.push({
       date: utcDate(result.timestamp[i]),
-      open: round(open),
-      high: round(high),
-      low: round(low),
-      close: round(close),
+      open: roundPrice(open),
+      high: roundPrice(high),
+      low: roundPrice(low),
+      close: roundPrice(close),
       volume: Math.round(quote.volume?.[i] || 0),
     });
   }
