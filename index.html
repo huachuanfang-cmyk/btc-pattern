@@ -1388,7 +1388,7 @@ function dlRpt(){
   }).then(canvas => {
     const link = document.createElement('a');
     const today = new Date().toISOString().slice(0,10);
-    link.download = 'btcpattern-' + activeCoin.toLowerCase() + '-' + today + '.png';
+    link.download = 'mybtcbox-' + activeCoin.toLowerCase() + '-' + today + '.png';
     link.href = canvas.toDataURL('image/png');
     document.body.appendChild(link);
     link.click();
