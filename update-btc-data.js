@@ -2,12 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const SYMBOL = 'BTC-USD';
-const COIN = 'BTC';
 const START_DATE = '2017-01-01';
 const OUT_DIR = path.join(__dirname, 'data');
-const JSON_PATH = path.join(OUT_DIR, 'btc.daily.json');
-const JS_PATH = path.join(OUT_DIR, 'btc.daily.js');
+
+const COINS = [
+  { coin: 'BTC', name: 'Bitcoin', symbol: 'BTC-USD' },
+  { coin: 'ETH', name: 'Ethereum', symbol: 'ETH-USD' },
+  { coin: 'SOL', name: 'Solana', symbol: 'SOL-USD' },
+  { coin: 'DOGE', name: 'Dogecoin', symbol: 'DOGE-USD' },
+  { coin: 'BNB', name: 'BNB', symbol: 'BNB-USD' },
+];
 
 function unixSeconds(date) {
   return Math.floor(new Date(`${date}T00:00:00Z`).getTime() / 1000);
@@ -25,22 +29,22 @@ function pct(a, b) {
   return !a || !b ? null : round((a / b - 1) * 100, 2);
 }
 
-async function fetchYahooDaily() {
+async function fetchYahooDaily(symbol) {
   const period1 = unixSeconds(START_DATE);
   const period2 = Math.floor(Date.now() / 1000) + 86400;
   const url =
-    `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}` +
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}` +
     `?period1=${period1}&period2=${period2}&interval=1d&events=history&includeAdjustedClose=true`;
 
   const data = await fetchJson(url);
   const result = data.chart?.result?.[0];
   if (!result?.timestamp?.length) {
-    throw new Error('Yahoo Finance response did not include daily candles.');
+    throw new Error(`${symbol}: Yahoo Finance response did not include daily candles.`);
   }
 
   const quote = result.indicators?.quote?.[0];
   if (!quote) {
-    throw new Error('Yahoo Finance response did not include OHLCV quote data.');
+    throw new Error(`${symbol}: Yahoo Finance response did not include OHLCV quote data.`);
   }
 
   const rows = [];
@@ -138,7 +142,7 @@ function addDerivedFields(rows) {
   });
 }
 
-function validate(rows) {
+function validate(rows, symbol) {
   const problems = [];
   const seen = new Set();
 
@@ -151,23 +155,28 @@ function validate(rows) {
   }
 
   if (problems.length) {
-    throw new Error(`Data validation failed:\n${problems.slice(0, 20).join('\n')}`);
+    throw new Error(`${symbol} data validation failed:\n${problems.slice(0, 20).join('\n')}`);
   }
 }
 
-async function main() {
-  const rawRows = await fetchYahooDaily();
-  const daily = addDerivedFields(rawRows);
-  validate(daily);
+async function buildCoinDataset(config) {
+  const rawRows = await fetchYahooDaily(config.symbol);
+  if (!rawRows.length) throw new Error(`${config.symbol}: no rows returned from Yahoo Finance.`);
 
-  const output = {
-    coin: COIN,
-    symbol: SYMBOL,
-    generated: new Date().toISOString().slice(0, 10),
+  const daily = addDerivedFields(rawRows);
+  validate(daily, config.symbol);
+  const checkedAt = new Date().toISOString();
+
+  return {
+    coin: config.coin,
+    name: config.name,
+    symbol: config.symbol,
+    generated: checkedAt.slice(0, 10),
+    last_checked_at: checkedAt,
     date_range: `${daily[0].date} to ${daily[daily.length - 1].date}`,
     data_through: daily[daily.length - 1].date,
     source: {
-      ohlcv: `Yahoo Finance ${SYMBOL}`,
+      ohlcv: `Yahoo Finance ${config.symbol}`,
       endpoint: 'https://query1.finance.yahoo.com/v8/finance/chart',
       timezone: 'UTC daily candles',
       note:
@@ -176,16 +185,31 @@ async function main() {
     current_price: null,
     daily,
   };
+}
 
+async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(JSON_PATH, JSON.stringify(output));
-  fs.writeFileSync(JS_PATH, `window.BTC_DAILY_DATA=${JSON.stringify(output)};\n`);
 
-  console.log(`Updated ${COIN} data`);
-  console.log(`Rows: ${daily.length}`);
-  console.log(`Range: ${output.date_range}`);
-  console.log(`JSON: ${JSON_PATH}`);
-  console.log(`JS:   ${JS_PATH}`);
+  for (const config of COINS) {
+    console.log(`Fetching ${config.coin} (${config.symbol})...`);
+    const dataset = await buildCoinDataset(config);
+
+    const base = config.coin.toLowerCase();
+    const jsonPath = path.join(OUT_DIR, `${base}.daily.json`);
+    const jsPath = path.join(OUT_DIR, `${base}.daily.js`);
+    fs.writeFileSync(jsonPath, JSON.stringify(dataset));
+
+    const varName = `${config.coin}_DAILY_DATA`;
+    fs.writeFileSync(jsPath, `window.${varName}=${JSON.stringify(dataset)};\n`);
+
+    if (config.coin === 'BTC') {
+      fs.writeFileSync(path.join(OUT_DIR, 'btc.daily.json'), JSON.stringify(dataset));
+      fs.writeFileSync(path.join(OUT_DIR, 'btc.daily.js'), `window.BTC_DAILY_DATA=${JSON.stringify(dataset)};\n`);
+    }
+
+    console.log(`  Rows: ${dataset.daily.length}`);
+    console.log(`  Range: ${dataset.date_range}`);
+  }
 }
 
 main().catch((err) => {

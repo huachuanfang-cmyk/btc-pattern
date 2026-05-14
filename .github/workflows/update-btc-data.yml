@@ -1,4 +1,4 @@
-name: Update BTC data
+name: Update crypto data
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  update-btc-data:
+  update-crypto-data:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,17 +21,17 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Update BTC data
+      - name: Update crypto data
         run: node update-btc-data.js
 
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/btc.daily.json data/btc.daily.js
+          git add data/*.daily.json data/*.daily.js
           if git diff --cached --quiet; then
             echo "No data changes."
           else
-            git commit -m "Update BTC daily data"
+            git commit -m "Update crypto daily data"
             git push
           fi

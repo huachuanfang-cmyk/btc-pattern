@@ -1,16 +1,17 @@
 # BTC Pattern
 
-Static BTC historical pattern and backtest tool.
+Static crypto historical pattern and backtest tool. Current assets: BTC, ETH, SOL, DOGE, and BNB.
 
 ## Local data update
 
 ```powershell
-npm run update:btc
+npm run update:crypto
 ```
 
 This updates:
 
-- `data/btc.daily.json`
-- `data/btc.daily.js`
+- `data/crypto.daily.json`
+- `data/crypto.daily.js`
+- individual `data/*.daily.json` and `data/*.daily.js` files
 
-Historical OHLCV source: Yahoo Finance `BTC-USD`.
+Historical OHLCV source: Yahoo Finance `BTC-USD`, `ETH-USD`, `SOL-USD`, `DOGE-USD`, and `BNB-USD`.

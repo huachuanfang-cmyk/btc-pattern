@@ -197,6 +197,10 @@ td.date-col{color:var(--ink2);font-size:12px;text-align:left}
 .dsitem{font-size:12px;color:var(--ink2)}
 .dslbl{color:var(--ink3);font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .dsitem a{color:var(--accent);text-decoration:none;font-size:11px}
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.status-item{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:7px;padding:10px 11px}
+.status-lbl{color:var(--ink3);font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.status-val{font-size:12px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-weight:600;word-break:break-word}
 
 .disc{text-align:center;padding:16px 24px 40px;color:var(--ink3);font-size:12px;max-width:640px;margin:0 auto}
 footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;color:var(--ink3);font-size:12px}
@@ -238,6 +242,16 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
 
 <div class="qwrap">
   <div class="qcard">
+    <div class="qrow" style="margin-bottom:18px">
+      <span class="qlabel" data-i="asset">Asset</span>
+      <select class="qsel" id="coin-select" onchange="selectCoin(this.value)">
+        <option value="BTC">BTC · Bitcoin</option>
+        <option value="ETH">ETH · Ethereum</option>
+        <option value="SOL">SOL · Solana</option>
+        <option value="DOGE">DOGE · Dogecoin</option>
+        <option value="BNB">BNB · BNB</option>
+      </select>
+    </div>
     <div class="qtitle" data-i="qTitle">QUERY HISTORICAL EVENTS</div>
     <div class="qrow">
       <span class="qlabel" data-i="ql1">When BTC</span>
@@ -429,10 +443,16 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   <div class="dscard">
     <div class="dstitle" data-i="dsTitle">📚 Data Sources</div>
     <div class="dsgrid">
-      <div class="dsitem"><div class="dslbl" data-i="ds1">Daily OHLC</div>Yahoo Finance BTC-USD<br><a href="https://finance.yahoo.com/quote/BTC-USD" target="_blank">yahoo finance →</a></div>
-      <div class="dsitem"><div class="dslbl" data-i="ds2">Volume</div>Yahoo Finance BTC-USD<br><a href="https://finance.yahoo.com/quote/BTC-USD" target="_blank">yahoo finance →</a></div>
+      <div class="dsitem"><div class="dslbl" data-i="ds1">Daily OHLC</div><span id="ds-ohlcv">Yahoo Finance BTC-USD</span><br><a id="ds-yahoo-1" href="https://finance.yahoo.com/quote/BTC-USD" target="_blank">yahoo finance →</a></div>
+      <div class="dsitem"><div class="dslbl" data-i="ds2">Volume</div><span id="ds-volume">Yahoo Finance BTC-USD</span><br><a id="ds-yahoo-2" href="https://finance.yahoo.com/quote/BTC-USD" target="_blank">yahoo finance →</a></div>
       <div class="dsitem"><div class="dslbl" data-i="ds3">Range</div><span id="ds-range">2017-01-01 → latest</span><br><span style="color:var(--ink3);font-size:11px" data-i="ds3note">Pre-2017 excluded</span></div>
       <div class="dsitem"><div class="dslbl" data-i="ds4">Live Price</div>CoinGecko API · 60s<br><a href="https://www.coingecko.com" target="_blank">coingecko.com →</a></div>
+    </div>
+    <div class="status-grid" aria-label="Data status">
+      <div class="status-item"><div class="status-lbl" data-i="stAsset">Asset</div><div class="status-val" id="st-asset">BTC-USD</div></div>
+      <div class="status-item"><div class="status-lbl" data-i="stThrough">Dataset through</div><div class="status-val" id="st-through">—</div></div>
+      <div class="status-item"><div class="status-lbl" data-i="stChecked">Last checked</div><div class="status-val" id="st-checked">—</div></div>
+      <div class="status-item"><div class="status-lbl" data-i="stSource">Source</div><div class="status-val">Yahoo Finance</div></div>
     </div>
   </div>
 
@@ -457,10 +477,15 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
 
 <script src="data/btc.daily.js"></script>
 <script>
-const BTC_DAILY_RAW = window.BTC_DAILY_DATA;
-if (!BTC_DAILY_RAW || !Array.isArray(BTC_DAILY_RAW.daily)) {
-  throw new Error('BTC daily data failed to load. Make sure data/btc.daily.js exists next to this HTML file.');
+const RAW_COINS = window.CRYPTO_DAILY_DATA?.coins || (window.BTC_DAILY_DATA ? { BTC: window.BTC_DAILY_DATA } : null);
+if (!RAW_COINS?.BTC || !Array.isArray(RAW_COINS.BTC.daily)) {
+  throw new Error('Crypto daily data failed to load. Make sure data/crypto.daily.js exists next to this HTML file.');
 }
+const COIN_ORDER = ['BTC', 'ETH', 'SOL', 'DOGE', 'BNB'];
+const savedCoin = localStorage.getItem('btcPatternCoin');
+const requestedCoin = COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
+let activeCoin = 'BTC';
+let BTC_DAILY_RAW = RAW_COINS[activeCoin];
 function bRound(n, d=2){ return n == null || !Number.isFinite(n) ? null : Math.round(n * 10**d) / 10**d; }
 function bPct(a,b){ return !a || !b ? null : bRound((a / b - 1) * 100, 2); }
 function buildBtcData(source){
@@ -537,23 +562,24 @@ function buildBtcData(source){
     pre:{
       drop:summarize(daily, 'pct', [3,5,8,10,15,20,30], 'lte'),
       rise:summarize(daily, 'pct', [3,5,8,10,15,20,30], 'gte'),
-      range:summarize(intraday, 'range_pct', [5,10,15,20,25,30], 'gte')
+      range:summarize(intraday, 'range_pct', [5,8,10,15,20,25,30], 'gte')
     }
   };
 }
-const BTC_DATA = buildBtcData(BTC_DAILY_RAW);
+let BTC_DATA = buildBtcData(BTC_DAILY_RAW);
 
 // ── I18N ──
 const T = {
 en:{
   live:'LIVE',fromATH:'FROM ATH',nextHalv:'NEXT HALVING',
   tagline:'/ bitcoin historical event lookup',
+  asset:'Asset',
   heroTag:'FACTS ONLY · YOU DECIDE',
   heroH1:'When Bitcoin drops <span class="hl">10%</span> in a day —<br>what happened next?',
   heroSub:'Real data 2017–2026. No predictions. Look up the pattern, decide for yourself.',
   heroNote:'Yahoo Finance BTC-USD · UTC daily candles · data updates daily',
   qTitle:'QUERY HISTORICAL EVENTS',
-  ql1:'When BTC',ql2:'in a single day:',
+  ql1:'When selected asset',ql2:'in a single day:',
   oDrop:'closes DOWN more than',oRise:'closes UP more than',oRange:'swings (High→Low) more than',
   oWick:'wick depth (Close−Low) more than',
   warn:'⚠ Statistics use 2017+ data only. Pre-2017 BTC was illiquid — including it would distort results.',
@@ -566,6 +592,7 @@ en:{
   genRpt:'Generate Report Card',
   dsTitle:'📚 Data Sources',
   ds1:'Daily OHLC',ds2:'Volume',ds3:'Range',ds3note:'Pre-2017 excluded',ds4:'Live Price',
+  stAsset:'Asset',stThrough:'Dataset through',stChecked:'Last checked',stSource:'Source',
   disc:'Historical data only. Not investment advice. Past patterns ≠ future results. Crypto is highly volatile. Always make your own decisions.',
   mshare:'X Share',mdl:'Download PNG',mclose:'Close',
   mnote:'Download PNG to save · Screenshot to share',
@@ -573,14 +600,14 @@ en:{
 
   cbTitle:'CONDITIONAL BUY BACKTEST',
   cbSub:'Choose a start date, drop threshold, and buy amount. Historical backtest only, not a trading signal.',
-  cbFrom:'From', cbWhen:'when BTC closes down more than', cbBuy:'buy', cbRun:'Run backtest', cbReport:'Generate Backtest Report', cbTiered:'Advanced: tiered buying', cbTierIf:'Drop >', cbTierBuy:'buy $', cbTierHint:'Tiered mode uses the previous close as the reference price. If the intraday low reaches -12%, all crossed tiers trigger, buying at each tier price.', cbEvery7:'Every 7 days',
+  cbFrom:'From', cbWhen:'when selected asset closes down more than', cbBuy:'buy', cbRun:'Run backtest', cbReport:'Generate Backtest Report', cbTiered:'Advanced: tiered buying', cbTierIf:'Drop >', cbTierBuy:'buy $', cbTierHint:'Tiered mode uses the previous close as the reference price. If the intraday low reaches -12%, all crossed tiers trigger, buying at each tier price.', cbEvery7:'Every 7 days',
   cbStratTitle:'YOUR STRATEGY · CONDITIONAL BUYING',
   cbTriggers:'Times triggered', cbFreq:'Avg frequency',
-  cbInvested:'Total invested', cbBTC:'BTC accumulated',
+  cbInvested:'Total invested', cbBTC:'Asset accumulated',
   cbAvgBuy:'Avg buy price', cbValue:'Current value', cbProfit:'Profit', cbROI:'Return on invested capital',
   cbDCATitle:'VS WEEKLY DCA · SAME AMOUNT/WEEK',
   cbDCAWeeks:'Total weeks', cbDCAFreq:'Frequency',
-  cbDCAInv:'Total invested', cbDCABTC:'BTC accumulated',
+  cbDCAInv:'Total invested', cbDCABTC:'Asset accumulated',
   cbDCAAvg:'Avg buy price', cbDCAVal:'Current value', cbDCAProfit:'Profit', cbDCARoi:'Return on invested capital',
   cbNoteTitle:'Important:', cbNote:'Return % is calculated against each strategy’s actual invested capital. Conditional buying may deploy less capital than weekly DCA. Past results do not predict future returns.',
   thDrop:['Date','Close','Drop %','Day Low','Low→Close','Next Day','7d','30d'],
@@ -588,21 +615,22 @@ en:{
   thRange:['Date','High','Low','Swing','Close %','Low→Close','Next Day','7d'],
   thWick:['Date','Day Low','Close','Wick Depth','Swing','Close %','Next Day','7d','30d'],
   interp:{
-    wick:(t,n,u1,a1,u7,a7)=>`A wick occurs when BTC closes much higher than its intraday LOW. Wick depth >${t}% has happened <strong>${n} times</strong> since 2017. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 7 days up: <strong>${u7}%</strong> (avg ${a7>=0?"+":""}${a7}%). <strong>Note:</strong> Buying at the exact intraday low is theoretically ideal but very difficult in practice. This data shows how often BTC recovered from its low — not that you can always catch it. <em>Past data is not a guarantee.</em>`,
-    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`BTC has closed down more than ${t}% in a single day <strong>${n} times</strong> since 2017. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). If you caught the intraday low, <strong>${ltc}%</strong> of the time it recovered by close (avg rebound +${ltca}%). <em>Past data is not a guarantee.</em>`,
-    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`BTC has closed up more than ${t}% in a single day <strong>${n} times</strong> since 2017. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). <em>Past data is not a guarantee.</em>`,
-    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`BTC has swung more than ${t}% intraday <strong>${n} times</strong> since 2017. This captures wick events missed by close-only data. If bought at the intraday LOW: <strong>${ltc}%</strong> recovered by close (avg +${ltca}%). Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). <em>Past data is not a guarantee.</em>`,
+    wick:(t,n,u1,a1,u7,a7)=>`${activeCoin} wick depth >${t}% has happened <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 7 days up: <strong>${u7}%</strong> (avg ${a7>=0?"+":""}${a7}%). <strong>Note:</strong> Buying at the exact intraday low is theoretically ideal but very difficult in practice. This data shows how often price recovered from its low — not that you can always catch it. <em>Past data is not a guarantee.</em>`,
+    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has closed down more than ${t}% in a single day <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). If you caught the intraday low, <strong>${ltc}%</strong> of the time it recovered by close (avg rebound +${ltca}%). <em>Past data is not a guarantee.</em>`,
+    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has closed up more than ${t}% in a single day <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). <em>Past data is not a guarantee.</em>`,
+    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has swung more than ${t}% intraday <strong>${n} times</strong> in this dataset. This captures wick events missed by close-only data. If bought at the intraday LOW: <strong>${ltc}%</strong> recovered by close (avg +${ltca}%). Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). <em>Past data is not a guarantee.</em>`,
   }
 },
 zh:{
   live:'实时',fromATH:'距历史高点',nextHalv:'下次减半',
   tagline:'/ 比特币历史行情查询',
+  asset:'币种',
   heroTag:'只看数据 · 自己判断',
   heroH1:'比特币单日暴跌 <span class="hl">10%</span>，<br>历史上接下来会怎样？',
   heroSub:'基于2017年至今真实数据。无预测，无建议。查规律，自己判断。',
   heroNote:'数据来源：Yahoo Finance BTC-USD · UTC日线 · 每日自动更新',
   qTitle:'历史事件查询',
-  ql1:'当BTC',ql2:'时，历史上发生了什么？',
+  ql1:'当所选币种',ql2:'时，历史上发生了什么？',
   oDrop:'单日收盘下跌超过',oRise:'单日收盘上涨超过',oRange:'单日振幅（最高→最低）超过',
   oWick:'单日插针深度（收盘−最低）超过',
   warn:'⚠ 统计仅使用2017年后数据。2017年前市场流动性极差，加入会导致统计失真。',
@@ -615,6 +643,7 @@ zh:{
   genRpt:'生成报告卡片',
   dsTitle:'📚 数据来源',
   ds1:'每日OHLC',ds2:'成交量',ds3:'数据范围',ds3note:'已排除2017年前',ds4:'实时价格',
+  stAsset:'当前币种',stThrough:'数据截止',stChecked:'上次检查',stSource:'数据源',
   disc:'仅供历史数据参考，不构成投资建议。历史规律不代表未来走势。加密货币风险极高。请自行判断，谨慎决策。',
   mshare:'X 分享',mdl:'下载 PNG',mclose:'关闭',
   mnote:'点击下载PNG保存报告 · 截图可直接分享',
@@ -622,14 +651,14 @@ zh:{
 
   cbTitle:'条件买入历史回测',
   cbSub:'选择开始日期、下跌阈值和每次买入金额。这里只是历史回测，不是交易信号。',
-  cbFrom:'从', cbWhen:'当BTC单日收盘下跌超过', cbBuy:'时买入', cbRun:'运行回测', cbReport:'生成回测报告', cbTiered:'高级：分层买入', cbTierIf:'跌超', cbTierBuy:'买入 $', cbTierHint:'分层模式以前一日收盘价为基准。若当日最低价触及 -12%，会触发所有穿过的层，并按各层价格买入。', cbEvery7:'每7天一次',
+  cbFrom:'从', cbWhen:'当所选币种单日收盘下跌超过', cbBuy:'时买入', cbRun:'运行回测', cbReport:'生成回测报告', cbTiered:'高级：分层买入', cbTierIf:'跌超', cbTierBuy:'买入 $', cbTierHint:'分层模式以前一日收盘价为基准。若当日最低价触及 -12%，会触发所有穿过的层，并按各层价格买入。', cbEvery7:'每7天一次',
   cbStratTitle:'你的策略 · 条件买入',
   cbTriggers:'历史触发次数', cbFreq:'平均触发频率',
-  cbInvested:'总投入', cbBTC:'累计BTC',
+  cbInvested:'总投入', cbBTC:'累计币数',
   cbAvgBuy:'平均买入价', cbValue:'当前价值', cbProfit:'盈利金额', cbROI:'投入收益率',
   cbDCATitle:'对比 · 每周投入相同金额',
   cbDCAWeeks:'总周数', cbDCAFreq:'频率',
-  cbDCAInv:'总投入', cbDCABTC:'累计BTC',
+  cbDCAInv:'总投入', cbDCABTC:'累计币数',
   cbDCAAvg:'平均买入价', cbDCAVal:'当前价值', cbDCAProfit:'盈利金额', cbDCARoi:'投入收益率',
   cbNoteTitle:'重要说明:', cbNote:'回报率基于各自的实际投入金额计算。条件买入通常投入次数更少，绝对收益与每周定投不同。历史数据不代表未来。',
   thDrop:['日期','收盘价','跌幅','当日最低','最低→收盘','次日','7日后','30日后'],
@@ -637,10 +666,10 @@ zh:{
   thRange:['日期','最高','最低','振幅','收盘%','最低→收盘','次日','7日后'],
   thWick:['日期','当日最低','收盘价','插针深度','振幅','当日涨跌','次日','7日后','30日后'],
   interp:{
-    wick:(t,n,u1,a1,u7,a7)=>`插针行情是指BTC当日最低价远低于收盘价，形成K线下影线。插针深度>${t}%在2017年至今共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；7日后上涨概率<strong>${u7}%</strong>（均值${a7>0?"+":""}${a7}%）。<strong>重要说明：</strong>在最低点买入在理论上最优，但实际操作中极难精确执行。此数据表明历史上BTC从当日最低点回升的频率，并不代表你能准确买在最低点。<em>历史数据，不代表未来。</em>`,
-    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`2017年至今，BTC单日收盘跌幅超过${t}%共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后上涨概率<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。若在当日最低点买入，<strong>${ltc}%</strong>的概率当天收盘即回升（均值+${ltca}%）。<em>历史数据，不代表未来。</em>`,
-    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`2017年至今，BTC单日收盘涨幅超过${t}%共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后上涨概率<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。<em>历史数据，不代表未来。</em>`,
-    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`2017年至今，BTC单日振幅超过${t}%共发生了<strong>${n}次</strong>。此统计可捕捉插针行情，弥补仅用收盘价的不足。若在当日最低点买入：<strong>${ltc}%</strong>的概率当天收盘即回升（均值+${ltca}%）。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）。<em>历史数据，不代表未来。</em>`,
+    wick:(t,n,u1,a1,u7,a7)=>`${activeCoin} 插针深度>${t}%在当前数据集中共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；7日后上涨概率<strong>${u7}%</strong>（均值${a7>0?"+":""}${a7}%）。<strong>重要说明：</strong>在最低点买入在理论上最优，但实际操作中极难精确执行。此数据表明历史上价格从当日最低点回升的频率，并不代表你能准确买在最低点。<em>历史数据，不代表未来。</em>`,
+    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日收盘跌幅超过${t}%共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后上涨概率<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。若在当日最低点买入，<strong>${ltc}%</strong>的概率当天收盘即回升（均值+${ltca}%）。<em>历史数据，不代表未来。</em>`,
+    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日收盘涨幅超过${t}%共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后上涨概率<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。<em>历史数据，不代表未来。</em>`,
+    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日振幅超过${t}%共发生了<strong>${n}次</strong>。此统计可捕捉插针行情，弥补仅用收盘价的不足。若在当日最低点买入：<strong>${ltc}%</strong>的概率当天收盘即回升（均值+${ltca}%）。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）。<em>历史数据，不代表未来。</em>`,
   }
 }};
 
@@ -654,16 +683,68 @@ const ATH=124723, NEXT_HALF=new Date('2028-04-17').getTime();
 // ── CONDITIONAL BUY BACKTEST ──
 let cbThresh = 5;
 
-const DAILY_SERIES = (() => {
-  const m = new Map();
-  [...(BTC_DATA.drops || []), ...(BTC_DATA.rises || [])].forEach(d => {
-    if (d && d.date && d.close) m.set(d.date, { date:d.date, close:d.close, low:d.low, high:d.high, pct:d.pct });
-  });
-  const rows = [...m.values()].sort((a,b) => a.date.localeCompare(b.date));
+let DAILY_SERIES = [];
+let LATEST_DAILY = null;
+
+function buildDailySeries(){
+  const rows = (BTC_DATA.daily || [])
+    .filter(d => d && d.date && d.close)
+    .map(d => ({ date:d.date, close:d.close, low:d.low, high:d.high, pct:d.pct }));
   rows.forEach((d,i) => { d.prevClose = i > 0 ? rows[i-1].close : null; });
   return rows;
-})();
-const LATEST_DAILY = DAILY_SERIES[DAILY_SERIES.length - 1];
+}
+
+function refreshDailySeries(){
+  DAILY_SERIES = buildDailySeries();
+  LATEST_DAILY = DAILY_SERIES[DAILY_SERIES.length - 1] || null;
+}
+refreshDailySeries();
+
+function loadCoinData(coin){
+  if(RAW_COINS[coin]) return Promise.resolve(RAW_COINS[coin]);
+  if(!COIN_ORDER.includes(coin)) return Promise.reject(new Error('Unsupported coin: ' + coin));
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-coin="${coin}"]`);
+    if(existing){
+      existing.addEventListener('load', () => resolve(window[`${coin}_DAILY_DATA`]));
+      existing.addEventListener('error', reject);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `data/${coin.toLowerCase()}.daily.js`;
+    script.dataset.coin = coin;
+    script.onload = () => {
+      const data = window[`${coin}_DAILY_DATA`];
+      if(!data?.daily?.length){
+        reject(new Error(`${coin} data loaded but was empty.`));
+        return;
+      }
+      RAW_COINS[coin] = data;
+      resolve(data);
+    };
+    script.onerror = () => reject(new Error(`Failed to load ${coin} data.`));
+    document.head.appendChild(script);
+  });
+}
+
+async function selectCoin(coin){
+  if(!COIN_ORDER.includes(coin)) return;
+  try{
+    const data = await loadCoinData(coin);
+    activeCoin = coin;
+    localStorage.setItem('btcPatternCoin', coin);
+    BTC_DAILY_RAW = data;
+    BTC_DATA = buildBtcData(BTC_DAILY_RAW);
+    refreshDailySeries();
+    applyLang();
+    onType();
+    run();
+    updateCB();
+  }catch(err){
+    toast(lang==='zh' ? `无法加载 ${coin} 数据` : `Could not load ${coin} data`);
+    console.error(err);
+  }
+}
 
 function nearestDaily(dateStr){
   for(const d of DAILY_SERIES){ if(d.date >= dateStr) return d; }
@@ -769,13 +850,13 @@ function updateCB() {
 
   const years = Math.max(1/365, (new Date(LATEST_DAILY.date) - new Date(startDay.date)) / 31557600000);
   const fp = v => '$' + Math.round(v).toLocaleString('en-US');
-  const fbtc = v => v.toFixed(4) + ' BTC';
+  const fcoin = v => v.toFixed(4) + ' ' + activeCoin;
   const froi = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
 
   document.getElementById('cb-count').textContent = tiered ? `${d.count}d / ${d.buys}×` : d.count + '×';
   document.getElementById('cb-freq').textContent = ((tiered ? d.buys : d.count) / years).toFixed(1) + (lang==='zh'?' 次/年':' times/yr');
   document.getElementById('cb-invested').textContent = fp(d.invested);
-  document.getElementById('cb-btc').textContent = fbtc(d.btc);
+  document.getElementById('cb-btc').textContent = fcoin(d.btc);
   document.getElementById('cb-avg').textContent = d.avgBuy ? fp(d.avgBuy) : '—';
   document.getElementById('cb-value').textContent = fp(d.currentValue);
   const profitEl = document.getElementById('cb-profit');
@@ -787,7 +868,7 @@ function updateCB() {
   const wks = document.getElementById('cb-dca-weeks');
   if(wks) wks.innerHTML = dca.count + ' <span style="color:var(--ink3);font-size:11px">wks</span>';
   document.getElementById('cb-dca-inv').textContent = fp(dca.invested);
-  document.getElementById('cb-dca-btc').textContent = fbtc(dca.btc);
+  document.getElementById('cb-dca-btc').textContent = fcoin(dca.btc);
   document.getElementById('cb-dca-avg').textContent = dca.avgBuy ? fp(dca.avgBuy) : '—';
   document.getElementById('cb-dca-val').textContent = fp(dca.currentValue);
   const dcaProfitEl = document.getElementById('cb-dca-profit');
@@ -812,11 +893,11 @@ function updateCB() {
   const verdict = zh
     ? `从 ${startDay.date} 到 ${LATEST_DAILY.date}，${tiered?'分层规则':'条件规则'}（${ruleText}）共触发 <strong style="color:var(--accent)">${tiered ? `${d.count}天、${d.buys}笔` : `${d.count}次`}</strong>，总投入 ${fp(d.invested)}，盈利 ${fp(d.currentValue-d.invested)}，投入收益率 <strong style="color:${d.roi>=0?'var(--green)':'var(--red)'}">${d.invested?froi(d.roi):'—'}</strong>。` +
       `每周投入 ${fp(amount)}：投入 ${fp(dca.invested)}，盈利 ${fp(dca.currentValue-dca.invested)}，投入收益率 <strong>${froi(dca.roi)}</strong>。` +
-      `<br><strong>对比结论：</strong>累计 BTC：<strong style="color:var(--green)">${winnerLabel(btcWinner,true)}</strong> 更高；盈利金额：<strong style="color:var(--green)">${winnerLabel(profitWinner,true)}</strong> 更高；投入收益率：<strong style="color:var(--green)">${winnerLabel(roiWinner,true)}</strong> 更高。` +
+      `<br><strong>对比结论：</strong>累计币数：<strong style="color:var(--green)">${winnerLabel(btcWinner,true)}</strong> 更高；盈利金额：<strong style="color:var(--green)">${winnerLabel(profitWinner,true)}</strong> 更高；投入收益率：<strong style="color:var(--green)">${winnerLabel(roiWinner,true)}</strong> 更高。` +
       `<br>条件买入比每周定投${less>=0?'少投入':'多投入'} <strong>${fp(Math.abs(less))}</strong>，回报率差值 <strong style="color:var(--accent)">${diff>=0?'+':''}${diff.toFixed(1)}个百分点</strong>。这是历史回测，不是买入建议。`
     : `From ${startDay.date} to ${LATEST_DAILY.date}, ${tiered?'tiered':'conditional'} rule (${ruleText}) triggered <strong style="color:var(--accent)">${tiered ? `${d.count} days / ${d.buys} buys` : `${d.count} buys`}</strong>, ${fp(d.invested)} invested, ${fp(d.currentValue-d.invested)} profit, return on invested capital <strong style="color:${d.roi>=0?'var(--green)':'var(--red)'}">${d.invested?froi(d.roi):'—'}</strong>. ` +
       `Weekly DCA with ${fp(amount)} invested ${fp(dca.invested)}, ${fp(dca.currentValue-dca.invested)} profit, return <strong>${froi(dca.roi)}</strong>.` +
-      `<br><strong>Comparison:</strong> BTC accumulated: <strong style="color:var(--green)">${winnerLabel(btcWinner,false)}</strong>; profit: <strong style="color:var(--green)">${winnerLabel(profitWinner,false)}</strong>; return on invested capital: <strong style="color:var(--green)">${winnerLabel(roiWinner,false)}</strong>.` +
+      `<br><strong>Comparison:</strong> asset accumulated: <strong style="color:var(--green)">${winnerLabel(btcWinner,false)}</strong>; profit: <strong style="color:var(--green)">${winnerLabel(profitWinner,false)}</strong>; return on invested capital: <strong style="color:var(--green)">${winnerLabel(roiWinner,false)}</strong>.` +
       `<br>Conditional buying deployed <strong>${fp(Math.abs(less))} ${less>=0?'less':'more'}</strong> than weekly DCA. Return-rate difference: <strong style="color:var(--accent)">${diff>=0?'+':''}${diff.toFixed(1)}pp</strong>. Historical backtest only, not a buy signal.`;
   document.getElementById('cb-verdict').innerHTML = verdict;
 }
@@ -827,6 +908,7 @@ function setLang(l){
     (l==='en'&&b.textContent==='EN')||(l==='zh'&&b.textContent==='中文')));
   applyLang();
   if(document.getElementById('results').classList.contains('show')) run();
+  updateCB();
 }
 function applyLang(){
   const L=T[lang];
@@ -849,16 +931,42 @@ function updateDynamicCopy(){
   const start = DAILY_SERIES[0]?.date || '2017-01-01';
   const end = BTC_DATA.data_through || DAILY_SERIES[DAILY_SERIES.length - 1]?.date || '';
   const range = `${start} → ${end}`;
+  const symbol = BTC_DAILY_RAW.symbol || `${activeCoin}-USD`;
+  const sourceLabel = `Yahoo Finance ${symbol}`;
+  const quoteUrl = `https://finance.yahoo.com/quote/${symbol}`;
+  const coinSelect = document.getElementById('coin-select');
+  if(coinSelect) coinSelect.value = activeCoin;
   const heroNote = document.getElementById('hero-note');
   if(heroNote){
     heroNote.textContent = lang === 'zh'
-      ? `数据来源：Yahoo Finance BTC-USD · UTC日线 · ${range} · 每日自动更新`
-      : `Yahoo Finance BTC-USD · UTC daily candles · ${range} · updates daily`;
+      ? `数据来源：${sourceLabel} · UTC日线 · ${range} · 每日自动更新`
+      : `${sourceLabel} · UTC daily candles · ${range} · updates daily`;
   }
   const dsRange = document.getElementById('ds-range');
   if(dsRange) dsRange.textContent = range;
+  const checkedAt = BTC_DAILY_RAW.last_checked_at || BTC_DAILY_RAW.generated || '';
+  const checkedText = checkedAt ? checkedAt.replace('T', ' ').replace(/\.\d+Z$/, ' UTC').replace(/Z$/, ' UTC') : '—';
+  const stAsset = document.getElementById('st-asset');
+  const stThrough = document.getElementById('st-through');
+  const stChecked = document.getElementById('st-checked');
+  if(stAsset) stAsset.textContent = `${activeCoin} · ${symbol}`;
+  if(stThrough) stThrough.textContent = end || '—';
+  if(stChecked) stChecked.textContent = checkedText;
+  const dsOhlcv = document.getElementById('ds-ohlcv');
+  const dsVolume = document.getElementById('ds-volume');
+  if(dsOhlcv) dsOhlcv.textContent = sourceLabel;
+  if(dsVolume) dsVolume.textContent = sourceLabel;
+  ['ds-yahoo-1','ds-yahoo-2'].forEach(id => {
+    const a = document.getElementById(id);
+    if(a) a.href = quoteUrl;
+  });
   const startInput = document.getElementById('cb-start');
-  if(startInput && end) startInput.max = end;
+  if(startInput && end){
+    startInput.min = start;
+    startInput.max = end;
+    if(startInput.value < start) startInput.value = start;
+    if(startInput.value > end) startInput.value = end;
+  }
 }
 
 function onType(){
@@ -1010,7 +1118,13 @@ const ATH_DATE = new Date('2025-10-06').getTime();
 
 function openReport(){
   const L=T[lang];
-  const stats=qtype==='drop'?BTC_DATA.pre.drop[String(thresh)]:qtype==='rise'?BTC_DATA.pre.rise[String(thresh)]:BTC_DATA.pre.range[String(thresh)];
+  const stats=qtype==='drop'
+    ? BTC_DATA.pre.drop[String(thresh)]
+    : qtype==='rise'
+      ? BTC_DATA.pre.rise[String(thresh)]
+      : qtype==='wick'
+        ? BTC_DATA.wick.pre[String(thresh)]
+        : BTC_DATA.pre.range[String(thresh)];
   if(!stats) return;
 
   const today=new Date();
@@ -1019,8 +1133,8 @@ function openReport(){
 
   // ── EVENT LABEL ──
   const evtLabel=zh
-    ?(qtype==='drop'?`BTC 单日收盘下跌 > ${thresh}%`:qtype==='rise'?`BTC 单日收盘上涨 > ${thresh}%`:`BTC 单日振幅 > ${thresh}%`)
-    :(qtype==='drop'?`BTC single-day close DROP > ${thresh}%`:qtype==='rise'?`BTC single-day close RISE > ${thresh}%`:`BTC intraday SWING > ${thresh}%`);
+    ?(qtype==='drop'?`${activeCoin} 单日收盘下跌 > ${thresh}%`:qtype==='rise'?`${activeCoin} 单日收盘上涨 > ${thresh}%`:`${activeCoin} 单日振幅 > ${thresh}%`)
+    :(qtype==='drop'?`${activeCoin} single-day close DROP > ${thresh}%`:qtype==='rise'?`${activeCoin} single-day close RISE > ${thresh}%`:`${activeCoin} intraday SWING > ${thresh}%`);
 
   // ── LIVE DATA ──
   const livePriceText = document.getElementById('tp').textContent || '$—';
@@ -1054,7 +1168,7 @@ function openReport(){
 
   <!-- HEADER -->
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08)">
-    <span style="font-size:16px;font-weight:800;color:#f7931a;letter-spacing:.05em">₿ BTC PATTERN</span>
+    <span style="font-size:16px;font-weight:800;color:#f7931a;letter-spacing:.05em">₿ BTC PATTERN · ${activeCoin}</span>
     <span style="font-size:11px;color:#475569;font-weight:500">${todayStr}</span>
   </div>
 
@@ -1148,12 +1262,12 @@ function openReport(){
   </div>
 </div>`;
   shareText = zh
-    ? `BTC ${qtype==='drop'?'暴跌':qtype==='rise'?'暴涨':'插针'} > ${thresh}% 共发生${stats.count}次\n\n次日上涨: ${stats.up1_pct}% | 7日: ${stats.up7_pct}% | 30日: ${stats.up30_pct}%`
+    ? `${activeCoin} ${qtype==='drop'?'暴跌':qtype==='rise'?'暴涨':'插针'} > ${thresh}% 共发生${stats.count}次\n\n次日上涨: ${stats.up1_pct}% | 7日: ${stats.up7_pct}% | 30日: ${stats.up30_pct}%`
       +(stats.ltc_up_pct?`\n插针抄底当日回升: ${stats.ltc_up_pct}%`:'')
-      +`\n\n当前 Day ${daysHalving} | ${livePriceText} | ATH: ${athPct}\n\nbtcpattern.com #BTC #Bitcoin`
-    : `BTC ${qtype==='drop'?'drops':qtype==='rise'?'surges':'swings'} > ${thresh}% — ${stats.count}x since 2017\n\nNext day up: ${stats.up1_pct}% | 7d: ${stats.up7_pct}% | 30d: ${stats.up30_pct}%`
+      +`\n\n当前 Day ${daysHalving} | ${livePriceText} | ATH: ${athPct}\n\nbtcpattern.com #${activeCoin}`
+    : `${activeCoin} ${qtype==='drop'?'drops':qtype==='rise'?'surges':'swings'} > ${thresh}% — ${stats.count}x\n\nNext day up: ${stats.up1_pct}% | 7d: ${stats.up7_pct}% | 30d: ${stats.up30_pct}%`
       +(stats.ltc_up_pct?`\nSpike low recovered: ${stats.ltc_up_pct}%`:'')
-      +`\n\nDay ${daysHalving} since halving | ${livePriceText} | ATH: ${athPct}\n\nbtcpattern.com #Bitcoin #BTC`;
+      +`\n\n${BTC_DAILY_RAW.symbol} · ${BTC_DATA.date_range}\n\nbtcpattern.com #${activeCoin}`;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -1191,13 +1305,13 @@ function openBacktestReport(){
   const valueW = win('cb-value','cb-dca-val');
   const avgW = win('cb-avg','cb-dca-avg');
   const conclusion = zh
-    ? `累计 BTC：${wl(btcW)} 更高；盈利金额：${wl(profitW)} 更高；投入收益率：${wl(roiW)} 更高。`
-    : `BTC accumulated: ${wl(btcW)} wins; profit: ${wl(profitW)} wins; return on invested capital: ${wl(roiW)} wins.`;
+    ? `累计币数：${wl(btcW)} 更高；盈利金额：${wl(profitW)} 更高；投入收益率：${wl(roiW)} 更高。`
+    : `Asset accumulated: ${wl(btcW)} wins; profit: ${wl(profitW)} wins; return on invested capital: ${wl(roiW)} wins.`;
 
   document.getElementById('rcard').innerHTML = `
 <div style="background:#08090f;border-radius:10px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e2e8f0;min-width:560px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)">
-    <span style="font-size:16px;font-weight:900;color:#f7931a;letter-spacing:.05em">₿ BTC PATTERN</span>
+    <span style="font-size:16px;font-weight:900;color:#f7931a;letter-spacing:.05em">₿ BTC PATTERN · ${activeCoin}</span>
     <span style="font-size:11px;color:#475569;font-weight:600">${todayStr}</span>
   </div>
 
@@ -1209,7 +1323,7 @@ function openBacktestReport(){
 
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
     ${[
-      [zh?'累计 BTC':'BTC accumulated', tx('cb-btc'), btcW==='left'],
+      [zh?'累计币数':'Asset accumulated', tx('cb-btc'), btcW==='left'],
       [zh?'盈利金额':'Profit', tx('cb-profit'), profitW==='left'],
       [zh?'投入收益率':'Return', tx('cb-roi'), roiW==='left']
     ].map(([lbl,val,on])=>`<div style="background:#0f1319;border-radius:8px;padding:13px;text-align:center;border:${on?'1px solid rgba(16,185,129,.35)':'1px solid transparent'}">
@@ -1225,7 +1339,7 @@ function openBacktestReport(){
       <tbody>
         ${stat(zh?'触发/周数':'Triggers / weeks', tx('cb-count'), tx('cb-dca-weeks'), 'tie')}
         ${stat(zh?'总投入':'Invested', tx('cb-invested'), tx('cb-dca-inv'), 'tie')}
-        ${stat(zh?'累计 BTC':'BTC', tx('cb-btc'), tx('cb-dca-btc'), btcW)}
+        ${stat(zh?'累计币数':'Asset', tx('cb-btc'), tx('cb-dca-btc'), btcW)}
         ${stat(zh?'平均买入价':'Avg buy', tx('cb-avg'), tx('cb-dca-avg'), avgW)}
         ${stat(zh?'当前价值':'Current value', tx('cb-value'), tx('cb-dca-val'), valueW)}
         ${stat(zh?'盈利金额':'Profit', tx('cb-profit'), tx('cb-dca-profit'), profitW)}
@@ -1243,8 +1357,8 @@ function openBacktestReport(){
 </div>`;
 
   shareText = zh
-    ? `BTC 回测报告\n${tiered?'分层买入':'条件买入'} vs 每周定投\n区间: ${startDay.date} → ${LATEST_DAILY.date}\n规则: ${ruleText}\n\n条件买入: ${tx('cb-btc')} BTC | 盈利 ${tx('cb-profit')} | 收益率 ${tx('cb-roi')}\n每周定投: ${tx('cb-dca-btc')} BTC | 盈利 ${tx('cb-dca-profit')} | 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n\nbtcpattern.com #BTC #Bitcoin`
-    : `BTC backtest report\n${tiered?'Tiered buying':'Conditional buying'} vs Weekly DCA\nRange: ${startDay.date} → ${LATEST_DAILY.date}\nRule: ${ruleText}\n\nConditional: ${tx('cb-btc')} BTC | Profit ${tx('cb-profit')} | Return ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} BTC | Profit ${tx('cb-dca-profit')} | Return ${tx('cb-dca-roi')}\n\n${conclusion}\n\nbtcpattern.com #Bitcoin #BTC`;
+    ? `${activeCoin} 回测报告\n${tiered?'分层买入':'条件买入'} vs 每周定投\n区间: ${startDay.date} → ${LATEST_DAILY.date}\n规则: ${ruleText}\n\n条件买入: ${tx('cb-btc')} | 盈利 ${tx('cb-profit')} | 收益率 ${tx('cb-roi')}\n每周定投: ${tx('cb-dca-btc')} | 盈利 ${tx('cb-dca-profit')} | 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n\nbtcpattern.com #${activeCoin}`
+    : `${activeCoin} backtest report\n${tiered?'Tiered buying':'Conditional buying'} vs Weekly DCA\nRange: ${startDay.date} → ${LATEST_DAILY.date}\nRule: ${ruleText}\n\nConditional: ${tx('cb-btc')} | Profit ${tx('cb-profit')} | Return ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} | Profit ${tx('cb-dca-profit')} | Return ${tx('cb-dca-roi')}\n\n${conclusion}\n\nbtcpattern.com #${activeCoin}`;
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
@@ -1274,7 +1388,7 @@ function dlRpt(){
   }).then(canvas => {
     const link = document.createElement('a');
     const today = new Date().toISOString().slice(0,10);
-    link.download = 'btcpattern-' + today + '.png';
+    link.download = 'btcpattern-' + activeCoin.toLowerCase() + '-' + today + '.png';
     link.href = canvas.toDataURL('image/png');
     document.body.appendChild(link);
     link.click();
@@ -1315,8 +1429,12 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 
 // init
 applyLang();
-setTimeout(()=>run(),200);
-updateCB();
+if(requestedCoin !== activeCoin){
+  selectCoin(requestedCoin);
+}else{
+  setTimeout(()=>run(),200);
+  updateCB();
+}
 </script>
 </body>
 </html>
