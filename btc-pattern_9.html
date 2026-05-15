@@ -1312,6 +1312,12 @@ function reportSeasonality(rows){
 function rIcon(label, color){
   return `<span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:${color};color:#061018;align-items:center;justify-content:center;font-size:11px;font-weight:900;margin-right:8px">${label}</span>`;
 }
+function getLiveReportPrice(){
+  if(activeCoin !== 'BTC') return null;
+  const text = document.getElementById('tp')?.textContent || '';
+  const value = Number(text.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 function openReport(){
   const zh = lang === 'zh';
@@ -1335,9 +1341,15 @@ function openReport(){
   const title = zh ? `${activeCoin} 历史数据观察报告` : `${activeCoin} Historical Data Report`;
   const sub = zh ? '基于日线 OHLCV · 事实观察 · 不做预测' : 'Daily OHLCV observations · Facts only · No prediction';
   const eventLabel = zh ? ev.zh : ev.en;
-  const currentPrice = fmtPrice(ext.latest?.close);
+  const livePrice = getLiveReportPrice();
+  const displayPrice = livePrice || ext.latest?.close;
+  const currentPrice = fmtPrice(displayPrice);
+  const currentPriceNote = livePrice
+    ? (zh ? `实时 · 日线截止 ${ext.latest.date}` : `live · daily through ${ext.latest.date}`)
+    : (zh ? `日线收盘 · ${ext.latest.date}` : `daily close · ${ext.latest.date}`);
   const athPrice = fmtPrice(ext.ath?.high || ext.ath?.close);
-  const fromAth = rpct(ext.fromAth, 2);
+  const fromAthValue = ext.ath && displayPrice ? (displayPrice / (ext.ath.high || ext.ath.close) - 1) * 100 : ext.fromAth;
+  const fromAth = rpct(fromAthValue, 2);
   const sinceAth = ext.ath ? rdateDiff(ext.ath.date, ext.latest.date) : null;
   const card = (icon, label, value, note, color='#f7931a') => `
     <div style="background:#0f1319;border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:13px;min-height:84px">
@@ -1416,7 +1428,7 @@ function openReport(){
 
   ${section(zh?'当前市场快照':'MARKET SNAPSHOT', `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">
-      ${card('P',zh?'当前价格':'Latest close',currentPrice,ext.latest.date,'#f7931a')}
+      ${card('P',zh?'当前价格':'Current price',currentPrice,currentPriceNote,'#f7931a')}
       ${card('A',zh?'历史高点':'All-time high',athPrice,ext.ath.date,'#10b981')}
       ${card('R',zh?'距高点':'From ATH',fromAth,`${sinceAth} ${zh?'天':'days'} ${zh?'以来':'since ATH'}`,'#ef4444')}
       ${card('V',zh?'日均波动':'Avg daily move',rpct(ext.avgVol,2),zh?'平均绝对涨跌幅':'average absolute daily move','#94a3b8')}
@@ -1464,7 +1476,7 @@ function openReport(){
     <div style="background:rgba(247,147,26,.08);border-left:3px solid #f7931a;border-radius:0 10px 10px 0;padding:13px 15px;font-size:12px;line-height:1.75;color:#cbd5e1">
       <div>${zh?'当前查询显示':'This query shows'} <strong style="color:#f7931a">${eventLabel}</strong> ${zh?'共出现':'occurred'} <strong>${stats.count}</strong> ${zh?'次。':'times.'}</div>
       <div>${zh?'样本内 30 日后上涨概率为':'The 30-day positive rate was'} <strong style="color:${probColor(stats.up30_pct)}">${stats.up30_pct}%</strong> ${zh?'，平均表现为':'with an average move of'} <strong>${rpct(stats.up30_avg,2)}</strong>.</div>
-      <div>${zh?'当前价格距历史高点':'Latest close is'} <strong style="color:#ef4444">${fromAth}</strong> ${zh?'，可与回撤和周期/阶段数据一起观察。':'from ATH; compare it with drawdown and cycle/stage context.'}</div>
+      <div>${zh?'当前价格距历史高点':'Current price is'} <strong style="color:#ef4444">${fromAth}</strong> ${zh?'，可与回撤和周期/阶段数据一起观察。':'from ATH; compare it with drawdown and cycle/stage context.'}</div>
       <div style="color:#94a3b8;margin-top:4px">${zh?'历史数据只是观察材料，不构成买卖建议。':'Historical data is context only, not a trading signal.'}</div>
     </div>
   `)}
