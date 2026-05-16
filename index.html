@@ -113,7 +113,7 @@ header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;just
 .tbl-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
 .tbl-title{font-size:10px;color:var(--ink2);font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .tbl-meta{font-size:11px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
-.tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;overflow-x:auto;margin-bottom:16px}
+.tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;overflow-x:auto;margin-bottom:16px;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead{background:var(--bg3);border-bottom:1px solid var(--border2)}
 th{padding:9px 11px;text-align:right;font-size:10px;font-weight:600;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap;border-right:1px solid var(--border)}
@@ -122,8 +122,11 @@ th:last-child,td:last-child{border-right:none}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--bg3)}
-td{padding:9px 11px;color:var(--ink);border-right:1px solid var(--border);white-space:nowrap;font-family:'JetBrains Mono',monospace;text-align:right}
+td{padding:9px 11px;color:var(--ink);border-right:1px solid var(--border);white-space:nowrap;font-family:'JetBrains Mono',monospace;text-align:right;vertical-align:middle}
 td.date-col{color:var(--ink2);font-size:12px;text-align:left}
+.date-link{color:var(--accent);text-decoration:none;cursor:pointer;border-bottom:1px dashed var(--accent50, rgba(247,147,26,.3))}
+.date-link:hover{color:var(--accent);border-bottom-style:solid}
+.comp-logo{display:inline-flex;align-items:center;vertical-align:middle}
 .bdg{display:inline-block;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700}
 .bdg.up{background:rgba(16,185,129,.15);color:var(--green)}
 .bdg.dn{background:rgba(239,68,68,.15);color:var(--red)}
@@ -194,7 +197,9 @@ td.date-col{color:var(--ink2);font-size:12px;text-align:left}
 @media(max-width:760px){.tier-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:460px){.tier-grid{grid-template-columns:1fr}}
 .cb-date{width:150px}.cb-money{width:110px;padding-left:26px}.cb-custom{width:92px}
+.cb-thresh-hint{width:100%;font-size:11px;color:var(--ink3);margin:-6px 0 4px 222px}
 @media(max-width:720px){.cb-grid{grid-template-columns:1fr!important}.cb-date,.cb-money,.cb-custom{width:100%}}
+@media(max-width:720px){.cb-thresh-hint{margin:0;width:100%}}
 /* DATA SOURCE */
 .dscard{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:28px}
 .dstitle{font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:600;margin-bottom:12px}
@@ -211,6 +216,18 @@ td.date-col{color:var(--ink2);font-size:12px;text-align:left}
 footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;color:var(--ink3);font-size:12px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);color:var(--ink);padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* CROSS-COIN COMPARISON */
+.comp-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:11px}
+@media(max-width:560px){
+  .snap-bar{align-items:stretch!important}
+  .snap-bar .cb-date,.snap-bar .cb-run{width:100%!important}
+  .tbl-wrap th,.tbl-wrap td{padding:10px 9px;font-size:11px}
+  .tbl-wrap th:nth-child(n+5),.tbl-wrap td:nth-child(n+5){display:none}
+  .tbl-wrap th:first-child,.tbl-wrap td:first-child{position:sticky;left:0;z-index:1}
+  .tbl-wrap th:first-child{background:var(--bg3)}
+  .tbl-wrap td:first-child{background:var(--bg2)}
+  .tbl-wrap tbody tr:hover td:first-child{background:var(--bg3)}
+}
 </style>
 </head>
 <body>
@@ -218,10 +235,10 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
 <div class="ticker">
   <div class="ticker-left">
     <span class="ti"><span class="dot"></span><span class="l" data-i="live">LIVE</span></span>
-    <span class="ti"><span class="l">BTC</span><span id="tp" class="mono">$—</span></span>
+    <span class="ti"><span class="l" id="ticker-symbol">BTC</span><span id="tp" class="mono">$—</span></span>
     <span class="ti"><span class="l">24H</span><span id="tc" class="mono">—</span></span>
     <span class="ti"><span class="l" data-i="fromATH">FROM ATH</span><span id="ta" class="mono dn">—</span></span>
-    <span class="ti"><span class="l" style="color:var(--accent);font-weight:600" data-i="nextHalv">NEXT HALVING</span><span id="th" class="mono">—</span></span>
+    <span class="ti" id="halving-row"><span class="l" style="color:var(--accent);font-weight:600" data-i="nextHalv">NEXT HALVING</span><span id="th" class="mono">—</span></span>
   </div>
   <span class="mono" id="tt" style="font-size:10px;color:var(--ink3)">—</span>
 </div>
@@ -345,6 +362,15 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
       <span class="tbl-title" data-i="tblTitle">Complete Historical Record</span>
       <span class="tbl-meta" id="tmeta">—</span>
     </div>
+
+    <!-- DATE SNAPSHOT BAR -->
+    <div class="snap-bar" style="display:flex;align-items:center;gap:10px;padding:8px 0 14px 0;flex-wrap:wrap">
+      <span style="font-size:13px;color:var(--ink2);font-weight:500">📅</span>
+      <input class="cb-input cb-date" type="date" id="hist-date" style="height:34px">
+      <span style="font-size:12px;color:var(--ink3);font-family:JetBrains Mono,monospace" id="hist-date-hint"></span>
+      <button class="qbtn cb-run" id="hist-comp-btn" data-i="snapBtn">View 5-Coin Snapshot</button>
+    </div>
+
     <div class="tbl-wrap">
       <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
     </div>
@@ -357,7 +383,6 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
       </button>
     </div>
   </div>
-
 
   <!-- CONDITIONAL BUY BACKTEST -->
   <div class="qcard" id="conditional-section" style="margin-bottom:28px">
@@ -378,7 +403,8 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
         <button class="tb" onclick="setCBThresh(10)">10%</button>
         <button class="tb" onclick="setCBThresh(15)">15%</button>
       </div>
-      <input class="cb-input cb-custom" type="number" id="cb-custom-thresh" min="1" max="80" step="0.5" placeholder="custom %" oninput="setCBThresh(parseFloat(this.value))">
+      <input class="cb-input cb-custom" type="number" id="cb-custom-thresh" min="1" max="80" step="0.5" placeholder="Custom %" oninput="setCBThresh(parseFloat(this.value))">
+      <div class="cb-thresh-hint" id="cb-custom-hint">Choose a fixed drop, or enter your own drop %</div>
       <span class="qlabel" data-i="cbBuy">buy</span>
       <div style="position:relative;display:inline-flex;align-items:center">
         <span style="position:absolute;left:12px;color:var(--ink3);font-family:JetBrains Mono,monospace;pointer-events:none">$</span>
@@ -395,11 +421,11 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
       <div class="tier-panel" id="cb-tier-panel">
         <div class="tier-grid">
           <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-0" value="3" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-0" value="100" min="0" step="50" oninput="updateCB()"></div>
-          <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-1" value="5" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-1" value="100" min="0" step="50" oninput="updateCB()"></div>
-          <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-2" value="8" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-2" value="100" min="0" step="50" oninput="updateCB()"></div>
-          <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-3" value="12" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-3" value="100" min="0" step="50" oninput="updateCB()"></div>
+          <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-1" value="5" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-1" value="200" min="0" step="50" oninput="updateCB()"></div>
+          <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-2" value="8" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-2" value="400" min="0" step="50" oninput="updateCB()"></div>
+          <div class="tier-item"><span data-i="cbTierIf">Drop ></span><input type="number" id="tier-th-3" value="12" min="1" max="80" step="0.5" oninput="updateCB()"><span>%</span><span data-i="cbTierBuy">buy</span><input type="number" id="tier-amt-3" value="800" min="0" step="50" oninput="updateCB()"></div>
         </div>
-        <div class="tier-hint" data-i="cbTierHint">Tiered mode uses the previous close as the reference price. If the intraday low reaches -12%, all crossed tiers trigger, buying at each tier price.</div>
+        <div class="tier-hint" data-i="cbTierHint">Tiered mode uses the previous close as the reference price. If the intraday low reaches -12%, all crossed tiers trigger, buying at each tier price. Default example: 3%/$100 + 5%/$200 + 8%/$400 + 12%/$800 = <strong>$1,500/day max</strong> — a 2x doubling ladder. Adjust freely.</div>
       </div>
     </div>
     <!-- RESULTS -->
@@ -437,7 +463,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     <div class="note" style="margin-top:12px">
       <strong data-i="cbNoteTitle">Important:</strong> <span data-i="cbNote">Return % is calculated against each strategy's actual invested capital. Conditional buying may deploy less capital than weekly DCA. Past results do not predict future returns.</span>
     </div>
-    <div class="rpt-wrap" style="margin:16px 0 0;text-align:left">
+    <div class="rpt-wrap" style="margin:16px 0 0;text-align:center">
       <button class="rpt-btn" onclick="openBacktestReport()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
         <span data-i="cbReport">Generate Backtest Report</span>
@@ -481,12 +507,23 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
 <div class="toast" id="toast"></div>
 
 <script src="data/btc.daily.js"></script>
+<script src="data/eth.daily.js"></script>
+<script src="data/sol.daily.js"></script>
+<script src="data/doge.daily.js"></script>
+<script src="data/bnb.daily.js"></script>
 <script>
-const RAW_COINS = window.CRYPTO_DAILY_DATA?.coins || (window.BTC_DAILY_DATA ? { BTC: window.BTC_DAILY_DATA } : null);
-if (!RAW_COINS?.BTC || !Array.isArray(RAW_COINS.BTC.daily)) {
-  throw new Error('Crypto daily data failed to load. Make sure data/crypto.daily.js exists next to this HTML file.');
-}
+const RAW_COINS = window.CRYPTO_DAILY_DATA?.coins || {};
 const COIN_ORDER = ['BTC', 'ETH', 'SOL', 'DOGE', 'BNB'];
+COIN_ORDER.forEach(code => {
+  const key = code + '_DAILY_DATA';
+  if (window[key]) {
+    RAW_COINS[code] = window[key];
+    RAW_COINS[code]._ath = RAW_COINS[code].daily.reduce((m, d) => Math.max(m, d.high || d.close || 0), 0);
+  }
+});
+if (!RAW_COINS?.BTC || !Array.isArray(RAW_COINS.BTC.daily)) {
+  throw new Error('Crypto daily data failed to load. Make sure data/btc.daily.js exists next to this HTML file.');
+}
 const savedCoin = localStorage.getItem('btcPatternCoin');
 const requestedCoin = COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
 let activeCoin = 'BTC';
@@ -571,6 +608,7 @@ function buildBtcData(source){
   }
   return {
     ...source,
+    _ath: rows.reduce((m, d) => Math.max(m, d.high || d.close || 0), 0),
     data_through: source.data_through || rows[rows.length-1].date,
     date_range: source.date_range || (rows[0].date + ' to ' + rows[rows.length-1].date),
     daily,
@@ -586,6 +624,24 @@ function buildBtcData(source){
   };
 }
 let BTC_DATA = buildBtcData(BTC_DAILY_RAW);
+
+// ── CROSS-COIN COMPARISON ──
+const COMP_COLORS = { BTC:'#f7931a', ETH:'#627eea', SOL:'#9945ff', DOGE:'#c2a633', BNB:'#f0b90b' };
+const COIN_LOGOS = {
+  BTC:'<svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M22.5 12.8c.3-2.2-1.4-3.4-3.7-4.2l.8-3-1.8-.5-.7 2.9c-.5-.1-1-.2-1.5-.4l.7-2.9L14.3 3.9l-.8 3c-.5.2-.9.3-1.4.5l0-.1L10 9.4l1.8.6c.5.1.6.2.5.4l-.7 2.8c0 .1-.5.2-.5.2l.7.2-.8 3.2c-.1.2-.4.4-.9.3l.1.1-2.6.7.8 3.2 1.8-.5c.3-.1.5-.2.8-.3l-.7 3 1.8.5.8-3.1c.5.1 1 .3 1.5.4l-.8 3.1 1.8.5.8-3.2c3.2.6 5.6.4 6.6-2.5.8-2.4-.1-3.8-1.6-4.7 1.2-.3 2-1.1 2.3-2.3zm-4.2 5.8c-.6 2.3-4.4 1.1-5.6.8l1-4c1.2.3 5.1.9 4.6 3.2zm.6-5.8c-.5 2.1-3.7 1-4.7.8l.9-3.6c1 .2 4.2.6 3.8 2.8z" fill="#FFF"/></svg>',
+  ETH:'<svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627EEA"/><path d="M16 5l-7 12.7 7 4.7 7-4.7L16 5z" fill="#FFF" opacity=".9"/><path d="M16 23.7l-7-4.7 7 8.7 7-8.7-7 4.7z" fill="#FFF" opacity=".7"/><path d="M16 5v8.4L9 17.7l7 4.7 7-4.7-7-4.3V5z" fill="#FFF" opacity=".5"/></svg>',
+  SOL:'<svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#9945FF"/><g fill="#FFF"><path d="M22.5 10.2c-.3-.4-.8-.6-1.3-.6H7.5l3.3-3.3h13.7c.6 0 1 .3 1 .7s-.4.7-1 .7l-1.8 1.2c-.4.4-.8.6-1.3.6l-1.3.4zm-2.1 4.1c-.3-.4-.8-.6-1.3-.6H5.4l3.3-3.3h13.7c.6 0 1 .3 1 .7s-.4.7-1 .7l-1.8 1.2c-.4.4-.8.6-1.3.6l-1.2.4zm0 4.1c-.3-.4-.8-.6-1.3-.6H3.3l3.3-3.3h13.7c.6 0 1 .3 1 .7s-.4.7-1 .7l-1.8 1.2c-.4.4-.8.6-1.3.6l-1.2.4z"/></g></svg>',
+  DOGE:'<svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#C2A633"/><path d="M16 3C8.8 3 3 8.8 3 16s5.8 13 13 13 13-5.8 13-13S23.2 3 16 3zm4.5 13.5c0 .3-.2.5-.5.5h-6.5v4.5h6.5c.3 0 .5.2.5.5s-.2.5-.5.5H13c-.3 0-.5-.2-.5-.5v-10c0-.3.2-.5.5-.5h7.5c.3 0 .5.2.5.5s-.2.5-.5.5H13.5v4.5H20c.3 0 .5.2.5.5z" fill="#FFF"/></svg>',
+  BNB:'<svg width="18" height="18" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F0B90B"/><path d="M16 5.4l4.1 4.1-2.5 2.5L16 9.9l-1.6 1.6-2.5-2.5L16 5.4zm8.1 8.1l2.5 2.5-2.5 2.5-2.5-2.5 2.5-2.5zM16 18.5l2.5 2.5L16 23.5l-2.5-2.5 2.5-2.5zm-8.1-5l2.5 2.5-2.5 2.5-2.5-2.5 2.5-2.5z" fill="#FFF"/></svg>'
+};
+let _snapDate = null; // null = normal history table, string = showing snapshot for this date
+
+let COIN_DATA = {};
+COIN_ORDER.forEach(code => {
+  if (RAW_COINS[code] && RAW_COINS[code].daily) {
+    COIN_DATA[code] = buildBtcData(RAW_COINS[code]);
+  }
+});
 
 // ── I18N ──
 const T = {
@@ -619,7 +675,7 @@ en:{
 
   cbTitle:'CONDITIONAL BUY BACKTEST',
   cbSub:'Choose a start date, drop threshold, and buy amount. Historical backtest only, not a trading signal.',
-  cbFrom:'From', cbWhen:'when selected asset closes down more than', cbBuy:'buy', cbRun:'Run backtest', cbReport:'Generate Backtest Report', cbTiered:'Advanced: tiered buying', cbTierIf:'Drop >', cbTierBuy:'buy $', cbTierHint:'Tiered mode uses the previous close as the reference price. If the intraday low reaches -12%, all crossed tiers trigger, buying at each tier price.', cbEvery7:'Every 7 days',
+  cbFrom:'From', cbWhen:'when selected asset closes down more than', cbBuy:'buy', cbRun:'Run backtest', cbReport:'Generate Backtest Report', cbCustomPh:'Custom %', cbCustomHint:'Choose a fixed drop, or enter your own drop %', cbTiered:'Advanced: tiered buying', cbTierIf:'Drop >', cbTierBuy:'buy $', cbTierHint:'Tiered mode uses the previous close as the reference price. If the intraday low reaches -12%, all crossed tiers trigger, buying at each tier price. Default example: 3%/$100 + 5%/$200 + 8%/$400 + 12%/$800 = <strong>$1,500/day max</strong> — a 2x doubling ladder. Adjust freely.', cbEvery7:'Every 7 days',
   cbStratTitle:'YOUR STRATEGY · CONDITIONAL BUYING',
   cbTriggers:'Times triggered', cbFreq:'Avg frequency',
   cbInvested:'Total invested', cbBTC:'Asset accumulated',
@@ -638,9 +694,13 @@ en:{
     drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has closed down more than ${t}% in a single day <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). If you caught the intraday low, <strong>${ltc}%</strong> of the time it recovered by close (avg rebound +${ltca}%). <em>Past data is not a guarantee.</em>`,
     rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has closed up more than ${t}% in a single day <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). <em>Past data is not a guarantee.</em>`,
     range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has swung more than ${t}% intraday <strong>${n} times</strong> in this dataset. This captures wick events missed by close-only data. If bought at the intraday LOW: <strong>${ltc}%</strong> recovered by close (avg +${ltca}%). Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). <em>Past data is not a guarantee.</em>`,
-  }
+  },
+  compTh:['Coin','Close','Pct','Low','Low→Close','Next Day','7d','30d'],
+  snapBtn:'View 5-Coin Snapshot',
 },
 zh:{
+  compTh:['币种','收盘价','涨跌幅','最低价','最低→收盘','次日','7日后','30日后'],
+  snapBtn:'查看5币种对照快照',
   live:'实时',fromATH:'距历史高点',nextHalv:'下次减半',
   tagline:'/ 比特币历史行情查询',
   asset:'币种',
@@ -670,7 +730,7 @@ zh:{
 
   cbTitle:'条件买入历史回测',
   cbSub:'选择开始日期、下跌阈值和每次买入金额。这里只是历史回测，不是交易信号。',
-  cbFrom:'从', cbWhen:'当所选币种单日收盘下跌超过', cbBuy:'时买入', cbRun:'运行回测', cbReport:'生成回测报告', cbTiered:'高级：分层买入', cbTierIf:'跌超', cbTierBuy:'买入 $', cbTierHint:'分层模式以前一日收盘价为基准。若当日最低价触及 -12%，会触发所有穿过的层，并按各层价格买入。', cbEvery7:'每7天一次',
+  cbFrom:'从', cbWhen:'当所选币种单日收盘下跌超过', cbBuy:'时买入', cbRun:'运行回测', cbReport:'生成回测报告', cbCustomPh:'自定义%', cbCustomHint:'可选固定跌幅，或输入自定义跌幅', cbTiered:'高级：分层买入', cbTierIf:'跌超', cbTierBuy:'买入 $', cbTierHint:'分层模式以前一日收盘价为基准。若当日最低价触及 -12%，会触发所有穿过的层，并按各层价格买入。默认翻倍模式：3%/$100 + 5%/$200 + 8%/$400 + 12%/$800 = 最多 $1,500/天。可自由调整。', cbEvery7:'每7天一次',
   cbStratTitle:'你的策略 · 条件买入',
   cbTriggers:'历史触发次数', cbFreq:'平均触发频率',
   cbInvested:'总投入', cbBTC:'累计币数',
@@ -703,6 +763,8 @@ function shareUrl(kind='event'){
   return `${SITE_URL}/?${params.toString()}`;
 }
 const ATH=124723, NEXT_HALF=new Date('2028-04-17').getTime();
+const COINGECKO_IDS={BTC:'bitcoin',ETH:'ethereum',SOL:'solana',DOGE:'dogecoin',BNB:'binancecoin'};
+let ACTIVE_ATH=BTC_DATA._ath || RAW_COINS.BTC?._ath || ATH;
 
 
 // ── CONDITIONAL BUY BACKTEST ──
@@ -745,6 +807,7 @@ function loadCoinData(coin){
         return;
       }
       RAW_COINS[coin] = data;
+      data._ath = data.daily.reduce((max, d) => Math.max(max, d.high || d.close || 0), 0);
       resolve(data);
     };
     script.onerror = () => reject(new Error(`Failed to load ${coin} data.`));
@@ -761,10 +824,22 @@ async function selectCoin(coin){
     BTC_DAILY_RAW = data;
     BTC_DATA = buildBtcData(BTC_DAILY_RAW);
     refreshDailySeries();
+    ACTIVE_ATH = data._ath || ATH;
+    document.getElementById('ticker-symbol').textContent = coin;
+    const halvingRow = document.getElementById('halving-row');
+    if (halvingRow) halvingRow.style.display = coin === 'BTC' ? '' : 'none';
+    // Update backtest date picker range to match coin's actual first/last dates
+    const cbStart = document.getElementById('cb-start');
+    if (cbStart && DAILY_SERIES.length) {
+      cbStart.min = DAILY_SERIES[0].date;
+      cbStart.max = LATEST_DAILY.date;
+      if (cbStart.value < DAILY_SERIES[0].date) cbStart.value = DAILY_SERIES[0].date;
+    }
     applyLang();
     onType();
     run();
     updateCB();
+    updatePrice();
   }catch(err){
     toast(lang==='zh' ? `无法加载 ${coin} 数据` : `Could not load ${coin} data`);
     console.error(err);
@@ -862,6 +937,15 @@ function updateCB() {
   const startDay = nearestDaily(startDate) || DAILY_SERIES[0];
   if(!startDay || !LATEST_DAILY) return;
 
+  // If no local data exists before coin's first date, it wasn't trading yet
+  if (startDay.date !== startDate && startDate < startDay.date) {
+    const zh = lang === 'zh';
+    toast(zh
+      ? `${activeCoin} 于 ${startDay.date} 才开始交易。回测已自动调整到该日期。`
+      : `${activeCoin} started trading on ${startDay.date}. Backtest has been adjusted.`);
+    if (document.getElementById('cb-start')) document.getElementById('cb-start').value = startDay.date;
+  }
+
   const tiered = !!document.getElementById('cb-tiered')?.checked;
   const panel = document.getElementById('cb-tier-panel');
   if(panel) panel.classList.toggle('on', tiered);
@@ -927,6 +1011,148 @@ function updateCB() {
       `<br>Conditional buying deployed <strong>${fp(Math.abs(less))} ${less>=0?'less':'more'}</strong> than weekly DCA. Return-rate difference: <strong style="color:var(--accent)">${diff>=0?'+':''}${diff.toFixed(1)}pp</strong>. Historical backtest only, not a buy signal.`;
   document.getElementById('cb-verdict').innerHTML = verdict;
 }
+
+// ── ENHANCED BACKTEST ANALYTICS ──
+
+function buildWeeklyRowsRange(startDate, endDate) {
+  const rows = [];
+  let d = startDate;
+  while (d <= endDate) {
+    const day = nearestDaily(d);
+    if (day && day.date <= endDate && (!rows.length || rows[rows.length - 1].date !== day.date)) rows.push(day);
+    d = addDays(d, 7);
+  }
+  return rows;
+}
+
+function calcYearlyBacktest(startDate, tiered, rules, amount) {
+  const years = {};
+  const startYear = Math.max(parseInt(startDate.slice(0, 4)), 2017);
+  const endYear = parseInt(LATEST_DAILY.date.slice(0, 4));
+  if (startYear > endYear) return years;
+
+  let cumStratBtc = 0, cumDcaBtc = 0, cumStratInv = 0, cumDcaInv = 0;
+
+  for (let y = startYear; y <= endYear; y++) {
+    const yearStart = `${y}-01-01`;
+    const yearEnd = `${y}-12-31`;
+    const segStart = y === startYear && startDate > yearStart ? startDate : yearStart;
+    const segEnd = LATEST_DAILY.date < yearEnd ? LATEST_DAILY.date : yearEnd;
+    if (segStart > segEnd) continue;
+    const eligible = DAILY_SERIES.filter(d => d.date >= segStart && d.date <= segEnd && d.pct != null);
+    if (!eligible.length) continue;
+
+    const strat = tiered ? calcTieredStats(eligible, rules) : calcBuyStats(eligible.filter(d => d.pct <= -cbThresh), amount);
+    const weeklyRows = buildWeeklyRowsRange(segStart, segEnd);
+    const dca = calcBuyStats(weeklyRows, amount);
+
+    cumStratBtc += strat.btc; cumDcaBtc += dca.btc;
+    cumStratInv += strat.invested; cumDcaInv += dca.invested;
+    const yep = eligible[eligible.length - 1].close;
+    const cumStratVal = cumStratBtc * yep;
+    const cumDcaVal = cumDcaBtc * yep;
+    const stratROI = cumStratInv ? (cumStratVal / cumStratInv - 1) * 100 : 0;
+    const dcaROI = cumDcaInv ? (cumDcaVal / cumDcaInv - 1) * 100 : 0;
+
+    years[y] = {
+      stratTriggers: strat.count, stratInvested: strat.invested, stratBtcAdded: strat.btc,
+      cumStratBtc: cumStratBtc, cumStratInv: cumStratInv, cumStratVal,
+      dcaInv: dca.invested, dcaBtcAdded: dca.btc,
+      cumDcaBtc: cumDcaBtc, cumDcaInv: cumDcaInv, cumDcaVal,
+      yep, winner: stratROI > dcaROI ? 'strat' : 'dca',
+      stratROI,
+      dcaROI,
+    };
+  }
+  return years;
+}
+
+function calcMonthlyTriggers(startDate) {
+  const months = Array.from({length:12}, (_,i) => ({month:i+1, triggers:0, totalInvested:0, drops:0}));
+  const eligible = DAILY_SERIES.filter(d => d.date >= startDate && d.pct != null);
+  for (const d of eligible) {
+    if (d.pct <= -cbThresh) {
+      const m = new Date(d.date + 'T00:00:00Z').getUTCMonth();
+      months[m].triggers++;
+      months[m].drops++;
+    }
+  }
+  return months;
+}
+
+function calcStrategyMonthlyROI(startDate, tiered, rules, amount) {
+  const months = Array.from({length:12}, (_,i) => ({month:i+1, stratReturns:[], dcaReturns:[]}));
+  const startYear = Math.max(parseInt(startDate.slice(0, 4)), 2017);
+  const endYear = parseInt(LATEST_DAILY.date.slice(0, 4));
+
+  for (let y = startYear; y <= endYear; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const ms = String(m).padStart(2,'0');
+      const monthStart = `${y}-${ms}-01`;
+      const lastDay = new Date(y, m, 0).getDate();
+      const monthEnd = `${y}-${ms}-${lastDay}`;
+      const segStart = y === startYear && startDate > monthStart ? startDate : monthStart;
+      const segEnd = LATEST_DAILY.date < monthEnd ? LATEST_DAILY.date : monthEnd;
+      if (segStart > segEnd) continue;
+      const eligible = DAILY_SERIES.filter(d => d.date >= segStart && d.date <= segEnd && d.pct != null);
+      if (!eligible.length) continue;
+      const monthEndPrice = eligible[eligible.length - 1].close;
+      const strat = tiered ? calcTieredStats(eligible, rules) : calcBuyStats(eligible.filter(d => d.pct <= -cbThresh), amount);
+      const weeklyRows = buildWeeklyRowsRange(segStart, segEnd);
+      const dca = calcBuyStats(weeklyRows, amount);
+      const stratROI = strat.invested ? ((strat.btc * monthEndPrice) / strat.invested - 1) * 100 : 0;
+      const dcaROI = dca.invested ? ((dca.btc * monthEndPrice) / dca.invested - 1) * 100 : 0;
+      if (strat.invested) months[m-1].stratReturns.push(stratROI);
+      if (dca.invested) months[m-1].dcaReturns.push(dcaROI);
+    }
+  }
+  return months.map(mm => ({
+    month: mm.month,
+    stratAvg: mm.stratReturns.length ? mm.stratReturns.reduce((a,b)=>a+b,0) / mm.stratReturns.length : null,
+    dcaAvg: mm.dcaReturns.length ? mm.dcaReturns.reduce((a,b)=>a+b,0) / mm.dcaReturns.length : null,
+    stratCount: mm.stratReturns.length,
+    dcaCount: mm.dcaReturns.length,
+  }));
+}
+
+function calcBacktestDrawdowns(startDate, tiered, rules, amount) {
+  const MONTHLY = 30;
+  const sim = [];
+  let stratBtc = 0, stratInv = 0, dcaBtc = 0, dcaInv = 0;
+  let cursor = startDate;
+  while (cursor <= LATEST_DAILY.date) {
+    const segEnd = addDays(cursor, MONTHLY - 1);
+    const eligible = DAILY_SERIES.filter(d => d.date >= cursor && d.date <= segEnd && d.pct != null);
+    if (!eligible.length) { cursor = addDays(cursor, MONTHLY); continue; }
+    const strat = tiered ? calcTieredStats(eligible, rules) : calcBuyStats(eligible.filter(d => d.pct <= -cbThresh), amount);
+    const weeklyRows = buildWeeklyRowsRange(cursor, segEnd);
+    const dca = calcBuyStats(weeklyRows, amount);
+    stratBtc += strat.btc; stratInv += strat.invested;
+    dcaBtc += dca.btc; dcaInv += dca.invested;
+    const price = eligible[eligible.length - 1].close;
+    sim.push({ date: segEnd, stratVal: stratBtc * price, stratInv, dcaVal: dcaBtc * price, dcaInv });
+    cursor = addDays(segEnd, 1);
+  }
+
+  function findDrawdowns(values) {
+    let peak = values[0], maxDd = 0, peakAfterDd = values[0], count20 = 0; const periods = [];
+    for (const v of values) {
+      if (v >= peak) { peak = v; peakAfterDd = v; }
+      else {
+        const dd = (v - peak) / peak * 100;
+        if (dd < maxDd) { maxDd = dd; peakAfterDd = v; }
+        if (dd <= -20) count20++;
+      }
+    }
+    return { maxDd: maxDd ? Math.round(maxDd * 100) / 100 : 0, count20 };
+  }
+
+  return {
+    strat: findDrawdowns(sim.map(s => s.stratVal)),
+    dca: findDrawdowns(sim.map(s => s.dcaVal)),
+  };
+}
+
 function setLang(l){
   lang=l;
   localStorage.setItem('btcPatternLang', l);
@@ -950,6 +1176,10 @@ function applyLang(){
   const sel=document.getElementById('qtype');
   sel.options[0].text=L.oDrop; sel.options[1].text=L.oRise; sel.options[2].text=L.oRange;
   sel.options[3].text=L.oWick;
+  const customThresh = document.getElementById('cb-custom-thresh');
+  if(customThresh) customThresh.placeholder = L.cbCustomPh;
+  const customHint = document.getElementById('cb-custom-hint');
+  if(customHint) customHint.textContent = L.cbCustomHint;
   updateDynamicCopy();
 }
 
@@ -1068,8 +1298,10 @@ function run(){
   }
 
   // table header
-  const ths = qtype==='range' ? L.thRange : qtype==='wick' ? L.thWick : (qtype==='drop'?L.thDrop:L.thRise);
-  document.getElementById('thead').innerHTML='<tr>'+ths.map(h=>`<th class="l">${h}</th>`).join('')+'</tr>';
+  const ths = _snapDate ? L.compTh : (qtype==='range' ? L.thRange : qtype==='wick' ? L.thWick : (qtype==='drop'?L.thDrop:L.thRise));
+  if (!_snapDate) {
+    document.getElementById('thead').innerHTML='<tr>'+ths.map(h=>`<th class="l">${h}</th>`).join('')+'</tr>';
+  }
 
   renderTable();
   const res=document.getElementById('results');
@@ -1078,12 +1310,13 @@ function run(){
 }
 
 function renderTable(){
+  if (_snapDate) { renderSnapshotTable(); return; }
   const rows=allRows.slice(0,shown);
   let html='';
   for(const e of rows){
     if(qtype==='wick'){
       html+=`<tr>
-        <td class="date-col">${e.date}</td>
+        <td class="date-col"><a href="javascript:void(0)" onclick="showSnapshot('${e.date}')" class="date-link">${e.date}</a></td>
         <td class="dn">${fp(e.low)}</td>
         <td>${fp(e.close)}</td>
         <td class="acc">${pc(e.wick_depth)}</td>
@@ -1095,7 +1328,7 @@ function renderTable(){
       </tr>`;
     } else if(qtype==='range'){
       html+=`<tr>
-        <td class="date-col">${e.date}</td>
+        <td class="date-col"><a href="javascript:void(0)" onclick="showSnapshot('${e.date}')" class="date-link">${e.date}</a></td>
         <td class="up">${fp(e.high)}</td>
         <td class="dn">${fp(e.low)}</td>
         <td class="acc">${pc(e.range_pct)}</td>
@@ -1106,7 +1339,7 @@ function renderTable(){
       </tr>`;
     } else {
       html+=`<tr>
-        <td class="date-col">${e.date}</td>
+        <td class="date-col"><a href="javascript:void(0)" onclick="showSnapshot('${e.date}')" class="date-link">${e.date}</a></td>
         <td>${fp(e.close)}</td>
         <td class="${e.pct>=0?'up':'dn'}">${pc(e.pct)}</td>
         <td class="dn">${e.low?fp(e.low):'—'}</td>
@@ -1120,6 +1353,64 @@ function renderTable(){
   document.getElementById('tbody').innerHTML=html;
   document.getElementById('tmeta').textContent=`${Math.min(shown,allRows.length)} / ${allRows.length}`;
   document.getElementById('morebtn').style.display=shown<allRows.length?'block':'none';
+}
+
+function renderSnapshotTable() {
+  const date = _snapDate;
+  const L = T[lang];
+  // Set thead
+  document.getElementById('thead').innerHTML = '<tr>' + L.compTh.map(h => '<th class="l">' + h + '</th>').join('') + '</tr>';
+  // Collect data for all coins
+  const rows = [];
+  for (const code of COIN_ORDER) {
+    const data = COIN_DATA[code];
+    if (!data || !data.daily) continue;
+    const day = data.daily.find(d => d.date === date);
+    if (!day) continue;
+    rows.push({ code, close: day.close, pct: day.pct, low: day.low, low_to_close: day.low_to_close, next1: day.next1, next7: day.next7, next30: day.next30 });
+  }
+  if (!rows.length) {
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--ink3);padding:24px">' + (lang === 'zh' ? '该日期无数据' : 'No data for this date') + '</td></tr>';
+    return;
+  }
+  const sorted = [...rows].sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0));
+  let html = '';
+  for (const r of sorted) {
+    const color = COMP_COLORS[r.code] || '#f7931a';
+    html += '<tr>' +
+      '<td style="display:flex;align-items:center;gap:6px"><span class="comp-logo">' + COIN_LOGOS[r.code] + '</span><span style="font-weight:600;color:' + color + '">' + r.code + '</span></td>' +
+      '<td>' + fp(r.close) + '</td>' +
+      '<td class="' + (r.pct >= 0 ? 'up' : 'dn') + '">' + pc(r.pct) + '</td>' +
+      '<td class="dn">' + (r.low ? fp(r.low) : '—') + '</td>' +
+      '<td class="' + (r.low_to_close != null && r.low_to_close > 0 ? 'up' : 'dn') + '">' + (r.low_to_close != null ? pc(r.low_to_close) : '—') + '</td>' +
+      '<td>' + badge(r.next1) + '</td>' +
+      '<td>' + badge(r.next7) + '</td>' +
+      '<td>' + badge(r.next30) + '</td>' +
+      '</tr>';
+  }
+  document.getElementById('tbody').innerHTML = html;
+  // Hide "show more" button in snapshot mode
+  document.getElementById('morebtn').style.display = 'none';
+}
+
+function showSnapshot(date) {
+  _snapDate = date;
+  document.getElementById('tmeta').innerHTML = '<a href="javascript:void(0)" onclick="exitSnapshot()" style="color:var(--accent);text-decoration:none;font-size:12px">← ' + (lang === 'zh' ? '返回' : 'Back') + '</a>';
+  renderSnapshotTable();
+}
+
+function exitSnapshot() {
+  _snapDate = null;
+  if (typeof allRows !== 'undefined' && allRows.length) {
+    document.getElementById('tmeta').textContent = Math.min(shown, allRows.length) + ' / ' + allRows.length;
+    if (typeof run === 'function') {
+      const L = T[lang];
+      const ths = qtype==='range' ? L.thRange : qtype==='wick' ? L.thWick : (qtype==='drop'?L.thDrop:L.thRise);
+      document.getElementById('thead').innerHTML = '<tr>' + ths.map(h => '<th class="l">' + h + '</th>').join('') + '</tr>';
+    }
+    renderTable();
+    document.getElementById('morebtn').style.display = shown < allRows.length ? 'block' : 'none';
+  }
 }
 function showMore(){ shown=allRows.length; renderTable(); }
 
@@ -1313,7 +1604,6 @@ function rIcon(label, color){
   return `<span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:${color};color:#061018;align-items:center;justify-content:center;font-size:11px;font-weight:900;margin-right:8px">${label}</span>`;
 }
 function getLiveReportPrice(){
-  if(activeCoin !== 'BTC') return null;
   const text = document.getElementById('tp')?.textContent || '';
   const value = Number(text.replace(/[^0-9.]/g, ''));
   return Number.isFinite(value) && value > 0 ? value : null;
@@ -1498,6 +1788,10 @@ function openReport(){
 
   document.getElementById('overlay').classList.add('show');
 }
+function calcStratROI(stratVal, stratInv){ return stratInv ? ((stratVal / stratInv - 1) * 100) : 0; }
+function fpShort(v){ return v == null || !Number.isFinite(v) ? '—' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+function rColor(v){ return v == null || !Number.isFinite(v) ? '#94a3b8' : v >= 0 ? '#10b981' : '#ef4444'; }
+
 function openBacktestReport(){
   updateCB();
   const zh = lang === 'zh';
@@ -1507,9 +1801,11 @@ function openBacktestReport(){
   const tiered = !!document.getElementById('cb-tiered')?.checked;
   const amount = Math.max(1, parseFloat(document.getElementById('cb-amount')?.value) || 100);
   const fp = fmtDollars;
+  const rules = getTierRules();
+  const thresholdText = Number.isInteger(cbThresh) ? cbThresh : cbThresh.toFixed(1);
   const ruleText = tiered
-    ? getTierRules().map(r => `${r.threshold}% / ${fp(r.amount)}`).join(' + ')
-    : `${Number.isInteger(cbThresh)?cbThresh:cbThresh.toFixed(1)}% / ${fp(amount)}`;
+    ? rules.map(r => `${r.threshold}% / ${fp(r.amount)}`).join(' + ')
+    : `${thresholdText}% / ${fp(amount)}`;
   const methodText = tiered
     ? (zh ? '分层模式：以前一日收盘价为基准，用当日最低价判断触发，并按各层价格买入。' : 'Tiered mode: previous close is the reference price; intraday low triggers each tier; buys execute at tier prices.')
     : (zh ? '普通模式：按单日收盘跌幅触发，并按当日收盘价买入。' : 'Simple mode: triggered by close-to-close daily drop and bought at that day close.');
@@ -1520,72 +1816,230 @@ function openBacktestReport(){
     return 'tie';
   };
   const wl = w => w==='left' ? (zh?'条件买入':'conditional buying') : w==='right' ? (zh?'每周定投':'weekly DCA') : (zh?'接近':'tie');
-  const stat = (label,l,r,w) => `
-    <tr style="border-bottom:1px solid rgba(255,255,255,.06)">
-      <td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${label}</td>
-      <td style="padding:9px 8px;text-align:right;color:${w==='left'?'#10b981':'#e2e8f0'};font-weight:800">${l}</td>
-      <td style="padding:9px 8px;text-align:right;color:${w==='right'?'#10b981':'#e2e8f0'};font-weight:800">${r}</td>
-    </tr>`;
+
   const btcW = win('cb-btc','cb-dca-btc');
   const profitW = win('cb-profit','cb-dca-profit');
   const roiW = win('cb-roi','cb-dca-roi');
   const valueW = win('cb-value','cb-dca-val');
   const avgW = win('cb-avg','cb-dca-avg');
+
+  const yearly = calcYearlyBacktest(startDay.date, tiered, rules, amount);
+  const monthlyTrigs = calcMonthlyTriggers(startDay.date);
+  const monthlyROI = calcStrategyMonthlyROI(startDay.date, tiered, rules, amount);
+  const drawdowns = calcBacktestDrawdowns(startDay.date, tiered, rules, amount);
+
+  const yearKeys = Object.keys(yearly).sort();
+  const yearlyRows = yearKeys.map(y => {
+    const yr = yearly[y];
+    const sRoi = yr.cumStratInv ? calcStratROI(yr.cumStratVal, yr.cumStratInv) : 0;
+    const dRoi = yr.cumDcaInv ? calcStratROI(yr.cumDcaVal, yr.cumDcaInv) : 0;
+    const w = yr.winner;
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,.05);font-size:11px">
+      <td style="padding:7px 8px;color:#e2e8f0;font-weight:700">${y}</td>
+      <td style="padding:7px 8px;text-align:right;color:#f97316">${yr.stratTriggers}</td>
+      <td style="padding:7px 8px;text-align:right;color:#e2e8f0">${fp(yr.stratInvested)}</td>
+      <td style="padding:7px 8px;text-align:right;color:#e2e8f0">${yr.cumStratBtc.toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:right;color:#94a3b8">${fp(Math.round(yr.cumStratVal))}</td>
+      <td style="padding:7px 8px;text-align:right;color:${rColor(sRoi)};font-weight:${Math.abs(sRoi)>20?'900':'600'}">${fpShort(sRoi)}</td>
+      <td style="padding:7px 8px;text-align:right;color:#94a3b8">${fp(Math.round(yr.cumDcaVal))}</td>
+      <td style="padding:7px 8px;text-align:right;color:${rColor(dRoi)}">${fpShort(dRoi)}</td>
+      <td style="padding:7px 8px;text-align:center;color:${w==='strat'?'#10b981':'#94a3b8'}">${w==='strat'?'✓':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const bestYear = yearKeys.reduce((best, y) => (!best || yearly[y].stratROI > yearly[best].stratROI) ? y : best, null);
+  const worstYear = yearKeys.reduce((worst, y) => (!worst || yearly[y].stratROI < yearly[worst].stratROI) ? y : worst, null);
+  const dcaBestYear = yearKeys.reduce((best, y) => (!best || yearly[y].dcaROI > yearly[best].dcaROI) ? y : best, null);
+
+  const trigMonthRows = monthlyTrigs.map((m,i) => {
+    const mt = monthlyROI[i];
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,.04);font-size:11px">
+      <td style="padding:6px 8px;color:#e2e8f0;font-weight:600">${zh?'':'M'}${m.month}</td>
+      <td style="padding:6px 8px;text-align:right;color:#f97316">${m.triggers}</td>
+      <td style="padding:6px 8px;text-align:right;color:${mt?.stratAvg!=null ? rColor(mt.stratAvg) : '#475569'}">${mt?.stratAvg!=null ? fpShort(mt.stratAvg) : '—'}</td>
+      <td style="padding:6px 8px;text-align:right;color:${mt?.dcaAvg!=null ? rColor(mt.dcaAvg) : '#475569'}">${mt?.dcaAvg!=null ? fpShort(mt.dcaAvg) : '—'}</td>
+    </tr>`;
+  }).join('');
+
   const conclusion = zh
     ? `累计币数：${wl(btcW)} 更高；盈利金额：${wl(profitW)} 更高；投入收益率：${wl(roiW)} 更高。`
     : `Asset accumulated: ${wl(btcW)} wins; profit: ${wl(profitW)} wins; return on invested capital: ${wl(roiW)} wins.`;
 
+  const stratLabel = tiered ? (zh ? '分层买入' : 'Tiered') : (zh ? '条件买入' : 'Conditional');
+  const stratVsDcaLabel = tiered ? (zh ? '分层 vs 定投' : 'Tiered vs DCA') : (zh ? '条件 vs 定投' : 'Conditional vs DCA');
+
+  const maxTrigMonth = [...monthlyTrigs].sort((a,b) => b.triggers - a.triggers)[0];
+  const minTrigMonth = [...monthlyTrigs].sort((a,b) => a.triggers - b.triggers)[0];
+
+  const yearlyWins = yearKeys.filter(y => yearly[y].winner === 'strat').length;
+  const yearlyTotal = yearKeys.length;
+  const stratWinRate = yearlyTotal ? (yearlyWins / yearlyTotal * 100).toFixed(0) : 0;
+
   document.getElementById('rcard').innerHTML = `
-<div style="background:#08090f;border-radius:10px;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e2e8f0;min-width:560px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)">
-    <span style="font-size:16px;font-weight:900;color:#f7931a;letter-spacing:.05em">₿ MY BTC BOX · ${activeCoin}</span>
-    <span style="font-size:11px;color:#475569;font-weight:600">${todayStr}</span>
+<div style="background:#08090f;border-radius:14px;padding:26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e2e8f0;min-width:680px;max-width:780px">
+  <!-- HEADER -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)">
+    <div>
+      <div style="font-size:20px;font-weight:950;color:#f7931a;letter-spacing:.04em">₿ MY BTC BOX</div>
+      <div style="font-size:16px;font-weight:900;color:#e2e8f0;margin-top:4px">${zh?'回测报告':'BACKTEST REPORT'}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">${activeCoin} · ${ruleText} · ${startDay.date} → ${LATEST_DAILY.date}</div>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#64748b;line-height:1.6">
+      <div>${zh?'生成':'Generated'}: ${todayStr}</div>
+      <div>${zh?'数据截止':'Data through'}: ${LATEST_DAILY.date}</div>
+    </div>
   </div>
 
-  <div style="font-size:10px;font-weight:800;color:#f7931a;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">${zh?'回测报告':'BACKTEST REPORT'}</div>
-  <div style="font-size:18px;font-weight:900;margin-bottom:7px">${tiered ? (zh?'分层买入 vs 每周定投':'Tiered Buying vs Weekly DCA') : (zh?'条件买入 vs 每周定投':'Conditional Buying vs Weekly DCA')}</div>
-  <div style="font-size:11px;color:#64748b;line-height:1.6;margin-bottom:14px">${zh?'区间':'Range'}: ${startDay.date} → ${LATEST_DAILY.date} · ${zh?'规则':'Rule'}: ${ruleText}</div>
+  <!-- METHOD -->
+  <div style="background:rgba(247,147,26,.07);border-left:3px solid #f7931a;border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:16px;font-size:12px;line-height:1.6;color:#cbd5e1">${methodText}</div>
 
-  <div style="background:rgba(247,147,26,.08);border-left:3px solid #f7931a;border-radius:0 7px 7px 0;padding:11px 13px;margin-bottom:14px;font-size:12px;line-height:1.6;color:#cbd5e1">${methodText}</div>
-
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-    ${[
-      [zh?'累计币数':'Asset accumulated', tx('cb-btc'), btcW==='left'],
-      [zh?'盈利金额':'Profit', tx('cb-profit'), profitW==='left'],
-      [zh?'投入收益率':'Return', tx('cb-roi'), roiW==='left']
-    ].map(([lbl,val,on])=>`<div style="background:#0f1319;border-radius:8px;padding:13px;text-align:center;border:${on?'1px solid rgba(16,185,129,.35)':'1px solid transparent'}">
-      <div style="font-size:9px;color:#475569;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px">${lbl}</div>
-      <div style="font-size:18px;font-weight:900;color:${on?'#10b981':'#f7931a'}">${val}</div>
-      <div style="font-size:9px;color:#64748b;margin-top:3px">${zh?'条件买入':'conditional'}</div>
-    </div>`).join('')}
+  <!-- QUICK SUMMARY CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+    <div style="background:#0f1319;border-radius:8px;padding:12px;text-align:center;border:${btcW==='left'?'1px solid rgba(16,185,129,.3)':'1px solid transparent'}">
+      <div style="font-size:9px;color:#475569;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">${zh?'累计币数':'Asset'}</div>
+      <div style="font-size:16px;font-weight:900;color:${btcW==='left'?'#10b981':'#e2e8f0'}">${tx('cb-btc')}</div>
+      <div style="font-size:8px;color:#64748b;margin-top:2px">${stratLabel}</div>
+    </div>
+    <div style="background:#0f1319;border-radius:8px;padding:12px;text-align:center;border:${profitW==='left'?'1px solid rgba(16,185,129,.3)':'1px solid transparent'}">
+      <div style="font-size:9px;color:#475569;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">${zh?'盈利金额':'Profit'}</div>
+      <div style="font-size:16px;font-weight:900;color:${profitW==='left'?'#10b981':'#e2e8f0'}">${tx('cb-profit')}</div>
+      <div style="font-size:8px;color:#64748b;margin-top:2px">${stratLabel}</div>
+    </div>
+    <div style="background:#0f1319;border-radius:8px;padding:12px;text-align:center;border:${roiW==='left'?'1px solid rgba(16,185,129,.3)':'1px solid transparent'}">
+      <div style="font-size:9px;color:#475569;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">${zh?'收益率':'Return'}</div>
+      <div style="font-size:16px;font-weight:900;color:${roiW==='left'?'#10b981':'#e2e8f0'}">${tx('cb-roi')}</div>
+      <div style="font-size:8px;color:#64748b;margin-top:2px">${stratLabel}</div>
+    </div>
+    <div style="background:#0f1319;border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:9px;color:#475569;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">${zh?'胜率':'Win Rate'}</div>
+      <div style="font-size:16px;font-weight:900;color:#f7931a">${yearlyTotal ? stratWinRate : '—'}%</div>
+      <div style="font-size:8px;color:#64748b;margin-top:2px">${zh ? `过去 ${yearlyTotal} 年中 ${stratLabel} 胜出 ${yearlyWins} 年` : `${stratLabel} wins ${yearlyWins}/${yearlyTotal} yrs`}</div>
+    </div>
   </div>
 
-  <div style="background:#0f1319;border-radius:8px;overflow:hidden;margin-bottom:14px">
+  <!-- DETAIL TABLE -->
+  <div style="background:#0f1319;border-radius:8px;overflow:hidden;margin-bottom:16px">
     <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead><tr style="background:#161c26"><th style="padding:9px 8px;text-align:left;color:#64748b;font-size:9px;text-transform:uppercase">${zh?'指标':'Metric'}</th><th style="padding:9px 8px;text-align:right;color:#f7931a;font-size:9px;text-transform:uppercase">${zh?'条件买入':'Conditional'}</th><th style="padding:9px 8px;text-align:right;color:#94a3b8;font-size:9px;text-transform:uppercase">${zh?'每周定投':'Weekly DCA'}</th></tr></thead>
+      <thead><tr style="background:#161c26"><th style="padding:9px 8px;text-align:left;color:#64748b;font-size:9px;text-transform:uppercase">${zh?'指标':'Metric'}</th><th style="padding:9px 8px;text-align:right;color:#f7931a;font-size:9px;text-transform:uppercase">${stratLabel}</th><th style="padding:9px 8px;text-align:right;color:#94a3b8;font-size:9px;text-transform:uppercase">${zh?'每周定投':'Weekly DCA'}</th></tr></thead>
       <tbody>
-        ${stat(zh?'触发/周数':'Triggers / weeks', tx('cb-count'), tx('cb-dca-weeks'), 'tie')}
-        ${stat(zh?'总投入':'Invested', tx('cb-invested'), tx('cb-dca-inv'), 'tie')}
-        ${stat(zh?'累计币数':'Asset', tx('cb-btc'), tx('cb-dca-btc'), btcW)}
-        ${stat(zh?'平均买入价':'Avg buy', tx('cb-avg'), tx('cb-dca-avg'), avgW)}
-        ${stat(zh?'当前价值':'Current value', tx('cb-value'), tx('cb-dca-val'), valueW)}
-        ${stat(zh?'盈利金额':'Profit', tx('cb-profit'), tx('cb-dca-profit'), profitW)}
-        ${stat(zh?'投入收益率':'Return', tx('cb-roi'), tx('cb-dca-roi'), roiW)}
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'触发/周数':'Triggers / weeks'}</td><td style="padding:9px 8px;text-align:right;color:#e2e8f0;font-weight:800">${tx('cb-count')}</td><td style="padding:9px 8px;text-align:right;color:#e2e8f0;font-weight:800">${tx('cb-dca-weeks')}</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'总投入':'Invested'}</td><td style="padding:9px 8px;text-align:right;color:#e2e8f0;font-weight:800">${tx('cb-invested')}</td><td style="padding:9px 8px;text-align:right;color:#e2e8f0;font-weight:800">${tx('cb-dca-inv')}</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'累计币数':'Asset'}</td><td style="padding:9px 8px;text-align:right;color:${btcW==='left'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-btc')}</td><td style="padding:9px 8px;text-align:right;color:${btcW==='right'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-dca-btc')}</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'平均买入价':'Avg buy'}</td><td style="padding:9px 8px;text-align:right;color:${avgW==='left'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-avg')}</td><td style="padding:9px 8px;text-align:right;color:${avgW==='right'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-dca-avg')}</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'当前价值':'Value'}</td><td style="padding:9px 8px;text-align:right;color:${valueW==='left'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-value')}</td><td style="padding:9px 8px;text-align:right;color:${valueW==='right'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-dca-val')}</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'盈利金额':'Profit'}</td><td style="padding:9px 8px;text-align:right;color:${profitW==='left'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-profit')}</td><td style="padding:9px 8px;text-align:right;color:${profitW==='right'?'#10b981':'#e2e8f0'};font-weight:800">${tx('cb-dca-profit')}</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,.06)"><td style="padding:9px 8px;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em">${zh?'投入收益率':'ROI'}</td><td style="padding:9px 8px;text-align:right;color:${roiW==='left'?'#10b981':'#e2e8f0'};font-weight:900;font-size:13px">${tx('cb-roi')}</td><td style="padding:9px 8px;text-align:right;color:${roiW==='right'?'#10b981':'#e2e8f0'};font-weight:900;font-size:13px">${tx('cb-dca-roi')}</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div style="background:rgba(16,185,129,.07);border-radius:7px;padding:12px 13px;margin-bottom:14px;font-size:12px;line-height:1.7;color:#cbd5e1"><strong style="color:#10b981">${zh?'对比结论':'Comparison'}:</strong> ${conclusion}</div>
+  <!-- YEAR BY YEAR -->
+  ${yearKeys.length ? `
+  <div style="margin-bottom:16px">
+    <div style="font-size:10px;font-weight:900;color:#f7931a;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px">${zh?'逐年比较 (累计)':'YEAR BY YEAR (CUMULATIVE)'}</div>
+    <div style="background:#0f1319;border-radius:8px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:600px">
+        <thead><tr style="background:#161c26">
+          <th style="padding:7px 8px;text-align:left;color:#64748b;font-size:8px;text-transform:uppercase">${zh?'年份':'Year'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#f97316;font-size:8px;text-transform:uppercase">${zh?'触发':'Trig'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#64748b;font-size:8px;text-transform:uppercase">${zh?'投入':'Inv'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#e2e8f0;font-size:8px;text-transform:uppercase">${zh?'持有币数':'BTC'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#f7931a;font-size:8px;text-transform:uppercase">${stratLabel} ${zh?'价值':'Val'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#f7931a;font-size:8px;text-transform:uppercase">${stratLabel} ${zh?'收益率':'ROI'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#94a3b8;font-size:8px;text-transform:uppercase">${zh?'定投价值':'DCA Val'}</th>
+          <th style="padding:7px 8px;text-align:right;color:#94a3b8;font-size:8px;text-transform:uppercase">${zh?'定投ROI':'DCA ROI'}</th>
+          <th style="padding:7px 8px;text-align:center;color:#10b981;font-size:8px;text-transform:uppercase">${zh?'领先':'Lead'}</th>
+        </tr></thead>
+        <tbody>${yearlyRows}</tbody>
+      </table>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+      <div style="background:#0f1319;border-radius:6px;padding:8px 10px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'最佳年份':'Best yr'}</div>
+        <div style="font-size:15px;font-weight:900;color:#10b981">${bestYear||'—'}</div>
+        <div style="font-size:9px;color:#64748b">${bestYear?fpShort(yearly[bestYear].stratROI):'—'}</div>
+      </div>
+      <div style="background:#0f1319;border-radius:6px;padding:8px 10px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'最差年份':'Worst yr'}</div>
+        <div style="font-size:15px;font-weight:900;color:#ef4444">${worstYear||'—'}</div>
+        <div style="font-size:9px;color:#64748b">${worstYear?fpShort(yearly[worstYear].stratROI):'—'}</div>
+      </div>
+      <div style="background:#0f1319;border-radius:6px;padding:8px 10px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'胜率':'Win rate'}</div>
+        <div style="font-size:15px;font-weight:900;color:#f7931a">${yearlyTotal ? stratWinRate : '—'}%</div>
+        <div style="font-size:9px;color:#64748b">${yearlyTotal ? (zh ? '过去 '+yearlyTotal+' 年中，有 '+yearlyWins+' 年 '+stratLabel+' 超过定投' : 'In '+yearlyTotal+' yrs, '+stratLabel+' won '+yearlyWins+' yrs' ) : '—'}</div>
+      </div>
+    </div>
+  </div>` : ''}
 
+  <!-- MONTHLY PATTERNS -->
+  <div style="margin-bottom:16px">
+    <div style="font-size:10px;font-weight:900;color:#f7931a;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px">${zh?'月度分布':'MONTHLY PATTERNS'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="background:#0f1319;border-radius:6px;padding:9px 11px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'最多买入月份':'Most buys'}</div>
+        <div style="font-size:16px;font-weight:900;color:#f97316">${zh?'':'M'}${maxTrigMonth.month}</div>
+        <div style="font-size:9px;color:#64748b">${maxTrigMonth.triggers} ${zh?`次下跌超${thresholdText}%`:`drops >${thresholdText}%`}</div>
+      </div>
+      <div style="background:#0f1319;border-radius:6px;padding:9px 11px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'最少买入月份':'Fewest buys'}</div>
+        <div style="font-size:16px;font-weight:900;color:#94a3b8">${zh?'':'M'}${minTrigMonth.month}</div>
+        <div style="font-size:9px;color:#64748b">${minTrigMonth.triggers} ${zh?`次下跌超${thresholdText}%`:`drops >${thresholdText}%`}</div>
+      </div>
+    </div>
+    <div style="background:#0f1319;border-radius:8px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#161c26">
+          <th style="padding:6px 8px;text-align:left;color:#64748b;font-size:8px;text-transform:uppercase">${zh?'月份':'Month'}</th>
+          <th style="padding:6px 8px;text-align:right;color:#f97316;font-size:8px;text-transform:uppercase">${zh?'买入次数':'Buys'}</th>
+          <th style="padding:6px 8px;text-align:right;color:#f7931a;font-size:8px;text-transform:uppercase">${stratLabel} ${zh?'平均收益率':'Avg ROI'}</th>
+          <th style="padding:6px 8px;text-align:right;color:#94a3b8;font-size:8px;text-transform:uppercase">${zh?'定投平均收益率':'DCA Avg ROI'}</th>
+        </tr></thead>
+        <tbody>${trigMonthRows}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DRAWDOWN -->
+  <div style="margin-bottom:16px">
+    <div style="font-size:10px;font-weight:900;color:#f7931a;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px">${zh?'回撤分析':'DRAWDOWN ANALYSIS'}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div style="background:#0f1319;border-radius:6px;padding:9px 11px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${stratLabel} ${zh?'最大回撤':'Max DD'}</div>
+        <div style="font-size:16px;font-weight:900;color:#ef4444">${drawdowns.strat.maxDd ? drawdowns.strat.maxDd.toFixed(1) + '%' : '—'}</div>
+      </div>
+      <div style="background:#0f1319;border-radius:6px;padding:9px 11px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'定投最大回撤':'DCA Max DD'}</div>
+        <div style="font-size:16px;font-weight:900;color:${drawdowns.dca.maxDd < -20 ? '#ef4444' : '#94a3b8'}">${drawdowns.dca.maxDd ? drawdowns.dca.maxDd.toFixed(1) + '%' : '—'}</div>
+      </div>
+      <div style="background:#0f1319;border-radius:6px;padding:9px 11px">
+        <div style="font-size:8px;color:#475569;text-transform:uppercase">${zh?'超过-20%回撤':'DDs > -20%'}</div>
+        <div style="font-size:16px;font-weight:900;color:#f97316">${stratLabel}: ${drawdowns.strat.count20} / ${zh?'定投':'DCA'}: ${drawdowns.dca.count20}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDICT -->
+  <div style="background:rgba(16,185,129,.06);border-radius:8px;padding:13px 15px;margin-bottom:16px;font-size:12px;line-height:1.7;color:#cbd5e1">
+    <strong style="color:#10b981">${zh?'对比结论':'COMPARISON'}:</strong> ${conclusion}
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);color:#94a3b8;font-size:11px;line-height:1.7">
+      ${zh?`<strong>年度表现</strong>：过去 ${yearlyTotal} 年中，${stratLabel} 在 ${yearlyWins} 个年份（${stratWinRate}%）跑赢了每周定投。最佳年份 ${bestYear||'—'}（${bestYear?fpShort(yearly[bestYear].stratROI):'—'}），最差年份 ${worstYear||'—'}（${worstYear?fpShort(yearly[worstYear].stratROI):'—'}）。`:`<strong>Yearly track record:</strong> ${stratLabel} beat weekly DCA in ${yearlyWins} out of ${yearlyTotal} years (${stratWinRate}%). Best: ${bestYear||'—'} (${bestYear?fpShort(yearly[bestYear].stratROI):'—'}), worst: ${worstYear||'—'} (${worstYear?fpShort(yearly[worstYear].stratROI):'—'}).`}
+    </div>
+    <div style="margin-top:4px;color:#64748b;font-size:10px">
+      ${zh?'提示：最大回撤衡量的是模拟组合净值的阶段性跌幅。策略受触发时机和投入频率影响，回撤表现可能与一次买入持有不同。':'Note: Drawdown measures simulated portfolio value declines. Strategy timing and frequency affect DD differently than buy-and-hold.'}
+    </div>
+  </div>
+
+  <!-- FOOTER -->
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
-    <div style="font-size:9px;color:#334155;max-width:350px;line-height:1.5">${zh?'历史回测，不构成投资建议。数据截止':'Historical backtest only. Not investment advice. Data through'} ${LATEST_DAILY.date}. ${zh?'不含手续费和滑点。':'Fees and slippage not included.'}</div>
-    <div style="font-size:13px;font-weight:900;color:#f7931a;flex-shrink:0;margin-left:12px">www.mybtcbox.com</div>
+    <div style="font-size:9px;color:#334155;max-width:420px;line-height:1.5">${zh?'历史回测，不构成投资建议。数据截止':'Historical backtest only. Not investment advice. Data through'} ${LATEST_DAILY.date}. ${zh?'不含手续费和滑点。':'Fees and slippage not included.'}</div>
+    <div style="font-size:14px;font-weight:950;color:#f7931a;flex-shrink:0;margin-left:12px">www.mybtcbox.com</div>
   </div>
 </div>`;
 
   shareText = zh
-    ? `我回测了 ${activeCoin}：${tiered?'分层买入':'条件买入'} vs 每周定投\n\n规则：${ruleText}\n区间：${startDay.date} → ${LATEST_DAILY.date}\n\n条件：${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投：${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n\n${conclusion}\n你会怎么调规则？\n${shareUrl('backtest')} #${activeCoin} #Crypto`
-    : `I backtested ${activeCoin}: ${tiered?'tiered buying':'conditional buying'} vs weekly DCA.\n\nRule: ${ruleText}\nRange: ${startDay.date} → ${LATEST_DAILY.date}\n\nConditional: ${tx('cb-btc')} · ${tx('cb-roi')}\nWeekly DCA: ${tx('cb-dca-btc')} · ${tx('cb-dca-roi')}\n\nWhat rule should I test next?\n${shareUrl('backtest')} #${activeCoin} #Crypto`;
+    ? `我回测了 ${activeCoin}：${stratLabel} vs 每周定投\n\n规则：${ruleText}\n区间：${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel}：${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投：${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n\n过去 ${yearlyTotal} 年跑赢 ${yearlyWins} 年 (${stratWinRate}%)\n你会怎么调规则？\n${shareUrl('backtest')} #${activeCoin} #Crypto`
+    : `I backtested ${activeCoin}: ${stratLabel} vs weekly DCA.\n\nRule: ${ruleText}\nRange: ${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel}: ${tx('cb-btc')} · ${tx('cb-roi')}\nDCA: ${tx('cb-dca-btc')} · ${tx('cb-dca-roi')}\n\nBeat DCA in ${yearlyWins}/${yearlyTotal} years (${stratWinRate}%)\nWhat rule should I test next?\n${shareUrl('backtest')} #${activeCoin} #Crypto`;
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
@@ -1631,6 +2085,43 @@ function dlRpt(){
   });
 }
 
+// ── HISTORY BAR INIT ──
+function initHistBar() {
+  var input = document.getElementById('hist-date');
+  if (!input) return;
+  // Compute common date range from all coins
+  var minDate = null, maxDate = null;
+  for (var ci = 0; ci < COIN_ORDER.length; ci++) {
+    var data = COIN_DATA[COIN_ORDER[ci]];
+    if (!data || !data.daily || !data.daily.length) continue;
+    var first = data.daily[0].date;
+    var last = data.data_through || data.daily[data.daily.length - 1].date;
+    if (!minDate || first > minDate) minDate = first;
+    if (!maxDate || last < maxDate) maxDate = last;
+  }
+  if (minDate) {
+    input.min = minDate;
+    input.max = maxDate;
+    input.value = maxDate;
+    var hint = document.getElementById('hist-date-hint');
+    if (hint) hint.textContent = minDate + ' → ' + maxDate;
+  }
+  // Button click → show snapshot
+  var btn = document.getElementById('hist-comp-btn');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      if (input.value) showSnapshot(input.value);
+    });
+  }
+  // Date change → auto-show snapshot
+  input.addEventListener('change', function() {
+    if (this.value) showSnapshot(this.value);
+  });
+}
+setTimeout(initHistBar, 100);
+
+// ── LIVE ──
+
 // ── LIVE ──
 function tickH(){
   const d=NEXT_HALF-Date.now(); if(d<=0){document.getElementById('th').textContent='NOW!';return;}
@@ -1640,14 +2131,18 @@ function tickH(){
 setInterval(tickH,1000); tickH();
 
 async function updatePrice(){
+  const coinId = COINGECKO_IDS[activeCoin] || 'bitcoin';
   try{
-    const r=await fetch('https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false');
+    const r=await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&community_data=false&developer_data=false`);
     const d=await r.json();
-    const p=d.market_data.current_price.usd, ch=d.market_data.price_change_percentage_24h, fa=(p-ATH)/ATH*100;
-    document.getElementById('tp').textContent='$'+Math.round(p).toLocaleString('en-US');
+    const p=d.market_data.current_price.usd, ch=d.market_data.price_change_percentage_24h;
+    const fa = ACTIVE_ATH ? ((p - ACTIVE_ATH) / ACTIVE_ATH * 100) : null;
+    document.getElementById('tp').textContent = fmtPrice(p);
     const ce=document.getElementById('tc'); ce.textContent=(ch>=0?'+':'')+ch.toFixed(2)+'%'; ce.className='mono '+(ch>=0?'up':'dn');
-    document.getElementById('ta').textContent=fa.toFixed(2)+'%';
-    const now=new Date(); document.getElementById('tt').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0')+' UTC';
+    const ta=document.getElementById('ta');
+    if(fa != null){ ta.textContent=fa.toFixed(2)+'%'; ta.className='mono '+(fa>=0?'up':'dn'); }
+    else { ta.textContent='—'; ta.className='mono'; }
+    document.getElementById('tt').textContent=new Date().toUTCString().slice(17,25)+' UTC';
   }catch(e){}
 }
 updatePrice(); setInterval(updatePrice,60000);
