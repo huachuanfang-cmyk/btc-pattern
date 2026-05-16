@@ -561,6 +561,7 @@ function buildBtcData(source){
     d.range_pct = bPct(d.high, d.low);
     d.low_to_close = bPct(d.close, d.low);
     d.drop_to_low = d.prev_close ? bPct(d.low, d.prev_close) : null;
+    d.rise_to_high = d.prev_close ? bPct(d.high, d.prev_close) : null;
     d.wick_depth = d.low_to_close;
   });
 
@@ -568,7 +569,7 @@ function buildBtcData(source){
   const base = (d,i) => ({
     date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
     pct:d.pct, next1:future(i,1), next7:future(i,7), next30:future(i,30),
-    low_to_close:d.low_to_close, drop_to_low:d.drop_to_low, volume:Math.round(d.volume || 0)
+    low_to_close:d.low_to_close, drop_to_low:d.drop_to_low, rise_to_high:d.rise_to_high, volume:Math.round(d.volume || 0)
   });
   const desc = (a,b) => b.date.localeCompare(a.date);
   const daily = rows.map(base);
@@ -1486,8 +1487,8 @@ function reportEvent(){
 function reportExtremes(rows){
   const ath = rmaxBy(rows, d => Number.isFinite(d.high) ? d.high : d.close);
   const atl = rminBy(rows, d => Number.isFinite(d.low) ? d.low : d.close);
-  const maxRise = rmaxBy(rows, d => d.pct);
-  const maxDrop = rminBy(rows, d => d.pct);
+  const maxRise = rmaxBy(rows, d => d.rise_to_high ?? d.pct);
+  const maxDrop = rminBy(rows, d => d.drop_to_low ?? d.pct);
   const first = rows[0], latest = rows[rows.length-1];
   const totalReturn = first && latest ? (latest.close / first.close - 1) * 100 : null;
   const avgDaily = ravg(rows.map(d => d.pct));
