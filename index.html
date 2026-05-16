@@ -2344,7 +2344,10 @@ async function updatePrice(){
     const ta=document.getElementById('ta');
     if(fa != null){ ta.textContent=fa.toFixed(2)+'%'; ta.className='mono '+(fa>=0?'up':'dn'); }
     else { ta.textContent='—'; ta.className='mono'; }
-    document.getElementById('tt').textContent=new Date().toUTCString().slice(17,25)+' UTC';
+    var now=new Date();
+    document.getElementById('tt').textContent=lang==='zh'
+      ? now.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'})+' 北京时间'
+      : now.toUTCString().slice(17,25)+' UTC';
   }catch(e){}
 }
 updatePrice(); setInterval(updatePrice,60000);
