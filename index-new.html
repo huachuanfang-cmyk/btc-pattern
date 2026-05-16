@@ -1943,12 +1943,8 @@ function openReport(){
   const shareMoveZh = qtype==='drop' ? '下跌' : qtype==='rise' ? '上涨' : qtype==='wick' ? '低点到收盘回升' : '振幅';
   const shareMoveEn = qtype==='drop' ? 'dropped' : qtype==='rise' ? 'rose' : qtype==='wick' ? 'recovered low-to-close' : 'moved';
   shareText = zh
-    ? `我查了 ${activeCoin} 历史上「单日${shareMoveZh} > ${thresh}%」之后的表现：\n\n共 ${stats.count} 次\n次日上涨率 ${stats.up1_pct}% · 7日后 ${stats.up7_pct}% · 30日后 ${stats.up30_pct}%`
-      +(stats.ltc_up_pct?`\n最低价→收盘回升率 ${stats.ltc_up_pct}%`:'')
-      +`\n\n历史数据，不是预测。你会测哪个条件？\n${shareUrl('event')} #${activeCoin} #Crypto`
-    : `I checked every time ${activeCoin} ${shareMoveEn} > ${thresh}% in a day.\n\n${stats.count} events\nNext day up: ${stats.up1_pct}% · 7d: ${stats.up7_pct}% · 30d: ${stats.up30_pct}%`
-      +(stats.ltc_up_pct?`\nLow→close recovered: ${stats.ltc_up_pct}%`:'')
-      +`\n\nPast data, not a prediction. What would you test next?\n${shareUrl('event')} #${activeCoin} #Crypto`;
+    ? `刚刚用 My BTC Box 查了一下：当 ${activeCoin} 单日${shareMoveZh}超过 ${thresh}% 时，历史上发生了 ${stats.count} 次。但次日反弹概率高达 ${stats.up1_pct}%！30日后上涨概率 ${stats.up30_pct}%。${stats.ltc_up_pct ? '而最低价到收盘的回升率竟然有 ' + stats.ltc_up_pct + '%！' : ''}别盲目操作，先看历史数据：${shareUrl('event')}`
+    : `Just checked My BTC Box: when ${activeCoin} ${shareMoveEn} >${thresh}%, it happened ${stats.count}x. Next day bounced ${stats.up1_pct}% of the time! 30d: ${stats.up30_pct}%.${stats.ltc_up_pct ? ' Low→close recovery: ' + stats.ltc_up_pct + '%! ' : ' '}Check the data before you trade: ${shareUrl('event')}`;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -2202,8 +2198,8 @@ function openBacktestReport(){
 </div>`;
 
   shareText = zh
-    ? `我回测了 ${activeCoin}：${stratLabel} vs 每周定投\n\n规则：${ruleText}\n区间：${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel}：${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投：${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n\n过去 ${yearlyTotal} 年跑赢 ${yearlyWins} 年 (${stratWinRate}%)\n你会怎么调规则？\n${shareUrl('backtest')} #${activeCoin} #Crypto`
-    : `I backtested ${activeCoin}: ${stratLabel} vs weekly DCA.\n\nRule: ${ruleText}\nRange: ${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel}: ${tx('cb-btc')} · ${tx('cb-roi')}\nDCA: ${tx('cb-dca-btc')} · ${tx('cb-dca-roi')}\n\nBeat DCA in ${yearlyWins}/${yearlyTotal} years (${stratWinRate}%)\nWhat rule should I test next?\n${shareUrl('backtest')} #${activeCoin} #Crypto`;
+    ? `刚刚用 My BTC Box 回测了 ${activeCoin} 的条件买入策略：\n${ruleText}\n区间 ${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel} 累计币数 ${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投 ${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n过去 ${yearlyTotal} 年跑赢定投 ${yearlyWins} 年（${stratWinRate}%）\n\n历史回测数据，不是投资建议。你会怎么调策略？${shareUrl('backtest')}`
+    : `Backtested ${activeCoin} conditional buying vs weekly DCA:\n${ruleText}\n${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel}: ${tx('cb-btc')} · ROI ${tx('cb-roi')}\nDCA: ${tx('cb-dca-btc')} · ROI ${tx('cb-dca-roi')}\n\nBeat DCA in ${yearlyWins}/${yearlyTotal}yrs (${stratWinRate}%). Past data only. Tweak the strategy: ${shareUrl('backtest')}`;
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
@@ -2212,14 +2208,22 @@ function shareX(){ window.open('https://twitter.com/intent/tweet?text='+encodeUR
 function shareWeibo(){
   var kind=shareText.includes('回测')?'backtest':'event';
   var url=shareUrl(kind,'weibo');
-  // Read stats from DOM (avoid variable scope issue)
-  var count = (document.getElementById('sn')||{}).textContent || '—';
-  var up1 = (document.getElementById('pu1')||{}).textContent || '—';
-  var up30 = (document.getElementById('pu30')||{}).textContent || '—';
-  var statsLine = lang==='zh'
-    ? '#'+activeCoin+' 跌>'+thresh+'% 共'+count+'次 · 次日涨'+up1+' · 30日涨'+up30
-    : activeCoin+' drop>'+thresh+'%: '+count+'x · next d '+up1+' · 30d '+up30;
-  var title = (lang==='zh'?'查了 #'+activeCoin+' 历史数据':'My BTC Box — '+activeCoin)+' '+statsLine;
+  var title;
+  if(kind==='backtest'){
+    var btc = (document.getElementById('cb-btc')||{}).textContent || '—';
+    var roi = (document.getElementById('cb-roi')||{}).textContent || '—';
+    title = lang==='zh'
+      ? '用 My BTC Box 回测了 '+activeCoin+' 条件买入策略。'+btc+'枚 · 收益率 '+roi+'。历史回测，不构成建议→'
+      : 'Backtested '+activeCoin+' conditional buying: '+btc+' BTC · ROI '+roi+'. Past data only→';
+  }else{
+    var count = (document.getElementById('sn')||{}).textContent || '—';
+    var up1 = (document.getElementById('pu1')||{}).textContent || '—';
+    var ltc = document.getElementById('spike-pct');
+    var ltcText = ltc ? ltc.textContent : '';
+    title = lang==='zh'
+      ? '刚刚用 My BTC Box 查到：当 '+activeCoin+' 单日跌超 '+thresh+'% 时，历史上发生了 '+count+' 次。但次日反弹概率高达 '+up1+'！'+(ltcText?'最低→收盘回升率 '+ltcText+'！':'')+' 别盲目操作→'
+      : 'Just checked My BTC Box: when '+activeCoin+' drops >'+thresh+'%, it happened '+count+'x. Next day bounced '+up1+'!'+(ltcText?' Low→close: '+ltcText+'! ':' ')+'Check the data:';
+  }
   window.open('https://service.weibo.com/share/share.php?url='+encodeURIComponent(url)+'&title='+encodeURIComponent(title)+'&appkey=&searchPic=true','_blank','width=620,height=560');
 }
 function copyLink(){
