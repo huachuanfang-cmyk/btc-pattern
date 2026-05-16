@@ -1656,12 +1656,14 @@ function reportExtremes(rows){
   const atl = rminBy(rows, d => Number.isFinite(d.low) ? d.low : d.close);
   const maxRise = rmaxBy(rows, d => d.rise_to_high ?? d.pct);
   const maxDrop = rminBy(rows, d => d.drop_to_low ?? d.pct);
+  const maxRiseMetric = maxRise ? (maxRise.rise_to_high ?? maxRise.pct) : null;
+  const maxDropMetric = maxDrop ? (maxDrop.drop_to_low ?? maxDrop.pct) : null;
   const first = rows[0], latest = rows[rows.length-1];
   const totalReturn = first && latest ? (latest.close / first.close - 1) * 100 : null;
   const avgDaily = ravg(rows.map(d => d.pct));
   const avgVol = ravg(rows.map(d => Math.abs(d.pct)));
   const fromAth = ath && latest ? (latest.close / (ath.high || ath.close) - 1) * 100 : null;
-  return {ath, atl, maxRise, maxDrop, first, latest, totalReturn, avgDaily, avgVol, fromAth};
+  return {ath, atl, maxRise, maxDrop, maxRiseMetric, maxDropMetric, first, latest, totalReturn, avgDaily, avgVol, fromAth};
 }
 function reportBuckets(rows){
   const defs = [
@@ -1898,8 +1900,8 @@ function openReport(){
   ${section(zh?'极端事件与整体收益':'EXTREMES AND TOTAL RETURN', `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">
       ${card('T',zh?'总收益率':'Total return',rpct(ext.totalReturn,1),`${ext.first.date} → ${ext.latest.date}`,'#10b981')}
-      ${card('U',zh?'单日最大涨幅':'Max daily up',rpct(ext.maxRise.pct,2),ext.maxRise.date,'#10b981')}
-      ${card('D',zh?'单日最大跌幅':'Max daily down',rpct(ext.maxDrop.pct,2),ext.maxDrop.date,'#ef4444')}
+      ${card('U',zh?'单日最高涨幅':'Max intraday up',rpct(ext.maxRiseMetric,2),ext.maxRise.date,'#10b981')}
+      ${card('D',zh?'单日最大下探':'Max intraday drawdown',rpct(ext.maxDropMetric,2),ext.maxDrop.date,'#ef4444')}
       ${card('L',zh?'历史最低价':'Lowest low',fmtPrice(ext.atl.low || ext.atl.close),ext.atl.date,'#94a3b8')}
     </div>
   `)}
@@ -1940,7 +1942,7 @@ function openReport(){
   `)}
 
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;margin-top:18px;border-top:1px solid rgba(255,255,255,.08)">
-    <div style="font-size:10px;color:#475569;max-width:520px;line-height:1.6">${zh?'历史 OHLCV 来源：Yahoo Finance。报告根据当前币种、阈值和最新数据实时生成，不含手续费、滑点或未来预测。':'Historical OHLCV source: Yahoo Finance. This report is generated from the selected asset, threshold, and latest local dataset. Fees, slippage, and predictions are not included.'}</div>
+    <div style="font-size:10px;color:#475569;max-width:520px;line-height:1.6">${zh?'历史 OHLCV 来源：Yahoo Finance。历史高点与盘中极值按 high/low 相对前日收盘计算；收盘涨跌分布和回测按 close 相对前日 close。报告不含手续费、滑点或未来预测。':'Historical OHLCV source: Yahoo Finance. ATH and intraday extremes use high/low versus the previous close; close-to-close distributions and backtests use close versus previous close. Fees, slippage, and predictions are not included.'}</div>
     <div style="font-size:15px;font-weight:950;color:#f7931a;margin-left:18px">www.mybtcbox.com</div>
   </div>
 </div>`;

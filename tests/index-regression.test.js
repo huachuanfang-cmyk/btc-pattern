@@ -80,6 +80,7 @@ function createContext(startDate = '2017-01-01') {
     parseFloat,
     setTimeout() {},
     setInterval() {},
+    requestAnimationFrame(cb) { cb(); },
     fetch: async () => ({ json: async () => ({ market_data: { current_price: { usd: 100000 }, price_change_percentage_24h: 0 } }) }),
     html2canvas: () => Promise.resolve({ toDataURL() { return ''; } }),
   };
@@ -140,6 +141,26 @@ assertEqual(result.yearTriggers, result.manualTriggers, 'First backtest year sho
 assertEqual(result.yearDcaInv, result.manualDcaInv, 'First-year DCA should start at selected date');
 assertEqual(result.janMonthly, result.janManual, 'Monthly triggers should use the current threshold');
 assertEqual(result.winnerByRoiMatches, true, 'Yearly winner should be based on cumulative ROI');
+
+const dogeExtremes = vm.runInContext(`
+const dogeRows = buildBtcData(RAW_COINS.DOGE).daily;
+const ext = reportExtremes(dogeRows);
+({
+  athDate: ext.ath.date,
+  athHigh: Number(ext.ath.high.toFixed(8)),
+  maxRiseDate: ext.maxRise.date,
+  maxRiseMetric: Number(ext.maxRiseMetric.toFixed(2)),
+  maxDropDate: ext.maxDrop.date,
+  maxDropMetric: Number(ext.maxDropMetric.toFixed(2)),
+});
+`, context);
+
+assertEqual(dogeExtremes.athDate, '2021-05-08', 'DOGE ATH should use daily high');
+assertEqual(dogeExtremes.athHigh, 0.73757, 'DOGE ATH high should match app-rounded Yahoo OHLCV high');
+assertEqual(dogeExtremes.maxRiseDate, '2021-01-28', 'DOGE max daily rise should use intraday high date');
+assertEqual(dogeExtremes.maxRiseMetric, 356.79, 'DOGE max daily rise should be high versus previous close');
+assertEqual(dogeExtremes.maxDropDate, '2021-05-19', 'DOGE max daily drop should use intraday low date');
+assertEqual(dogeExtremes.maxDropMetric, -54.16, 'DOGE max daily drop should be low versus previous close');
 
 const copyContext = createContext();
 const copyResult = vm.runInContext(`
