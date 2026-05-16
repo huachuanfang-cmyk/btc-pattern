@@ -2210,9 +2210,17 @@ function closeModal(){ document.getElementById('overlay').classList.remove('show
 function closeOuter(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
 function shareX(){ window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(shareText),'_blank','width=620,height=560'); }
 function shareWeibo(){
-  var url=shareUrl(shareText.includes('回测')?'backtest':'event','weibo');
-  var title=document.title+' — '+activeCoin+' '+(lang==='zh'?'历史数据查询':'Historical Data');
-  window.open('https://service.weibo.com/share/share.php?url='+encodeURIComponent(url)+'&title='+encodeURIComponent(shareText)+'&appkey=&searchPic=true','_blank','width=620,height=560');
+  var kind=shareText.includes('回测')?'backtest':'event';
+  var url=shareUrl(kind,'weibo');
+  // Read stats from DOM (avoid variable scope issue)
+  var count = (document.getElementById('sn')||{}).textContent || '—';
+  var up1 = (document.getElementById('pu1')||{}).textContent || '—';
+  var up30 = (document.getElementById('pu30')||{}).textContent || '—';
+  var statsLine = lang==='zh'
+    ? '#'+activeCoin+' 跌>'+thresh+'% 共'+count+'次 · 次日涨'+up1+' · 30日涨'+up30
+    : activeCoin+' drop>'+thresh+'%: '+count+'x · next d '+up1+' · 30d '+up30;
+  var title = (lang==='zh'?'查了 #'+activeCoin+' 历史数据':'My BTC Box — '+activeCoin)+' '+statsLine;
+  window.open('https://service.weibo.com/share/share.php?url='+encodeURIComponent(url)+'&title='+encodeURIComponent(title)+'&appkey=&searchPic=true','_blank','width=620,height=560');
 }
 function copyLink(){
   var url=shareUrl(shareText.includes('回测')?'backtest':'event','copy');
