@@ -360,6 +360,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     <span class="ti"><span class="l" id="ticker-symbol">BTC</span><span id="tp" class="mono">$—</span></span>
     <span class="ti"><span class="l">24H</span><span id="tc" class="mono">—</span></span>
     <span class="ti"><span class="l" data-i="fromATH">FROM ATH</span><span id="ta" class="mono dn">—</span></span>
+    <span class="ti" id="fr-row"><span class="l" style="color:var(--ink3);font-size:10px">Funding</span><span id="tfr" class="mono" style="font-size:11px">—</span></span>
     <span class="ti" id="halving-row"><span class="l" style="color:var(--accent);font-weight:600" data-i="nextHalv">NEXT HALVING</span><span id="th" class="mono">—</span></span>
   </div>
   <span class="mono" id="tt" style="font-size:10px;color:var(--ink3)">—</span>
@@ -2348,6 +2349,22 @@ async function updatePrice(){
     document.getElementById('tt').textContent=lang==='zh'
       ? now.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'})+' 北京时间'
       : now.toUTCString().slice(17,25)+' UTC';
+  }catch(e){}
+  // Binance funding rate — no key needed
+  try{
+    const fr=await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
+    const fd=await fr.json();
+    var rate=parseFloat(fd.lastFundingRate)*100;
+    var frEl=document.getElementById('tfr');
+    if(Number.isFinite(rate)){
+      var frColor= rate > 0.05 ? '#ef4444' : rate > 0.015 ? '#f97316' : rate < -0.01 ? '#60a5fa' : '#10b981';
+      var frLabel= rate > 0.05 ? (lang==='zh'?'过热':'hot') : rate > 0.015 ? (lang==='zh'?'偏热':'warm') : rate < -0.01 ? (lang==='zh'?'偏空':'oversold') : (lang==='zh'?'正常':'normal');
+      frEl.textContent=(rate>=0?'+':'')+rate.toFixed(3)+'%';
+      frEl.style.color=frColor;
+      frEl.title=lang==='zh'?'币安BTC永续资金费率 · '+frLabel:'Binance BTC perpetual funding rate · '+frLabel;
+    }else{
+      frEl.textContent='—';
+    }
   }catch(e){}
 }
 updatePrice(); setInterval(updatePrice,60000);
