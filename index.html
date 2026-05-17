@@ -649,6 +649,7 @@ if (!RAW_COINS?.BTC || !Array.isArray(RAW_COINS.BTC.daily)) {
 }
 const savedCoin = localStorage.getItem('btcPatternCoin');
 const requestedCoin = COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
+const PX = 'https://mybtcbox-proxy.huachuanfang.workers.dev/api?url=';
 let activeCoin = 'BTC';
 let BTC_DAILY_RAW = RAW_COINS[activeCoin];
 function bRound(n, d=2){ return n == null || !Number.isFinite(n) ? null : Math.round(n * 10**d) / 10**d; }
@@ -2354,7 +2355,7 @@ async function updatePrice(){
   }catch(e){}
   // Binance funding rate — no key needed
   try{
-    const fr=await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
+    const fr=await fetch(PX + encodeURIComponent('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT'));
     const fd=await fr.json();
     var rate=parseFloat(fd.lastFundingRate)*100;
     var frEl=document.getElementById('tfr');
@@ -2372,9 +2373,9 @@ async function updatePrice(){
   try{
     var lsEl=document.getElementById('tls');
     var [bnLS,okLS,bbLS] = await Promise.all([
-      fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1h'),
-      fetch('https://www.okx.com/api/v5/public/long-short-account-ratio?currency=BTC'),
-      fetch('https://api.bybit.com/v5/market/long-short-ratio?category=linear&symbol=BTCUSDT')
+      fetch(PX + encodeURIComponent('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1h')),
+      fetch(PX + encodeURIComponent('https://www.okx.com/api/v5/public/long-short-account-ratio?currency=BTC')),
+      fetch(PX + encodeURIComponent('https://api.bybit.com/v5/market/long-short-ratio?category=linear&symbol=BTCUSDT'))
     ]);
     var ratios=[], weights=[];
     if(bnLS.ok){
@@ -2408,8 +2409,8 @@ async function updatePrice(){
     var liqEl=document.getElementById('tliq');
     var totalLiq=0;
     var [okLiq,bbLiq]=await Promise.all([
-      fetch('https://www.okx.com/api/v5/public/liquidation-orders?instType=SWAP&instId=BTC-USDT-SWAP&limit=50'),
-      fetch('https://api.bybit.com/v5/market/liquidation?category=linear&symbol=BTCUSDT&limit=50')
+      fetch(PX + encodeURIComponent('https://www.okx.com/api/v5/public/liquidation-orders?instType=SWAP&instId=BTC-USDT-SWAP&limit=50')),
+      fetch(PX + encodeURIComponent('https://api.bybit.com/v5/market/liquidation?category=linear&symbol=BTCUSDT&limit=50'))
     ]);
     if(okLiq.ok){
       var okL=await okLiq.json();
