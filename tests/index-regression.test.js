@@ -28,6 +28,7 @@ class ElementStub {
     this.options = withOptions ? [{}, {}, {}, {}] : [];
     this.dataset = {};
     this.placeholder = '';
+    this.title = '';
   }
   addEventListener() {}
   scrollIntoView() {}
@@ -81,7 +82,16 @@ function createContext(startDate = '2017-01-01') {
     setTimeout() {},
     setInterval() {},
     requestAnimationFrame(cb) { cb(); },
-    fetch: async () => ({ json: async () => ({ market_data: { current_price: { usd: 100000 }, price_change_percentage_24h: 0 } }) }),
+    fetch: async (url = '') => {
+      const href = String(url);
+      if (href.includes('funding-rate')) {
+        return { ok: true, json: async () => ({ code: '0', data: [{ fundingRate: '0.00002166' }] }) };
+      }
+      if (href.includes('long-short-account-ratio')) {
+        return { ok: true, json: async () => ({ code: '0', data: [['1778985300000', '1.43']] }) };
+      }
+      return { ok: true, json: async () => ({ market_data: { current_price: { usd: 100000 }, price_change_percentage_24h: 0 } }) };
+    },
     html2canvas: () => Promise.resolve({ toDataURL() { return ''; } }),
   };
   vm.createContext(context);
@@ -162,6 +172,33 @@ assertEqual(dogeExtremes.maxRiseMetric, 356.79, 'DOGE max daily rise should be h
 assertEqual(dogeExtremes.maxDropDate, '2021-05-19', 'DOGE max daily drop should use intraday low date');
 assertEqual(dogeExtremes.maxDropMetric, -54.16, 'DOGE max daily drop should be low versus previous close');
 
+const sentimentContext = createContext();
+const sentimentResult = vm.runInContext(`
+updateMarketSentiment().then(() => ({
+  fundingText: document.getElementById('tfr').textContent,
+  fundingColor: document.getElementById('tfr').style.color,
+  fundingTitle: document.getElementById('tfr').title,
+  lsText: document.getElementById('tls').textContent,
+  lsColor: document.getElementById('tls').style.color,
+  lsTitle: document.getElementById('tls').title,
+}));
+`, sentimentContext);
+
+sentimentResult.then(result => {
+  assertEqual(result.fundingText, '+0.002%', 'Funding should parse OKX funding rate as percent');
+  assertEqual(result.fundingColor, '#10b981', 'Normal funding should be green');
+  assertEqual(result.fundingTitle.includes('OKX BTC-USDT'), true, 'Funding tooltip should disclose OKX source');
+  assertEqual(result.lsText, '1.43', 'L/S should parse OKX long-short ratio');
+  assertEqual(result.lsColor, '#f97316', 'Warm L/S should be orange');
+  assertEqual(result.lsTitle.includes('OKX BTC'), true, 'L/S tooltip should disclose OKX source');
+}).then(() => {
+  runCopyChecks();
+}).catch(err => {
+  console.error(err);
+  process.exit(1);
+});
+
+function runCopyChecks() {
 const copyContext = createContext();
 const copyResult = vm.runInContext(`
 setLang('zh');
@@ -179,3 +216,4 @@ assertEqual(copyResult.enPlaceholder, 'Custom %', 'English custom threshold plac
 assertEqual(copyResult.enHint, 'Choose a fixed drop, or enter your own drop %', 'English custom threshold hint should explain the input');
 
 console.log('index regression checks passed');
+}

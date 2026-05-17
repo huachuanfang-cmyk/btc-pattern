@@ -362,7 +362,6 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     <span class="ti"><span class="l" data-i="fromATH">FROM ATH</span><span id="ta" class="mono dn">—</span></span>
     <span class="ti" id="fr-row"><span class="l" style="color:var(--ink3);font-size:10px">Funding</span><span id="tfr" class="mono" style="font-size:11px">—</span></span>
     <span class="ti" id="ls-row"><span class="l" style="color:var(--ink3);font-size:10px">L/S</span><span id="tls" class="mono" style="font-size:11px">—</span></span>
-    <span class="ti" id="liq-row"><span class="l" style="color:var(--ink3);font-size:10px">Liq</span><span id="tliq" class="mono" style="font-size:11px">—</span></span>
     <span class="ti" id="halving-row"><span class="l" style="color:var(--accent);font-weight:600" data-i="nextHalv">NEXT HALVING</span><span id="th" class="mono">—</span></span>
   </div>
   <span class="mono" id="tt" style="font-size:10px;color:var(--ink3)">—</span>
@@ -2338,6 +2337,63 @@ function tickH(){
 }
 setInterval(tickH,1000); tickH();
 
+async function fetchProxyJson(url){
+  const res = await fetch(PX + encodeURIComponent(url));
+  if(!res.ok) throw new Error('proxy ' + res.status);
+  return res.json();
+}
+function fundingColor(rate){
+  return rate > 0.05 ? '#ef4444' : rate > 0.015 ? '#f97316' : rate < -0.01 ? '#60a5fa' : '#10b981';
+}
+function fundingLabel(rate){
+  return rate > 0.05 ? (lang==='zh'?'过热':'hot') : rate > 0.015 ? (lang==='zh'?'偏热':'warm') : rate < -0.01 ? (lang==='zh'?'偏空':'short bias') : (lang==='zh'?'正常':'normal');
+}
+function lsColor(ratio){
+  return ratio > 1.5 ? '#ef4444' : ratio > 1.2 ? '#f97316' : ratio < 0.8 ? '#60a5fa' : '#10b981';
+}
+function setMetricUnavailable(id, title){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = '—';
+  el.style.color = '#64748b';
+  el.title = title;
+}
+async function updateMarketSentiment(){
+  try{
+    const fd = await fetchProxyJson('https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USDT-SWAP');
+    const rate = parseFloat(fd?.data?.[0]?.fundingRate) * 100;
+    const el = document.getElementById('tfr');
+    if(el && Number.isFinite(rate)){
+      el.textContent = (rate >= 0 ? '+' : '') + rate.toFixed(3) + '%';
+      el.style.color = fundingColor(rate);
+      el.title = lang==='zh'
+        ? 'OKX BTC-USDT 永续资金费率 · ' + fundingLabel(rate)
+        : 'OKX BTC-USDT perpetual funding rate · ' + fundingLabel(rate);
+    }else{
+      setMetricUnavailable('tfr', lang==='zh'?'资金费率暂不可用':'Funding unavailable');
+    }
+  }catch(e){
+    setMetricUnavailable('tfr', lang==='zh'?'资金费率暂不可用':'Funding unavailable');
+  }
+
+  try{
+    const ld = await fetchProxyJson('https://www.okx.com/api/v5/rubik/stat/contracts/long-short-account-ratio?ccy=BTC');
+    const ratio = parseFloat(ld?.data?.[0]?.[1]);
+    const el = document.getElementById('tls');
+    if(el && Number.isFinite(ratio)){
+      el.textContent = ratio.toFixed(2);
+      el.style.color = lsColor(ratio);
+      el.title = lang==='zh'
+        ? 'OKX BTC 合约账户多空比'
+        : 'OKX BTC contract account long/short ratio';
+    }else{
+      setMetricUnavailable('tls', lang==='zh'?'多空比暂不可用':'L/S unavailable');
+    }
+  }catch(e){
+    setMetricUnavailable('tls', lang==='zh'?'多空比暂不可用':'L/S unavailable');
+  }
+}
+
 async function updatePrice(){
   const coinId = COINGECKO_IDS[activeCoin] || 'bitcoin';
   try{
@@ -2355,84 +2411,7 @@ async function updatePrice(){
       ? now.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'})+' 北京时间'
       : now.toUTCString().slice(17,25)+' UTC';
   }catch(e){}
-  // Binance funding rate — no key needed
-  try{
-    const fr=await fetch(PX + encodeURIComponent('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT'));
-    const fd=await fr.json();
-    var rate=parseFloat(fd.lastFundingRate)*100;
-    var frEl=document.getElementById('tfr');
-    if(Number.isFinite(rate)){
-      var frColor= rate > 0.05 ? '#ef4444' : rate > 0.015 ? '#f97316' : rate < -0.01 ? '#60a5fa' : '#10b981';
-      var frLabel= rate > 0.05 ? (lang==='zh'?'过热':'hot') : rate > 0.015 ? (lang==='zh'?'偏热':'warm') : rate < -0.01 ? (lang==='zh'?'偏空':'oversold') : (lang==='zh'?'正常':'normal');
-      frEl.textContent=(rate>=0?'+':'')+rate.toFixed(3)+'%';
-      frEl.style.color=frColor;
-      frEl.title=lang==='zh'?'币安BTC永续资金费率 · '+frLabel:'Binance BTC perpetual funding rate · '+frLabel;
-    }else{
-      frEl.textContent='—';
-    }
-  }catch(e){}
-  // Multi-exchange long/short ratio (Binance + OKX + Bybit)
-  try{
-    var lsEl=document.getElementById('tls');
-    var [bnLS,okLS,bbLS] = await Promise.all([
-      fetch(PX + encodeURIComponent('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1h')),
-      fetch(PX + encodeURIComponent('https://www.okx.com/api/v5/public/long-short-account-ratio?currency=BTC')),
-      fetch(PX + encodeURIComponent('https://api.bybit.com/v5/market/long-short-ratio?category=linear&symbol=BTCUSDT'))
-    ]);
-    var ratios=[], weights=[];
-    if(bnLS.ok){
-      var bnD=await bnLS.json();
-      if(bnD&&bnD.length>0&&bnD[0].longShortRatio){
-        ratios.push(parseFloat(bnD[0].longShortRatio)); weights.push(50);
-      }
-    }
-    if(okLS.ok){
-      var okD=await okLS.json();
-      if(okD&&okD.code==='0'&&okD.data&&okD.data.length>0&&okD.data[0].longShortRatio){
-        ratios.push(parseFloat(okD.data[0].longShortRatio)); weights.push(25);
-      }
-    }
-    if(bbLS.ok){
-      var bbD=await bbLS.json();
-      if(bbD&&bbD.retCode===0&&bbD.result&&bbD.result.list&&bbD.result.list.length>0&&bbD.result.list[0].longShortRatio){
-        ratios.push(parseFloat(bbD.result.list[0].longShortRatio)); weights.push(15);
-      }
-    }
-    if(ratios.length>0){
-      var totalW=weights.reduce(function(a,b){return a+b},0);
-      var composite=ratios.reduce(function(s,r,i){return s+r*weights[i]},0)/totalW;
-      lsEl.textContent=composite.toFixed(2);
-      lsEl.style.color= composite>1.5?'#ef4444': composite>1.2?'#f97316': composite<0.8?'#60a5fa':'#10b981';
-      lsEl.title=lang==='zh'?'综合多空比(币安+OKX+Bybit)':'Composite L/S (Binance+OKX+Bybit)';
-    }else{lsEl.textContent='—'}
-  }catch(e){}
-  // Aggregated liquidation (OKX + Bybit)
-  try{
-    var liqEl=document.getElementById('tliq');
-    var totalLiq=0;
-    var [okLiq,bbLiq]=await Promise.all([
-      fetch(PX + encodeURIComponent('https://www.okx.com/api/v5/public/liquidation-orders?instType=SWAP&instId=BTC-USDT-SWAP&limit=50')),
-      fetch(PX + encodeURIComponent('https://api.bybit.com/v5/market/liquidation?category=linear&symbol=BTCUSDT&limit=50'))
-    ]);
-    if(okLiq.ok){
-      var okL=await okLiq.json();
-      if(okL&&okL.data&&okL.data.length){
-        okL.data.forEach(function(o){totalLiq+=parseFloat(o.sz||0)*parseFloat(o.px||0)});
-      }
-    }
-    if(bbLiq.ok){
-      var bbL=await bbLiq.json();
-      if(bbL&&bbL.result&&bbL.result.list&&bbL.result.list.length){
-        bbL.result.list.forEach(function(o){totalLiq+=parseFloat(o.size||0)*parseFloat(o.price||0)});
-      }
-    }
-    if(totalLiq>0){
-      var liqVal=totalLiq>=1e6?(totalLiq/1e6).toFixed(1)+'M':(totalLiq/1e3).toFixed(0)+'K';
-      liqEl.textContent='$'+liqVal;
-      liqEl.style.color= totalLiq>100e6?'#ef4444': totalLiq>50e6?'#f97316':'#94a3b8';
-      liqEl.title=lang==='zh'?'近24h爆仓总额(OKX+Bybit)':'24h Liq Total (OKX+Bybit)';
-    }else{liqEl.textContent='—'}
-  }catch(e){}
+  updateMarketSentiment();
 }
 updatePrice(); setInterval(updatePrice,60000);
 
