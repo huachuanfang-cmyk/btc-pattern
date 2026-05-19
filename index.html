@@ -362,6 +362,8 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     <span class="ti"><span class="l" data-i="fromATH">FROM ATH</span><span id="ta" class="mono dn">—</span></span>
     <span class="ti" id="fr-row"><span class="l" style="color:var(--ink3);font-size:10px">Funding</span><span id="tfr" class="mono" style="font-size:11px">—</span></span>
     <span class="ti" id="ls-row"><span class="l" style="color:var(--ink3);font-size:10px">L/S</span><span id="tls" class="mono" style="font-size:11px">—</span></span>
+    <span class="ti" id="fg-row"><span class="l" style="color:var(--ink3);font-size:10px">F&G</span><span id="tfg" class="mono" style="font-size:11px">—</span></span>
+    <span class="ti" id="dom-row"><span class="l" style="color:var(--ink3);font-size:10px">Domin</span><span id="tdom" class="mono" style="font-size:11px">—</span></span>
     <span class="ti" id="halving-row"><span class="l" style="color:var(--accent);font-weight:600" data-i="nextHalv">NEXT HALVING</span><span id="th" class="mono">—</span></span>
   </div>
   <span class="mono" id="tt" style="font-size:10px;color:var(--ink3)">—</span>
@@ -2392,6 +2394,31 @@ async function updateMarketSentiment(){
   }catch(e){
     setMetricUnavailable('tls', lang==='zh'?'多空比暂不可用':'L/S unavailable');
   }
+  // Fear & Greed Index
+  try{
+    const fgResp = await fetch('https://api.alternative.me/fng/?limit=1');
+    const fgD = await fgResp.json();
+    const el = document.getElementById('tfg');
+    if(el && fgD?.data?.[0]?.value){
+      const val = parseInt(fgD.data[0].value);
+      const label = fgD.data[0].value_classification;
+      el.textContent = val + ' ' + (label||'');
+      el.style.color = val <= 25 ? '#ef4444' : val <= 45 ? '#f97316' : val <= 55 ? '#eab308' : val <= 75 ? '#22c55e' : '#10b981';
+      el.title = lang==='zh'?'恐惧贪婪指数: '+label:'Fear & Greed: '+label;
+    }else{ setMetricUnavailable('tfg', '—'); }
+  }catch(e){ setMetricUnavailable('tfg', '—'); }
+  // BTC Dominance (direct fetch — CoinGecko allows CORS)
+  try{
+    const domResp = await fetch('https://api.coingecko.com/api/v3/global');
+    const domD = await domResp.json();
+    const el = document.getElementById('tdom');
+    const btcDom = domD?.data?.market_cap_percentage?.btc;
+    if(el && Number.isFinite(btcDom)){
+      el.textContent = btcDom.toFixed(1) + '%';
+      el.style.color = btcDom > 55 ? '#22c55e' : btcDom > 45 ? '#94a3b8' : '#f97316';
+      el.title = lang==='zh'?'BTC市占率':'BTC Dominance';
+    }else{ setMetricUnavailable('tdom', '—'); }
+  }catch(e){ setMetricUnavailable('tdom', '—'); }
 }
 
 async function updatePrice(){
