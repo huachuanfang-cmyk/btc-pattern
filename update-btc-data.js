@@ -21,6 +21,15 @@ function utcDate(ts) {
   return new Date(ts * 1000).toISOString().slice(0, 10);
 }
 
+function utcDay(date = new Date()) {
+  return new Date(date).toISOString().slice(0, 10);
+}
+
+function keepCompletedUtcDays(rows, now = new Date()) {
+  const currentUtcDay = utcDay(now);
+  return rows.filter((row) => row.date < currentUtcDay);
+}
+
 function round(n, d = 2) {
   return n == null || !Number.isFinite(n) ? null : Math.round(n * 10 ** d) / 10 ** d;
 }
@@ -33,9 +42,9 @@ function pct(a, b) {
   return !a || !b ? null : round((a / b - 1) * 100, 2);
 }
 
-async function fetchYahooDaily(symbol) {
+async function fetchYahooDaily(symbol, now = new Date()) {
   const period1 = unixSeconds(START_DATE);
-  const period2 = Math.floor(Date.now() / 1000) + 86400;
+  const period2 = Math.floor(new Date(now).getTime() / 1000) + 86400;
   const url =
     `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}` +
     `?period1=${period1}&period2=${period2}&interval=1d&events=history&includeAdjustedClose=true`;
@@ -70,7 +79,10 @@ async function fetchYahooDaily(symbol) {
   }
 
   rows.sort((a, b) => a.date.localeCompare(b.date));
-  return rows.filter((row) => row.date >= START_DATE);
+  return keepCompletedUtcDays(
+    rows.filter((row) => row.date >= START_DATE),
+    now,
+  );
 }
 
 async function fetchJson(url) {
@@ -216,7 +228,17 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  START_DATE,
+  addDerivedFields,
+  keepCompletedUtcDays,
+  utcDay,
+  validate,
+};

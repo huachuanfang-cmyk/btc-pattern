@@ -33,11 +33,13 @@ class ElementStub {
     this.title = '';
   }
   addEventListener() {}
+  setAttribute(name, value) { this[name] = value; }
   scrollIntoView() {}
 }
 
 function createContext(startDate = '2017-01-01') {
   const elements = new Map();
+  const storage = new Map();
   function getElementById(id) {
     if (!elements.has(id)) {
       const el = new ElementStub(id, id === 'qtype');
@@ -71,7 +73,11 @@ function createContext(startDate = '2017-01-01') {
     console,
     window: {},
     document,
-    localStorage: { getItem() { return null; }, setItem() {} },
+    localStorage: {
+      getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+      setItem(key, value) { storage.set(key, String(value)); },
+      removeItem(key) { storage.delete(key); },
+    },
     URLSearchParams,
     Date,
     Math,
@@ -144,21 +150,31 @@ const manualDcaInv = manualWeeklyRowsRangeForTest('2024-06-01', '2024-12-31').le
 const janMonthly = calcMonthlyTriggers('2024-01-01')[0].triggers;
 const janManual = DAILY_SERIES.filter(d => d.date >= '2024-01-01' && d.date <= '2024-01-31' && d.pct <= -cbThresh).length;
 const winnerByRoiMatches = Object.values(years).every(y => y.winner === (y.stratROI > y.dcaROI ? 'strat' : 'dca'));
-const pulseScore = marketPulseScore({ change24h: 2.5, fromAth: -20, fundingRate: 0.002, lsRatio: 1.43 });
-const pulseState = marketPulseState(pulseScore);
 const latestSignal = latestSignalForData(BTC_DATA);
+const btcLast = BTC_DATA.daily[BTC_DATA.daily.length - 1];
+const syntheticRangeSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, range_pct:9, low_to_close:1}]});
+const syntheticWickSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, range_pct:6, low_to_close:5.5}]});
+COIN_DATA.BTC = {...BTC_DATA, daily:[...BTC_DATA.daily.slice(0,-1), {...btcLast, pct:-8.2}]};
+renderDailySignals();
+const dailySignalHtml = document.getElementById('daily-signal-list').innerHTML;
+const dailySignalCount = document.getElementById('daily-scan-count').textContent;
+COIN_DATA.BTC = BTC_DATA;
+activeCoin = 'BTC';
+qtype = 'drop';
+thresh = 8;
+saveCurrentQuery();
+const savedQueryHtml = document.getElementById('saved-queries').innerHTML;
+const savedQueryStorage = localStorage.getItem(SAVED_QUERY_KEY);
 MARKET_PRICES.BTC = { price: 100000, change24h: 2.5 };
 MARKET_SENTIMENT = { fundingRate: 0.002, lsRatio: 1.43 };
-renderMarketWatch();
-const watchStatus = document.getElementById('liq-status').textContent;
-const watchBtc = document.getElementById('watch-btc').textContent;
-const watchFunding = document.getElementById('watch-funding').textContent;
 const initialBtcAth = BTC_DATA._ath;
 activeCoin = 'DOGE';
 BTC_DATA = buildBtcData(RAW_COINS.DOGE);
 COIN_DATA.DOGE = BTC_DATA;
 MARKET_PRICES = { BTC:{ price:100000, change24h:2.5 }, DOGE:{ price:0.11, change24h:-3.4 } };
 renderMarketDashboard();
+updateDynamicCopy();
+run();
 ({
   activeAth: ACTIVE_ATH,
   btcAth: initialBtcAth,
@@ -169,15 +185,18 @@ renderMarketDashboard();
   janMonthly,
   janManual,
   winnerByRoiMatches,
-  pulseScore,
-  pulseStateKey: pulseState.key,
   latestSignalDate: latestSignal.date,
-  watchStatus,
-  watchBtc,
-  watchFunding,
+  syntheticRangeKind: syntheticRangeSignal.kind,
+  syntheticWickKind: syntheticWickSignal.kind,
+  dailySignalHtml,
+  dailySignalCount,
+  savedQueryHtml,
+  savedQueryStorage,
   tickerSymbol: document.getElementById('ticker-symbol').textContent,
   tickerPrice: document.getElementById('tp').textContent,
-  heatClickable: document.getElementById('heat-row').innerHTML.includes('openCoinChart'),
+  heroTitle: document.getElementById('hero-title').innerHTML,
+  mobileHistory: document.getElementById('mobile-history').innerHTML,
+  probSample: document.getElementById('pa30').textContent,
 });
 `, context);
 
@@ -186,15 +205,24 @@ assertEqual(result.yearTriggers, result.manualTriggers, 'First backtest year sho
 assertEqual(result.yearDcaInv, result.manualDcaInv, 'First-year DCA should start at selected date');
 assertEqual(result.janMonthly, result.janManual, 'Monthly triggers should use the current threshold');
 assertEqual(result.winnerByRoiMatches, true, 'Yearly winner should be based on cumulative ROI');
-assertEqual(result.pulseScore >= 0 && result.pulseScore <= 100, true, 'Market pulse should be clamped to 0-100');
-assertEqual(['cold', 'cautious', 'balanced', 'warm', 'hot'].includes(result.pulseStateKey), true, 'Market pulse should return a known state');
 assertEqual(/^\d{4}-\d{2}-\d{2}$/.test(result.latestSignalDate), true, 'Latest signal should expose a daily candle date');
-assertEqual(result.watchStatus, 'Live data', 'Market watch should replace unstable liquidation status');
-assertEqual(result.watchBtc, '+2.50%', 'Market watch should show BTC 24H');
-assertEqual(result.watchFunding, '+0.002%', 'Market watch should show funding');
+assertEqual(result.syntheticRangeKind, 'range', 'Latest signal should detect a completed daily range event');
+assertEqual(result.syntheticWickKind, 'wick', 'Latest signal should detect a completed daily wick event');
+assertEqual(result.dailySignalHtml.includes("openDailySignal('BTC','drop',8)"), true, 'Triggered daily signal should open the matching historical query');
+assertEqual(result.dailySignalCount.includes('1/5'), true, 'Daily scan should disclose how many assets triggered');
+assertEqual(result.savedQueryHtml.includes('BTC 收盘跌超 8%'), true, 'Saved query should render a readable local shortcut');
+assertEqual(result.savedQueryStorage.includes('"coin":"BTC"'), true, 'Saved query should persist on the current device');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
 assertEqual(result.tickerPrice, '$0.1100', 'Top ticker should use shared live price data for selected asset');
-assertEqual(result.heatClickable, false, 'Heat strip should stay as a compact live overview, not open the removed chart experiment');
+assertEqual(result.heroTitle.includes('狗狗币'), true, 'Hero title should follow the selected asset');
+assertEqual(result.mobileHistory.includes('30日后'), true, 'Mobile history should retain long-horizon outcomes');
+assertEqual(result.probSample.includes('样本'), true, 'Probability copy should disclose its valid sample denominator');
+
+assertEqual(html.includes('id="pulse-score"'), false, 'Homepage should not include a proprietary market score');
+assertEqual(html.includes('id="liq-status"'), false, 'Homepage should not include the large real-time market watch card');
+assertEqual(html.includes('id="heat-row"'), false, 'Homepage should not include the duplicate five-asset heat strip');
+assertEqual(html.includes('<div class="results" id="results">'), true, 'Historical results should start hidden until the user runs a query');
+assertEqual(html.includes('<details class="secondary-tool" id="backtest-tool"'), true, 'Backtest should live behind a secondary tool disclosure');
 
 const dogeExtremes = vm.runInContext(`
 const dogeRows = buildBtcData(RAW_COINS.DOGE).daily;
