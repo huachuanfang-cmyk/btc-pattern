@@ -21,23 +21,26 @@ const server = http.createServer((request, response) => {
   try { pathname = decodeURIComponent(requestUrl.pathname); }
   catch { response.writeHead(400); response.end('Bad Request'); return; }
   const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  const file = path.resolve(root, relative);
+  let file = path.resolve(root, relative);
   if (file !== root && !file.startsWith(`${root}${path.sep}`)) {
     response.writeHead(403);
     response.end('Forbidden');
     return;
   }
   fs.stat(file, (statError, stat) => {
-    if (statError || !stat.isFile()) {
-      response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      response.end('Not Found');
-      return;
-    }
-    response.writeHead(200, {
-      'Cache-Control': 'no-store',
-      'Content-Type': types[path.extname(file).toLowerCase()] || 'application/octet-stream',
+    if (!statError && stat.isDirectory()) file = path.join(file, 'index.html');
+    fs.stat(file, (fileError, fileStat) => {
+      if (fileError || !fileStat.isFile()) {
+        response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        response.end('Not Found');
+        return;
+      }
+      response.writeHead(200, {
+        'Cache-Control': 'no-store',
+        'Content-Type': types[path.extname(file).toLowerCase()] || 'application/octet-stream',
+      });
+      fs.createReadStream(file).pipe(response);
     });
-    fs.createReadStream(file).pipe(response);
   });
 });
 

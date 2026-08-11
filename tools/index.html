@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BTC 历史数据工具目录 | My BTC Box</title>
+  <meta name="description" content="使用 BTC 历史大跌、大涨、振幅、插针、周期刻度和条件买入回测工具。真实 UTC 日线，只做历史数据参考。">
+  <link rel="canonical" href="https://www.mybtcbox.com/tools/">
+  <meta property="og:title" content="BTC 历史数据工具目录 | My BTC Box">
+  <meta property="og:description" content="六个可直接使用的 BTC 历史数据查询、周期比较和回测工具。">
+  <meta property="og:url" content="https://www.mybtcbox.com/tools/">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#080b10">
+  <link rel="icon" href="/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/tools.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"BTC 历史数据工具目录","url":"https://www.mybtcbox.com/tools/","description":"六个可直接使用的 BTC 历史数据查询、周期比较和回测工具。","isPartOf":{"@type":"WebSite","name":"My BTC Box","url":"https://www.mybtcbox.com/"}}</script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/"><span>₿</span>My BTC Box</a>
+    <nav aria-label="工具目录导航"><a href="/status.html">数据状态</a><a href="/methodology.html">数据与方法</a></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="kicker">BTC 历史数据工具</p>
+      <h1>从一个问题开始查历史</h1>
+      <p>选择你想理解的市场事件。每个工具都公开样本数、数据日期和计算口径，不给出涨跌预测或交易指令。</p>
+    </section>
+
+    <section class="tool-group" aria-labelledby="events-title">
+      <div class="group-heading"><h2 id="events-title">历史事件查询</h2><p>筛选真实发生过的日线事件，再观察后续不同结果。</p></div>
+      <div class="tool-list">
+        <a href="/tools/btc-drop-history"><strong>单日大跌</strong><span>收盘下跌至少 8% 后，1 日、7 日和 30 日表现如何？</span><b>打开工具</b></a>
+        <a href="/tools/btc-rise-history"><strong>单日大涨</strong><span>收盘上涨至少 8% 后，历史结果是否一致？</span><b>打开工具</b></a>
+        <a href="/tools/btc-volatility-history"><strong>高振幅日</strong><span>最高价到最低价振幅至少 8% 时，后来怎样？</span><b>打开工具</b></a>
+        <a href="/tools/btc-wick-history"><strong>插针恢复</strong><span>最低价到收盘价回升至少 5% 的历史样本。</span><b>打开工具</b></a>
+      </div>
+    </section>
+
+    <section class="tool-group paired" aria-labelledby="compare-title">
+      <div class="group-heading"><h2 id="compare-title">周期与策略比较</h2><p>把当前时间位置或买入规则放进统一的历史口径。</p></div>
+      <div class="tool-list">
+        <a href="/tools/btc-cycle-clock"><strong>历史周期刻度尺</strong><span>当前样本高点后走了多久，与过去三轮相比在哪里？</span><b>打开工具</b></a>
+        <a href="/tools/btc-conditional-buy-backtest"><strong>条件买入回测</strong><span>单日下跌时买入，与每周定投的历史差异。</span><b>打开工具</b></a>
+      </div>
+    </section>
+
+    <section class="principle">
+      <h2>共同数据原则</h2>
+      <dl>
+        <div><dt>日线</dt><dd>Yahoo Finance BTC-USD，UTC 完整日线</dd></div>
+        <div><dt>概率</dt><dd>只使用存在对应未来收盘价的有效样本</dd></div>
+        <div><dt>用途</dt><dd>理解历史分布，不预测下一次涨跌</dd></div>
+      </dl>
+    </section>
+  </main>
+  <footer><span>历史数据仅供参考，不构成投资建议。</span><a href="/">返回首页</a></footer>
+</body>
+</html>

@@ -11,6 +11,8 @@ const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const serviceWorker = fs.readFileSync('sw.js', 'utf8');
 const statusHtml = fs.readFileSync('status.html', 'utf8');
 const statusScript = fs.readFileSync('assets/status.js', 'utf8');
+const toolsHtml = fs.readFileSync('tools/index.html', 'utf8');
+const toolsStyles = fs.readFileSync('assets/tools.css', 'utf8');
 const coreScript = fs.readFileSync('assets/core.js', 'utf8');
 const backtestCoreScript = fs.readFileSync('assets/backtest-core.js', 'utf8');
 const reportCoreScript = fs.readFileSync('assets/report-core.js', 'utf8');
@@ -407,6 +409,7 @@ assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), tr
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/</loc>'), true, 'Sitemap should include the core tool homepage');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/methodology.html</loc>'), true, 'Sitemap should include the public methodology page');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/status.html</loc>'), true, 'Sitemap should include the public data status page');
+assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/tools/</loc>'), true, 'Sitemap should include the public tool directory');
 assertEqual(statusHtml.includes('id="status-summary"'), true, 'Status page should expose an accessible live summary');
 assertEqual(statusHtml.includes('/data/health.json'), true, 'Status page should link the machine-readable health manifest');
 assertEqual(statusScript.includes("expected=['BTC','ETH','SOL','DOGE','BNB']"), true, 'Status page should require all five published assets');
@@ -414,10 +417,17 @@ assertEqual(statusScript.includes("lag<=2"), true, 'Status page should apply the
 for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-history','btc-wick-history','btc-cycle-clock','btc-conditional-buy-backtest']) {
   assertEqual(toolFunction.includes(`'${slug}'`), true, `Pages Function should define the ${slug} tool route`);
   assertEqual(sitemap.includes(`<loc>https://www.mybtcbox.com/tools/${slug}</loc>`), true, `Sitemap should include the ${slug} tool route`);
+  assertEqual(toolsHtml.includes(`href="/tools/${slug}"`), true, `Tool directory should link to the ${slug} route`);
 }
 assertEqual(toolFunction.includes('window.MYBTCBOX_PRESET='), true, 'Tool routes should reuse the real query app with a route preset');
 assertEqual(toolFunction.includes("url: canonical"), true, 'Each tool route should publish its own structured-data URL');
 assertEqual(toolFunction.includes('twitter:title'), true, 'Each tool route should publish route-specific Twitter metadata');
+assertEqual(toolFunction.includes("'@type': 'BreadcrumbList'"), true, 'Each tool route should publish breadcrumb structured data');
+assertEqual(toolFunction.includes('class="route-explainer"'), true, 'Each tool route should include a crawlable method explanation');
+assertEqual(toolFunction.includes('计算口径：'), true, 'Each tool route should label its calculation method');
+assertEqual(toolsHtml.includes('"@type":"CollectionPage"'), true, 'Tool directory should publish CollectionPage structured data');
+assertEqual(toolsHtml.includes('共同数据原则'), true, 'Tool directory should disclose shared data principles');
+assertEqual(toolsStyles.includes('@media(max-width:720px)'), true, 'Tool directory should include a compact mobile layout');
 assertEqual(manifest.display, 'standalone', 'Web app manifest should support a standalone home-screen experience');
 assertEqual(manifest.icons.some(icon => icon.sizes === '192x192' && icon.type === 'image/png'), true, 'Web app manifest should include the Chromium 192px PNG icon');
 assertEqual(manifest.icons.some(icon => icon.sizes === '512x512' && icon.type === 'image/png'), true, 'Web app manifest should include the Chromium 512px PNG icon');
@@ -441,6 +451,9 @@ for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/backtest-cor
 }
 for (const asset of ['/status.html', '/assets/status.css', '/assets/status.js', '/data/health.js']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache status resource ${asset}`);
+}
+for (const asset of ['/tools/', '/assets/tools.css']) {
+  assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache tool directory resource ${asset}`);
 }
 assertEqual(html.includes('rel="manifest" href="/manifest.webmanifest"'), true, 'Homepage should link the web app manifest');
 assertEqual(html.includes('rel="apple-touch-icon" href="/app-icon-180.png"'), true, 'Homepage should provide an iOS home-screen icon');

@@ -88,6 +88,17 @@ test('public data status exposes all five assets', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('tool directory exposes all six tasks without overflow', async ({ page }) => {
+  const errors = collectConsoleErrors(page);
+  await page.goto('/tools/', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('从一个问题开始查历史');
+  await expect(page.locator('.tool-list > a')).toHaveCount(6);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://www.mybtcbox.com/tools/');
+  await expect(page.getByText('共同数据原则')).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  expect(errors).toEqual([]);
+});
+
 test('historical report stays readable inside the viewport', async ({ page }) => {
   const errors = collectConsoleErrors(page);
   await page.goto('/?kind=event&asset=btc&type=drop&threshold=8', { waitUntil: 'domcontentloaded' });
