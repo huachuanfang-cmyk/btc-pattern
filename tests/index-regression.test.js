@@ -6,6 +6,7 @@ const methodologyHtml = fs.readFileSync('methodology.html', 'utf8');
 const headers = fs.readFileSync('_headers', 'utf8');
 const robots = fs.readFileSync('robots.txt', 'utf8');
 const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
+const toolFunction = fs.readFileSync('functions/tools/[slug].js', 'utf8');
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
   .find(script => script.includes('function buildBtcData'));
@@ -41,7 +42,7 @@ class ElementStub {
   scrollIntoView() {}
 }
 
-function createContext(startDate = '2017-01-01') {
+function createContext(startDate = '2017-01-01', pageWindow = {}) {
   const elements = new Map();
   const storage = new Map();
   function getElementById(id) {
@@ -75,7 +76,7 @@ function createContext(startDate = '2017-01-01') {
 
   const context = {
     console,
-    window: {},
+    window: pageWindow,
     document,
     localStorage: {
       getItem(key) { return storage.has(key) ? storage.get(key) : null; },
@@ -254,6 +255,21 @@ assertEqual(result.eventShareUrl.includes('asset=doge'), true, 'Shared event URL
 assertEqual(result.eventShareUrl.includes('type=drop'), true, 'Shared event URL should preserve the event type');
 assertEqual(result.eventShareUrl.includes('threshold=8'), true, 'Shared event URL should preserve the event threshold');
 
+const presetContext = createContext('2017-01-01', {
+  location: { search: '' },
+  MYBTCBOX_PRESET: { asset: 'btc', type: 'wick', threshold: 5 },
+});
+const presetState = vm.runInContext(`({
+  requestedCoin,
+  requestedQueryType,
+  requestedQueryThreshold,
+  hasRequestedQuery
+})`, presetContext);
+assertEqual(presetState.requestedCoin, 'BTC', 'Tool route preset should select its configured asset');
+assertEqual(presetState.requestedQueryType, 'wick', 'Tool route preset should select its configured event type');
+assertEqual(presetState.requestedQueryThreshold, 5, 'Tool route preset should select its configured threshold');
+assertEqual(presetState.hasRequestedQuery, true, 'A valid tool route preset should automatically run the real query');
+
 assertEqual(html.includes('id="pulse-score"'), false, 'Homepage should not include a proprietary market score');
 assertEqual(html.includes('id="daily-brief"'), true, 'Homepage should include the daily observation mount point');
 assertEqual(html.includes('id="liq-status"'), false, 'Homepage should not include the large real-time market watch card');
@@ -345,6 +361,11 @@ assertEqual(html.includes('"@type":"WebApplication"'), true, 'Homepage should pu
 assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), true, 'Robots file should disclose the sitemap');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/</loc>'), true, 'Sitemap should include the core tool homepage');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/methodology.html</loc>'), true, 'Sitemap should include the public methodology page');
+for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-history','btc-wick-history']) {
+  assertEqual(toolFunction.includes(`'${slug}'`), true, `Pages Function should define the ${slug} tool route`);
+  assertEqual(sitemap.includes(`<loc>https://www.mybtcbox.com/tools/${slug}</loc>`), true, `Sitemap should include the ${slug} tool route`);
+}
+assertEqual(toolFunction.includes('window.MYBTCBOX_PRESET='), true, 'Tool routes should reuse the real query app with a route preset');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`

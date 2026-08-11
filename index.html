@@ -840,8 +840,9 @@ if (!RAW_COINS?.BTC || !Array.isArray(RAW_COINS.BTC.daily)) {
   throw new Error('Crypto daily data failed to load. Make sure data/btc.daily.js exists next to this HTML file.');
 }
 const PAGE_PARAMS = new URLSearchParams(window.location?.search || '');
+const PAGE_PRESET = window.MYBTCBOX_PRESET || {};
 const savedCoin = localStorage.getItem('btcPatternCoin');
-const urlCoin = (PAGE_PARAMS.get('asset') || '').toUpperCase();
+const urlCoin = (PAGE_PARAMS.get('asset') || PAGE_PRESET.asset || '').toUpperCase();
 const requestedCoin = COIN_ORDER.includes(urlCoin) ? urlCoin : COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
 const PX = 'https://mybtcbox-proxy.huachuanfang.workers.dev/api?url=';
 let activeCoin = 'BTC';
@@ -1301,9 +1302,11 @@ zh:{
 
 const savedLang = localStorage.getItem('btcPatternLang');
 let lang=savedLang === 'en' ? 'en' : 'zh', qtype='drop', thresh=8;
-const requestedQueryType = PAGE_PARAMS.get('kind') === 'event' && ['drop','rise','range','wick'].includes(PAGE_PARAMS.get('type'))
-  ? PAGE_PARAMS.get('type') : null;
-const requestedQueryThreshold = Number(PAGE_PARAMS.get('threshold'));
+const requestedTypeCandidate = PAGE_PARAMS.get('type') || PAGE_PRESET.type;
+const requestedKind = PAGE_PARAMS.get('kind') || (PAGE_PRESET.type ? 'event' : null);
+const requestedQueryType = requestedKind === 'event' && ['drop','rise','range','wick'].includes(requestedTypeCandidate)
+  ? requestedTypeCandidate : null;
+const requestedQueryThreshold = Number(PAGE_PARAMS.get('threshold') || PAGE_PRESET.threshold);
 const hasRequestedQuery = requestedQueryType && [3,5,8,10,15,20,30].includes(requestedQueryThreshold);
 const SAVED_QUERY_KEY='btcPatternSavedQueries';
 function loadSavedQueries(){
@@ -1957,9 +1960,16 @@ function updateDynamicCopy(){
   if(coinSelect) coinSelect.value = activeCoin;
   const heroTitle = document.getElementById('hero-title');
   if(heroTitle){
-    heroTitle.innerHTML = lang === 'zh'
-      ? `${coinName} 出现大幅波动时，<br>历史上接下来会怎样？`
-      : `When ${coinName} moves sharply,<br>what happened next?`;
+    const queryNames = lang === 'zh'
+      ? {drop:'单日收盘下跌',rise:'单日收盘上涨',range:'单日振幅',wick:'插针深度'}
+      : {drop:'daily close falls',rise:'daily close rises',range:'daily range reaches',wick:'wick depth reaches'};
+    heroTitle.innerHTML = hasRequestedQuery
+      ? (lang === 'zh'
+          ? `${coinName} ${queryNames[requestedQueryType]}至少 <span class="hl">${requestedQueryThreshold}%</span>，<br>历史上后来怎样？`
+          : `When ${coinName} ${queryNames[requestedQueryType]} <span class="hl">${requestedQueryThreshold}%</span>,<br>what happened next?`)
+      : (lang === 'zh'
+          ? `${coinName} 出现大幅波动时，<br>历史上接下来会怎样？`
+          : `When ${coinName} moves sharply,<br>what happened next?`);
   }
   const heroNote = document.getElementById('hero-note');
   if(heroNote){
