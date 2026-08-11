@@ -13,7 +13,7 @@
     {"id":"correctness","name":"数据正确性","baseline":8,"current":8.5,"evidence":["tests/update-data.test.js","tests/core.test.js","tests/index-regression.test.js","docs/evidence/correctness-2026-08-11.md"],"nextMilestone":"增加上游数据交叉抽查、黄金样本和发布门禁"},
     {"id":"retention","name":"用户粘性","baseline":5,"current":7.5,"evidence":["index.html","manifest.webmanifest","sw.js","tests/index-regression.test.js","docs/evidence/retention-2026-08-11.md"],"nextMilestone":"完成隐私友好的次日、7日和30日回访衡量，并验证主动订阅效果"},
     {"id":"seo","name":"SEO获客","baseline":5,"current":7.5,"evidence":["index.html","methodology.html","robots.txt","sitemap.xml","functions/tools/[slug].js","docs/evidence/seo-2026-08-11.md"],"nextMilestone":"完成搜索平台收录、Core Web Vitals和30天自然搜索证据"},
-    {"id":"data-operations","name":"数据运维","baseline":6,"current":6,"evidence":[".github/workflows/update-btc-data.yml","data/health.json","docs/data-recovery-runbook.md"],"nextMilestone":"完成一次真实告警验证和30分钟恢复演练后重新评分"},
+    {"id":"data-operations","name":"数据运维","baseline":6,"current":8,"evidence":[".github/workflows/update-btc-data.yml",".github/workflows/monitor-data-health.yml","scripts/check-data-health.js","tests/data-health.test.js","data/health.json","status.html","docs/data-recovery-runbook.md","docs/evidence/data-operations-2026-08-11.md"],"nextMilestone":"完成一次真实告警闭环、30分钟恢复演练和30天可用率记录"},
     {"id":"extensibility","name":"代码扩展性","baseline":5,"current":8,"evidence":["index.html","assets/app.css","assets/core.js","assets/app.js","tests/core.test.js","tests/index-regression.test.js","docs/evidence/extensibility-2026-08-11.md"],"nextMilestone":"继续拆分回测和报告模块，并建立模块体积与复杂度门禁"}
   ]
 }
