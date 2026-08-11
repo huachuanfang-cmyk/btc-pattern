@@ -16,15 +16,18 @@
 
 工作流任一步失败时，会创建或更新题为 `Automated crypto data update failed` 的 GitHub Issue，并附带失败运行链接。下一次完整成功后，工作流会留言并关闭该 Issue。
 
+独立的线上巡检每 6 小时读取 `https://www.mybtcbox.com/data/health.json`，检查 HTTP 内容类型、五种资产是否齐全、数据延迟、样本量和 SHA-256 字段。失败时创建或更新 `Published crypto data health check failed` Issue，恢复后自动留言并关闭。它能发现“仓库更新成功但线上部署或缓存仍异常”的情况。
+
 维护者仍需在 GitHub 账户中开启仓库 Issue 通知。Issue 是公开可追踪的异常记录，不得在其中粘贴令牌、Cookie 或其他凭据。
 
 ## 人工检查
 
 1. 打开失败的 Actions 运行，确定失败发生在获取、校验、测试、提交还是告警步骤。
 2. 查看 `data/health.json` 的 `generated_at`、总状态和各资产 `lag_days`。
-3. 对照对应 `data/*.daily.json` 的 `data_through` 和最后两条日线。
-4. 检查 Yahoo Finance 对应交易对是否暂时无数据或修改了响应结构。
-5. 不得为了恢复更新而跳过校验或删除失败测试。
+3. 打开 `https://www.mybtcbox.com/status.html`，确认公开状态与清单一致。
+4. 对照对应 `data/*.daily.json` 的 `data_through` 和最后两条日线。
+5. 检查 Yahoo Finance 对应交易对是否暂时无数据或修改了响应结构。
+6. 不得为了恢复更新而跳过校验或删除失败测试。
 
 ## 本地恢复
 
@@ -33,7 +36,14 @@
 ```powershell
 npm run update:crypto
 npm test
+npm run health:check
 git diff --check
+```
+
+线上恢复后执行：
+
+```powershell
+npm run health:online
 ```
 
 确认五个资产的最新完整 UTC 日期合理，`data/health.json` 状态为 `healthy`，然后只提交本次生成的数据文件和必要修复。

@@ -9,6 +9,8 @@ const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const toolFunction = fs.readFileSync('functions/tools/[slug].js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const serviceWorker = fs.readFileSync('sw.js', 'utf8');
+const statusHtml = fs.readFileSync('status.html', 'utf8');
+const statusScript = fs.readFileSync('assets/status.js', 'utf8');
 const coreScript = fs.readFileSync('assets/core.js', 'utf8');
 const appScript = fs.readFileSync('assets/app.js', 'utf8');
 function readPngInfo(path) {
@@ -400,6 +402,11 @@ assertEqual(html.includes('"@type":"WebApplication"'), true, 'Homepage should pu
 assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), true, 'Robots file should disclose the sitemap');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/</loc>'), true, 'Sitemap should include the core tool homepage');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/methodology.html</loc>'), true, 'Sitemap should include the public methodology page');
+assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/status.html</loc>'), true, 'Sitemap should include the public data status page');
+assertEqual(statusHtml.includes('id="status-summary"'), true, 'Status page should expose an accessible live summary');
+assertEqual(statusHtml.includes('/data/health.json'), true, 'Status page should link the machine-readable health manifest');
+assertEqual(statusScript.includes("expected=['BTC','ETH','SOL','DOGE','BNB']"), true, 'Status page should require all five published assets');
+assertEqual(statusScript.includes("lag<=2"), true, 'Status page should apply the documented two-UTC-day freshness threshold');
 for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-history','btc-wick-history','btc-cycle-clock','btc-conditional-buy-backtest']) {
   assertEqual(toolFunction.includes(`'${slug}'`), true, `Pages Function should define the ${slug} tool route`);
   assertEqual(sitemap.includes(`<loc>https://www.mybtcbox.com/tools/${slug}</loc>`), true, `Sitemap should include the ${slug} tool route`);
@@ -425,6 +432,9 @@ assertEqual(html.includes('src="/assets/core.js"'), true, 'Homepage should load 
 assertEqual(html.includes('src="/assets/app.js"'), true, 'Homepage should load the extracted application controller');
 for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/app.js']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache ${asset}`);
+}
+for (const asset of ['/status.html', '/assets/status.css', '/assets/status.js', '/data/health.js']) {
+  assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache status resource ${asset}`);
 }
 assertEqual(html.includes('rel="manifest" href="/manifest.webmanifest"'), true, 'Homepage should link the web app manifest');
 assertEqual(html.includes('rel="apple-touch-icon" href="/app-icon-180.png"'), true, 'Homepage should provide an iOS home-screen icon');

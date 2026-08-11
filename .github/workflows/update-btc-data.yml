@@ -28,6 +28,9 @@ jobs:
       - name: Verify data and product regressions
         run: npm test
 
+      - name: Verify generated health manifest
+        run: npm run health:check
+
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"

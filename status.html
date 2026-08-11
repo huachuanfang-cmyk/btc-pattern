@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>数据运行状态 | My BTC Box</title>
+  <meta name="description" content="查看 My BTC Box 五种加密资产日线数据的更新时间、延迟、样本量和完整性校验状态。">
+  <link rel="canonical" href="https://www.mybtcbox.com/status.html">
+  <meta name="theme-color" content="#080b10">
+  <link rel="icon" href="/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/status.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"My BTC Box 数据运行状态","url":"https://www.mybtcbox.com/status.html","description":"公开展示加密资产日线数据的新鲜度、样本量和完整性状态。","isPartOf":{"@type":"WebSite","name":"My BTC Box","url":"https://www.mybtcbox.com/"}}</script>
+</head>
+<body>
+  <header class="status-nav">
+    <a class="brand" href="/" aria-label="返回 My BTC Box 首页"><span class="brand-mark">₿</span><span>My BTC Box</span></a>
+    <nav aria-label="状态页导航"><a href="/methodology.html">数据与方法</a><a href="/">返回工具</a></nav>
+  </header>
+
+  <main>
+    <section class="status-intro" aria-labelledby="page-title">
+      <p class="kicker">公开数据状态</p>
+      <h1 id="page-title">这些历史数据现在可靠吗？</h1>
+      <p>这里公开展示数据是否按时更新，以及每种资产最新完整日线的日期。状态不正常时，工具仍可查看历史数据，但应先确认数据截止日期。</p>
+    </section>
+
+    <section class="status-summary loading" id="status-summary" aria-live="polite" aria-busy="true">
+      <div>
+        <span class="summary-label">当前状态</span>
+        <strong id="overall-status">正在检查</strong>
+        <p id="overall-detail">正在读取公开健康清单。</p>
+      </div>
+      <dl>
+        <div><dt>健康资产</dt><dd id="healthy-count">-</dd></div>
+        <div><dt>数据截止</dt><dd id="data-through">-</dd></div>
+        <div><dt>清单生成</dt><dd id="generated-at">-</dd></div>
+      </dl>
+    </section>
+
+    <section class="asset-section" aria-labelledby="asset-title">
+      <div class="section-copy">
+        <h2 id="asset-title">五种资产明细</h2>
+        <p>延迟按当前 UTC 日期与最新完整日线之间的自然日计算。允许最多 2 天，用于覆盖时区和上游发布时间差异。</p>
+      </div>
+      <div class="asset-list" id="asset-list">
+        <div class="asset-row placeholder"><span>正在加载资产状态</span><span>请稍候</span></div>
+      </div>
+    </section>
+
+    <section class="status-notes" aria-labelledby="meaning-title">
+      <h2 id="meaning-title">状态如何判断</h2>
+      <div class="note-grid">
+        <article><h3>正常</h3><p>五种资产都存在，日线延迟不超过 2 个 UTC 日，样本与 SHA-256 校验信息完整。</p></article>
+        <article><h3>需要留意</h3><p>任一资产延迟、缺失或完整性字段异常。页面会明确列出原因，不会把异常隐藏为正常。</p></article>
+      </div>
+      <p class="method-note">完整计算口径、来源说明和恢复方式见 <a href="/methodology.html">数据与方法</a>。机器可读清单位于 <a href="/data/health.json">health.json</a>。</p>
+    </section>
+  </main>
+
+  <footer>历史数据仅供参考，不构成投资建议。<a href="/">返回 My BTC Box</a></footer>
+  <script src="/data/health.js"></script>
+  <script src="/assets/status.js"></script>
+</body>
+</html>
