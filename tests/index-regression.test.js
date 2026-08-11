@@ -170,6 +170,9 @@ renderCycleRuler();
 const cycleRulerHtml = document.getElementById('cycle-ruler').innerHTML;
 const cycleClock = btcCycleContext();
 const cycleStage = btcCycleStageComparisons(cycleClock.daysSincePeak);
+renderDailyObservation();
+const dailyBriefHtml = document.getElementById('daily-brief').innerHTML;
+const dailyBriefContext = dailyObservationContext();
 MARKET_PRICES.BTC = { price: 100000, change24h: 2.5 };
 MARKET_SENTIMENT = { fundingRate: 0.002, lsRatio: 1.43 };
 const initialBtcAth = BTC_DATA._ath;
@@ -198,6 +201,9 @@ run();
   savedQueryHtml,
   savedQueryStorage,
   cycleRulerHtml,
+  dailyBriefHtml,
+  dailyBriefChange:dailyBriefContext.drawdownChange,
+  dailyBriefExpectedChange:dailyBriefContext.drawdown - dailyBriefContext.previousDrawdown,
   cyclePeakDate: cycleClock.peak.date,
   cycleDaysSincePeak: cycleClock.daysSincePeak,
   cycleExpectedDays: utcDayDiff(cycleClock.peak.date, cycleClock.latest.date),
@@ -229,6 +235,10 @@ assertEqual(result.cycleRulerHtml.includes('不是见底日期或逃顶日期预
 assertEqual(result.cyclePeakDate, '2025-10-06', 'Cycle ruler should derive the latest BTC sample high from daily data');
 assertEqual(result.cycleDaysSincePeak, result.cycleExpectedDays, 'Cycle clock should use completed UTC daily candles');
 assertEqual(result.cycleRulerHtml.includes('距历史最早触底样本还有 56 天'), true, 'Cycle ruler should explain the distance to the earliest historical sample');
+assertEqual(result.dailyBriefHtml.includes('今日观察'), true, 'Homepage should render the daily observation summary');
+assertEqual(result.dailyBriefHtml.includes('回撤较前一日'), true, 'Daily observation should compare drawdown with the prior completed candle');
+assertEqual(result.dailyBriefHtml.includes(`周期计时推进至第${result.cycleDaysSincePeak}天`), true, 'Daily observation should advance with the completed cycle clock');
+assertEqual(Number(result.dailyBriefChange.toFixed(8)), Number(result.dailyBriefExpectedChange.toFixed(8)), 'Daily drawdown change should use the same sample high for both completed candles');
 assertEqual(result.cycleStage.length, 2, 'Same-stage comparison should include two verifiable prior cycles');
 assertEqual(Number(result.cycleStage[0].drawdown.toFixed(1)), -70.5, 'Previous cycle day-aligned drawdown should match source daily data');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
@@ -238,6 +248,7 @@ assertEqual(result.mobileHistory.includes('30日后'), true, 'Mobile history sho
 assertEqual(result.probSample.includes('样本'), true, 'Probability copy should disclose its valid sample denominator');
 
 assertEqual(html.includes('id="pulse-score"'), false, 'Homepage should not include a proprietary market score');
+assertEqual(html.includes('id="daily-brief"'), true, 'Homepage should include the daily observation mount point');
 assertEqual(html.includes('id="liq-status"'), false, 'Homepage should not include the large real-time market watch card');
 assertEqual(html.includes('id="heat-row"'), false, 'Homepage should not include the duplicate five-asset heat strip');
 assertEqual(html.includes('<div class="results" id="results">'), true, 'Historical results should start hidden until the user runs a query');
