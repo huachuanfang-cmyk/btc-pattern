@@ -1,5 +1,7 @@
 # My BTC Box 产品优先级记忆
 
+> 本文保留早期产品决策背景。当前强制执行标准见 `docs/quality-standard-95.md`，实时评分见 `quality-scorecard.json`。
+
 更新时间：2026-05-19
 
 ## 产品定位

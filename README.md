@@ -4,6 +4,14 @@ Static crypto historical pattern and backtest tool. Current assets: BTC, ETH, SO
 
 Production site: https://www.mybtcbox.com
 
+## Product quality target
+
+The project tracks ten evidence-based product dimensions with a target of 9.5/10 or higher.
+
+- Standard: `docs/quality-standard-95.md`
+- Current scorecard: `quality-scorecard.json`
+- Validate the scorecard: `npm run quality:score`
+
 ## Local data update
 
 ```powershell
