@@ -152,9 +152,9 @@ const janManual = DAILY_SERIES.filter(d => d.date >= '2024-01-01' && d.date <= '
 const winnerByRoiMatches = Object.values(years).every(y => y.winner === (y.stratROI > y.dcaROI ? 'strat' : 'dca'));
 const latestSignal = latestSignalForData(BTC_DATA);
 const btcLast = BTC_DATA.daily[BTC_DATA.daily.length - 1];
-const syntheticRangeSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, range_pct:9, low_to_close:1}]});
-const syntheticWickSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, range_pct:6, low_to_close:5.5}]});
-COIN_DATA.BTC = {...BTC_DATA, daily:[...BTC_DATA.daily.slice(0,-1), {...btcLast, pct:-8.2}]};
+const syntheticRangeSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, pct_raw:0.5, range_pct:9, range_pct_raw:9, low_to_close:1, low_to_close_raw:1}]});
+const syntheticWickSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, pct_raw:0.5, range_pct:6, range_pct_raw:6, low_to_close:5.5, low_to_close_raw:5.5}]});
+COIN_DATA.BTC = {...BTC_DATA, daily:[...BTC_DATA.daily.slice(0,-1), {...btcLast, pct:-8.2, pct_raw:-8.2}]};
 renderDailySignals();
 const dailySignalHtml = document.getElementById('daily-signal-list').innerHTML;
 const dailySignalCount = document.getElementById('daily-scan-count').textContent;
@@ -165,6 +165,9 @@ thresh = 8;
 saveCurrentQuery();
 const savedQueryHtml = document.getElementById('saved-queries').innerHTML;
 const savedQueryStorage = localStorage.getItem(SAVED_QUERY_KEY);
+renderCycleRuler();
+const cycleRulerHtml = document.getElementById('cycle-ruler').innerHTML;
+const cycleClock = btcCycleContext();
 MARKET_PRICES.BTC = { price: 100000, change24h: 2.5 };
 MARKET_SENTIMENT = { fundingRate: 0.002, lsRatio: 1.43 };
 const initialBtcAth = BTC_DATA._ath;
@@ -192,6 +195,10 @@ run();
   dailySignalCount,
   savedQueryHtml,
   savedQueryStorage,
+  cycleRulerHtml,
+  cyclePeakDate: cycleClock.peak.date,
+  cycleDaysSincePeak: cycleClock.daysSincePeak,
+  cycleExpectedDays: utcDayDiff(cycleClock.peak.date, cycleClock.latest.date),
   tickerSymbol: document.getElementById('ticker-symbol').textContent,
   tickerPrice: document.getElementById('tp').textContent,
   heroTitle: document.getElementById('hero-title').innerHTML,
@@ -210,8 +217,13 @@ assertEqual(result.syntheticRangeKind, 'range', 'Latest signal should detect a c
 assertEqual(result.syntheticWickKind, 'wick', 'Latest signal should detect a completed daily wick event');
 assertEqual(result.dailySignalHtml.includes("openDailySignal('BTC','drop',8)"), true, 'Triggered daily signal should open the matching historical query');
 assertEqual(result.dailySignalCount.includes('1/5'), true, 'Daily scan should disclose how many assets triggered');
-assertEqual(result.savedQueryHtml.includes('BTC 收盘跌超 8%'), true, 'Saved query should render a readable local shortcut');
+assertEqual(result.savedQueryHtml.includes('BTC 收盘跌幅至少 8%'), true, 'Saved query should render a readable local shortcut');
 assertEqual(result.savedQueryStorage.includes('"coin":"BTC"'), true, 'Saved query should persist on the current device');
+assertEqual(result.cycleRulerHtml.includes('BTC 历史周期刻度尺'), true, 'Homepage should render the BTC historical cycle ruler');
+assertEqual(result.cycleRulerHtml.includes('363 / 376 / 411d'), true, 'Cycle ruler should show all three peak-to-bottom timing samples');
+assertEqual(result.cycleRulerHtml.includes('不是见底日期或逃顶日期预测'), true, 'Cycle ruler should explicitly reject date forecasting');
+assertEqual(result.cyclePeakDate, '2025-10-06', 'Cycle ruler should derive the latest BTC sample high from daily data');
+assertEqual(result.cycleDaysSincePeak, result.cycleExpectedDays, 'Cycle clock should use completed UTC daily candles');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
 assertEqual(result.tickerPrice, '$0.1100', 'Top ticker should use shared live price data for selected asset');
 assertEqual(result.heroTitle.includes('狗狗币'), true, 'Hero title should follow the selected asset');
@@ -253,15 +265,44 @@ DAILY_SERIES = BTC_DATA.daily;
 LATEST_DAILY = DAILY_SERIES[DAILY_SERIES.length - 1];
 ACTIVE_ATH = BTC_DATA._ath;
 setCBThresh(8);
+thresh = 3;
 openReport();
 const reportHtml = document.getElementById('rcard').innerHTML;
+const reportYears = reportYearly(reportRows());
+const reportMonths = reportSeasonality(reportRows());
+const reportExt = reportExtremes(reportRows());
+const bestMonth = rmaxBy(reportMonths, m => m.avg ?? -999);
 ({
-  hasCycleTable: reportHtml.includes('四周期关键数据') && reportHtml.includes('C4 ▶') && reportHtml.includes('恢复天数'),
+  hasCycleTable: reportHtml.includes('价格周期摘要（口径见说明）') && reportHtml.includes('C4 ▶') && reportHtml.includes('恢复天数'),
+  hasMethodLabels: reportHtml.includes('样本期最低价') && reportHtml.includes('2026 YTD') && reportHtml.includes('有效样本 427'),
+  hasCycleTimingDisclosure: reportHtml.includes('BTC 历史周期刻度尺') && reportHtml.includes('363-411d') && reportHtml.includes('不是见底日期或逃顶日期预测'),
+  omitsTautologicalRecovery: !reportHtml.includes('96.3%') && reportHtml.includes('回升至少 1%'),
+  drop3Count: BTC_DATA.pre.drop['3'].count,
+  drop3NextDayShare: BTC_DATA.pre.drop['3'].up1_pct,
+  drop3Median30: BTC_DATA.pre.drop['3'].med30,
+  drop3LowRecovery1: BTC_DATA.pre.drop['3'].ltc_1_pct,
+  annual2024: Number(reportYears.find(y=>y.year==='2024').ret.toFixed(1)),
+  annual2026Label: reportYears.find(y=>y.year==='2026').label,
+  bestMonth: bestMonth.month,
+  bestMonthReturn: Number(bestMonth.avg.toFixed(1)),
+  totalReturn: Number(reportExt.totalReturn.toFixed(1)),
   logosHaveLabels: Object.values(COIN_LOGOS).every(svg => svg.includes('aria-label') && svg.includes('viewBox="0 0 32 32"')),
 });
 `, context);
 
 assertEqual(reportUi.hasCycleTable, true, 'BTC report should include four-cycle key data');
+assertEqual(reportUi.hasMethodLabels, true, 'Report should expose sample-period, YTD, and effective-sample labels');
+assertEqual(reportUi.hasCycleTimingDisclosure, true, 'Report should include the historical cycle timing ruler and forecast boundary');
+assertEqual(reportUi.omitsTautologicalRecovery, true, 'Report should replace the tautological positive low-to-close metric');
+assertEqual(reportUi.drop3Count, 427, '3% drop threshold should use unrounded returns');
+assertEqual(reportUi.drop3NextDayShare, 56, '3% drop next-day positive share should match the source dataset');
+assertEqual(reportUi.drop3Median30, 1.98, 'Report should expose the 30-day median outcome');
+assertEqual(reportUi.drop3LowRecovery1, 53.6, 'Low recovery should require at least a 1% rebound');
+assertEqual(reportUi.annual2024, 121.1, '2024 return should use the prior year-end close');
+assertEqual(reportUi.annual2026Label, '2026 YTD', 'Latest partial year should be labeled YTD');
+assertEqual(reportUi.bestMonth, 10, 'Best calendar month should use compounded monthly returns');
+assertEqual(reportUi.bestMonthReturn, 18.2, 'Best calendar month should report average monthly return');
+assertEqual(reportUi.totalReturn, 6395.4, 'Total return should start at the first available close');
 assertEqual(reportUi.logosHaveLabels, true, 'Coin snapshot logos should use labeled 32x32 SVGs');
 
 const sentimentContext = createContext();

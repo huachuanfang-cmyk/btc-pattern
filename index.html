@@ -84,6 +84,33 @@ button.daily-signal:hover{border-color:rgba(247,147,26,.5);background:rgba(247,1
 .daily-signal-label{font-size:10px;color:var(--ink2);line-height:1.45;min-height:29px}
 .daily-signal-action{font-size:9px;color:var(--accent);margin-top:8px;font-weight:700}
 
+/* BTC CYCLE RULER */
+.cycle-ruler{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px}
+.cycle-ruler-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:16px}
+.cycle-ruler-title{font-size:16px;font-weight:800;margin-bottom:4px}
+.cycle-ruler-copy{font-size:11px;color:var(--ink3);line-height:1.55;max-width:610px}
+.cycle-ruler-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);white-space:nowrap;padding-top:2px}
+.cycle-ruler-metrics{display:grid;grid-template-columns:1.15fr .85fr 1fr;gap:1px;background:var(--border);border-radius:8px;overflow:hidden}
+.cycle-ruler-metric{background:rgba(255,255,255,.025);padding:12px 14px;min-width:0}
+.cycle-ruler-label{font-size:9px;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px}
+.cycle-ruler-value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:var(--ink);line-height:1.15}
+.cycle-ruler-value.accent{color:var(--accent)}
+.cycle-ruler-value.negative{color:var(--red)}
+.cycle-ruler-sub{font-size:10px;color:var(--ink3);margin-top:4px;line-height:1.4}
+.cycle-track{position:relative;height:70px;margin:16px 4px 2px}
+.cycle-track-line{position:absolute;left:0;right:0;top:29px;height:1px;background:var(--border2)}
+.cycle-range{position:absolute;top:25px;height:9px;background:rgba(247,147,26,.24);border-left:1px solid var(--accent);border-right:1px solid var(--accent)}
+.cycle-tick{position:absolute;top:22px;width:1px;height:15px;background:var(--ink2);transform:translateX(-50%)}
+.cycle-tick-label{position:absolute;top:42px;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);white-space:nowrap}
+.cycle-now{position:absolute;top:8px;width:2px;height:31px;background:var(--accent);transform:translateX(-50%)}
+.cycle-now::before{content:"";position:absolute;left:50%;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
+.cycle-scale-label{position:absolute;top:0;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);transform:translateX(-50%);white-space:nowrap;font-weight:700}
+.cycle-benchmarks{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:13px;border-top:1px solid var(--border)}
+.cycle-benchmark{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-width:0}
+.cycle-benchmark-label{font-size:10px;color:var(--ink3);line-height:1.45}
+.cycle-benchmark-value{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink2);font-weight:700;white-space:nowrap}
+.cycle-ruler-note{font-size:10px;color:var(--ink3);line-height:1.55;margin-top:12px}
+
 /* QUERY */
 .qwrap{max-width:900px;margin:0 auto;padding:0 24px 60px}
 .qcard{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:28px;margin-bottom:28px}
@@ -293,6 +320,9 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   .hero-sub{font-size:13px}
   .dash{padding:0 12px;margin:0 auto 18px}
   .daily-signal-list{grid-template-columns:repeat(2,1fr)}
+  .cycle-ruler-head{display:block}
+  .cycle-ruler-date{margin-top:7px}
+  .cycle-benchmarks{grid-template-columns:1fr}
   .qwrap{padding:0 12px 30px}
   .qcard{padding:16px}
   .modal{padding:12px;border-radius:0;max-width:100%;max-height:100vh}
@@ -343,6 +373,18 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   .daily-signal-move{margin:0}
   .daily-signal-label{min-height:0;text-align:right}
   .daily-signal-action{grid-column:1/3;margin-top:4px}
+  .cycle-ruler{padding:12px}
+  .cycle-ruler-head{margin-bottom:10px}
+  .cycle-ruler-title{font-size:14px}
+  .cycle-ruler-copy{font-size:10px}
+  .cycle-ruler-metrics{grid-template-columns:1fr 1fr}
+  .cycle-ruler-metric:first-child{grid-column:1/3}
+  .cycle-ruler-metric{padding:9px 10px}
+  .cycle-ruler-value{font-size:15px}
+  .cycle-track{height:66px;margin:13px 2px 0}
+  .cycle-tick-label{font-size:8px}
+  .cycle-benchmark{align-items:flex-start}
+  .cycle-benchmark-value{font-size:10px}
   .qcard{padding:12px}
   .qtitle{font-size:9px;margin-bottom:10px}
   .qrow{gap:5px;margin-bottom:8px}
@@ -468,6 +510,7 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     </div>
     <div class="daily-signal-list" id="daily-signal-list"></div>
   </div>
+  <div class="cycle-ruler" id="cycle-ruler" aria-live="polite"></div>
 </section>
 
 <div class="qwrap">
@@ -557,11 +600,11 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
     <div class="spike-box" id="spikebox">
       <div class="spike-icon">📍</div>
       <div class="spike-content">
-        <div class="spike-title" data-i="spikeTitle">INTRADAY LOW → CLOSE</div>
+        <div class="spike-title" data-i="spikeTitle">INTRADAY LOW RECOVERY</div>
         <div class="spike-stat">
-          <span data-i="spikeIf">If bought at the day’s LOW →</span>
+          <span data-i="spikeIf">Close at least 1% above the day low:</span>
           <span class="big" id="spike-pct">-</span>
-          <span data-i="spikeOf">of the time, recovered by close</span>
+          <span data-i="spikeOf">historical share</span>
         </div>
         <div class="spike-sub" id="spike-sub">avg intraday rebound: -</div>
       </div>
@@ -787,40 +830,67 @@ function buildBtcData(source){
 
   rows.forEach((d,i) => {
     d.prev_close = i > 0 ? rows[i-1].close : null;
-    d.pct = d.prev_close ? bPct(d.close, d.prev_close) : null;
+    d.pct_raw = d.prev_close ? (d.close / d.prev_close - 1) * 100 : null;
+    d.pct = d.pct_raw == null ? null : bRound(d.pct_raw, 2);
     d.close_pct = d.pct;
-    d.range_pct = bPct(d.high, d.low);
-    d.low_to_close = bPct(d.close, d.low);
-    d.drop_to_low = d.prev_close ? bPct(d.low, d.prev_close) : null;
-    d.rise_to_high = d.prev_close ? bPct(d.high, d.prev_close) : null;
+    d.range_pct_raw = (d.high / d.low - 1) * 100;
+    d.range_pct = bRound(d.range_pct_raw, 2);
+    d.low_to_close_raw = (d.close / d.low - 1) * 100;
+    d.low_to_close = bRound(d.low_to_close_raw, 2);
+    d.drop_to_low_raw = d.prev_close ? (d.low / d.prev_close - 1) * 100 : null;
+    d.drop_to_low = d.drop_to_low_raw == null ? null : bRound(d.drop_to_low_raw, 2);
+    d.rise_to_high_raw = d.prev_close ? (d.high / d.prev_close - 1) * 100 : null;
+    d.rise_to_high = d.rise_to_high_raw == null ? null : bRound(d.rise_to_high_raw, 2);
     d.wick_depth = d.low_to_close;
+    d.wick_depth_raw = d.low_to_close_raw;
   });
 
-  const future = (i,n) => rows[i+n] ? bPct(rows[i+n].close, rows[i].close) : null;
+  const futureRaw = (i,n) => rows[i+n] ? (rows[i+n].close / rows[i].close - 1) * 100 : null;
+  const future = (i,n) => {
+    const value = futureRaw(i,n);
+    return value == null ? null : bRound(value, 2);
+  };
   const base = (d,i) => ({
     date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
     pct:d.pct, next1:future(i,1), next7:future(i,7), next30:future(i,30),
+    next1_raw:futureRaw(i,1), next7_raw:futureRaw(i,7), next30_raw:futureRaw(i,30),
     range_pct:d.range_pct, wick_depth:d.wick_depth, low_to_close:d.low_to_close,
-    drop_to_low:d.drop_to_low, rise_to_high:d.rise_to_high, volume:Math.round(d.volume || 0)
+    drop_to_low:d.drop_to_low, rise_to_high:d.rise_to_high,
+    pct_raw:d.pct_raw, range_pct_raw:d.range_pct_raw, wick_depth_raw:d.wick_depth_raw,
+    low_to_close_raw:d.low_to_close_raw, drop_to_low_raw:d.drop_to_low_raw, rise_to_high_raw:d.rise_to_high_raw,
+    volume:Math.round(d.volume || 0)
   });
   const desc = (a,b) => b.date.localeCompare(a.date);
   const daily = rows.map(base);
-  const drops = daily.filter(d => d.pct != null && d.pct < 0).sort(desc);
-  const rises = daily.filter(d => d.pct != null && d.pct >= 0).sort(desc);
+  const drops = daily.filter(d => d.pct_raw != null && d.pct_raw < 0).sort(desc);
+  const rises = daily.filter(d => d.pct_raw != null && d.pct_raw >= 0).sort(desc);
   const intraday = rows.map((d,i)=>({
     date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
     close_pct:d.close_pct, range_pct:d.range_pct, low_to_close:d.low_to_close, drop_to_low:d.drop_to_low,
-    next1:future(i,1), next7:future(i,7), next30:future(i,30), volume:Math.round(d.volume || 0)
-  })).filter(d => d.range_pct >= 5).sort(desc);
+    range_pct_raw:d.range_pct_raw, low_to_close_raw:d.low_to_close_raw,
+    next1:future(i,1), next7:future(i,7), next30:future(i,30),
+    next1_raw:futureRaw(i,1), next7_raw:futureRaw(i,7), next30_raw:futureRaw(i,30),
+    volume:Math.round(d.volume || 0)
+  })).filter(d => d.range_pct_raw >= 5).sort(desc);
   const wickEvents = rows.map((d,i)=>({
     date:d.date, low:priceRound(d.low), close:priceRound(d.close), wick_depth:d.wick_depth, range_pct:d.range_pct,
-    day_pct:d.pct, next1:future(i,1), next7:future(i,7), next30:future(i,30), volume:Math.round(d.volume || 0)
-  })).filter(d => d.wick_depth >= 3).sort(desc);
+    day_pct:d.pct, wick_depth_raw:d.wick_depth_raw, low_to_close_raw:d.low_to_close_raw,
+    next1:future(i,1), next7:future(i,7), next30:future(i,30),
+    next1_raw:futureRaw(i,1), next7_raw:futureRaw(i,7), next30_raw:futureRaw(i,30),
+    volume:Math.round(d.volume || 0)
+  })).filter(d => d.wick_depth_raw >= 3).sort(desc);
 
   function stat(selected){
-    const valid = k => selected.filter(e => e[k] != null);
-    const upPct = k => { const v = valid(k); return v.length ? bRound(v.filter(e => e[k] > 0).length / v.length * 100, 1) : null; };
-    const avg = k => { const v = valid(k); return v.length ? bRound(v.reduce((s,e)=>s+e[k],0) / v.length, 2) : null; };
+    const values = k => selected.map(e => e[k + '_raw'] ?? e[k]).filter(Number.isFinite);
+    const valid = k => values(k);
+    const upPct = k => { const v = values(k); return v.length ? bRound(v.filter(n => n > 0).length / v.length * 100, 1) : null; };
+    const avg = k => { const v = values(k); return v.length ? bRound(v.reduce((s,n)=>s+n,0) / v.length, 2) : null; };
+    const median = k => {
+      const v = values(k).sort((a,b)=>a-b);
+      if(!v.length) return null;
+      const mid = Math.floor(v.length / 2);
+      return bRound(v.length % 2 ? v[mid] : (v[mid-1] + v[mid]) / 2, 2);
+    };
     const ltc = selected.filter(e => e.low_to_close != null);
     return {
       count:selected.length,
@@ -828,14 +898,19 @@ function buildBtcData(source){
       up1_pct:upPct('next1'), up1_avg:avg('next1'),
       up7_pct:upPct('next7'), up7_avg:avg('next7'),
       up30_pct:upPct('next30'), up30_avg:avg('next30'),
+      med1:median('next1'), med7:median('next7'), med30:median('next30'),
       ltc_up_pct:ltc.length ? bRound(ltc.filter(e => e.low_to_close > 0).length / ltc.length * 100, 1) : null,
+      ltc_1_pct:ltc.length ? bRound(ltc.filter(e => (e.low_to_close_raw ?? e.low_to_close) >= 1).length / ltc.length * 100, 1) : null,
       ltc_avg:ltc.length ? bRound(ltc.reduce((s,e)=>s+e.low_to_close,0) / ltc.length, 2) : null
     };
   }
   function summarize(events, metric, thresholds, mode){
     const out = {};
     for (const th of thresholds) {
-      const selected = events.filter(e => mode === 'lte' ? e[metric] <= -th : e[metric] >= th);
+      const selected = events.filter(e => {
+        const value = e[metric + '_raw'] ?? e[metric];
+        return mode === 'lte' ? value <= -th : value >= th;
+      });
       out[String(th)] = selected.length ? stat(selected) : null;
     }
     return out;
@@ -878,6 +953,93 @@ COIN_ORDER.forEach(code => {
   }
 });
 
+const BTC_CYCLE_TIMING = {
+  bear:[
+    {label:'2013-2015', peak:'2013-11-29', bottom:'2015-01-14', days:411},
+    {label:'2017-2018', peak:'2017-12-17', bottom:'2018-12-15', days:363},
+    {label:'2021-2022', peak:'2021-11-10', bottom:'2022-11-21', days:376}
+  ],
+  bull:[
+    {label:'2015-2017', low:'2015-01-14', peak:'2017-12-17', days:1068, halvingDays:526},
+    {label:'2018-2021', low:'2018-12-15', peak:'2021-11-10', days:1061, halvingDays:548},
+    {label:'2022-2025', low:'2022-11-21', peak:'2025-10-06', days:1050, halvingDays:534}
+  ]
+};
+function utcDayDiff(a,b){
+  return Math.max(0, Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z')) / 86400000));
+}
+function btcCycleContext(){
+  const rows = COIN_DATA.BTC?.daily || [];
+  if(!rows.length) return null;
+  const latest = rows[rows.length-1];
+  const peak = rows.reduce((best,d) => (d.high || d.close) > (best.high || best.close) ? d : best, rows[0]);
+  const peakPrice = peak.high || peak.close;
+  const daysSincePeak = utcDayDiff(peak.date, latest.date);
+  const drawdown = peakPrice ? (latest.close / peakPrice - 1) * 100 : null;
+  return {latest, peak, peakPrice, daysSincePeak, drawdown};
+}
+function renderCycleRuler(){
+  const host = document.getElementById('cycle-ruler');
+  if(!host) return;
+  const ctx = btcCycleContext();
+  const zh = lang === 'zh';
+  host.setAttribute('aria-label', zh ? 'BTC 历史周期刻度尺' : 'BTC historical cycle ruler');
+  if(!ctx){
+    host.innerHTML = `<div class="cycle-ruler-title">${zh?'BTC 历史周期刻度尺':'BTC historical cycle ruler'}</div><div class="cycle-ruler-copy">${zh?'周期数据暂时无法读取。':'Cycle data is temporarily unavailable.'}</div>`;
+    return;
+  }
+  const bearDays = BTC_CYCLE_TIMING.bear.map(x=>x.days);
+  const bullDays = BTC_CYCLE_TIMING.bull.map(x=>x.days);
+  const halvingDays = BTC_CYCLE_TIMING.bull.map(x=>x.halvingDays);
+  const bearMin = Math.min(...bearDays), bearMax = Math.max(...bearDays);
+  const scaleMax = Math.max(450, Math.ceil((ctx.daysSincePeak + 30) / 50) * 50);
+  const pct = n => Math.max(2, Math.min(98, n / scaleMax * 100));
+  const rangeLeft = pct(bearMin), rangeRight = pct(bearMax);
+  const markerHtml = BTC_CYCLE_TIMING.bear.map(item => `
+    <span class="cycle-tick" style="left:${pct(item.days)}%" aria-hidden="true"></span>
+    <span class="cycle-tick-label" style="left:${pct(item.days)}%">${item.days}d</span>`).join('');
+  const drawdownText = Number.isFinite(ctx.drawdown) ? `${ctx.drawdown.toFixed(1)}%` : '-';
+  host.innerHTML = `
+    <div class="cycle-ruler-head">
+      <div>
+        <h2 class="cycle-ruler-title">${zh?'BTC 历史周期刻度尺':'BTC historical cycle ruler'}</h2>
+        <p class="cycle-ruler-copy">${zh?'现在走了多久，过去三轮走了多久。这里只做时间对照，不预测最低点或最高点。':'How long the current move has lasted versus three completed cycles. This is a time comparison, not a bottom or top forecast.'}</p>
+      </div>
+      <div class="cycle-ruler-date">${zh?'日线截止':'daily through'} ${ctx.latest.date}</div>
+    </div>
+    <div class="cycle-ruler-metrics">
+      <div class="cycle-ruler-metric">
+        <div class="cycle-ruler-label">${zh?'最近样本高点':'latest sample high'}</div>
+        <div class="cycle-ruler-value">${ctx.peak.date}</div>
+        <div class="cycle-ruler-sub">${fmtPrice(ctx.peakPrice)} · Yahoo Finance BTC-USD</div>
+      </div>
+      <div class="cycle-ruler-metric">
+        <div class="cycle-ruler-label">${zh?'高点后完整日线':'completed days after high'}</div>
+        <div class="cycle-ruler-value accent">${ctx.daysSincePeak}d</div>
+        <div class="cycle-ruler-sub">${ctx.peak.date} → ${ctx.latest.date}</div>
+      </div>
+      <div class="cycle-ruler-metric">
+        <div class="cycle-ruler-label">${zh?'距样本高点':'from sample high'}</div>
+        <div class="cycle-ruler-value negative">${drawdownText}</div>
+        <div class="cycle-ruler-sub">${zh?'最新收盘相对样本期最高价':'latest close vs sample-period high'}</div>
+      </div>
+    </div>
+    <div class="cycle-track" role="img" aria-label="${zh?`当前为高点后第 ${ctx.daysSincePeak} 天，历史三轮顶部到底部分别为 363、376、411 天`:`Current position is day ${ctx.daysSincePeak} after the sample high. Prior peak-to-bottom samples were 363, 376, and 411 days`}">
+      <span class="cycle-track-line"></span>
+      <span class="cycle-range" style="left:${rangeLeft}%;width:${Math.max(1,rangeRight-rangeLeft)}%"></span>
+      ${markerHtml}
+      <span class="cycle-now" style="left:${pct(ctx.daysSincePeak)}%"></span>
+      <span class="cycle-scale-label" style="left:${pct(ctx.daysSincePeak)}%">${zh?'当前':'NOW'} ${ctx.daysSincePeak}d</span>
+    </div>
+    <div class="cycle-benchmarks">
+      <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'三轮顶部到底部':'Three peak-to-bottom samples'}</span><span class="cycle-benchmark-value">363 / 376 / 411d</span></div>
+      <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'三轮低点到高点':'Three low-to-peak samples'}</span><span class="cycle-benchmark-value">${bullDays.join(' / ')}d</span></div>
+      <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'三轮减半到高点':'Three halving-to-peak samples'}</span><span class="cycle-benchmark-value">${halvingDays.join(' / ')}d</span></div>
+      <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'历史顶部到底部观察区间':'Historical peak-to-bottom range'}</span><span class="cycle-benchmark-value">${bearMin}-${bearMax}d</span></div>
+    </div>
+    <p class="cycle-ruler-note">${zh?'历史周期日期来自 Bitstamp BTC/USD UTC 日线研究；当前高点、收盘价和回撤来自 Yahoo Finance BTC-USD UTC 日线。三个样本只用于历史比较，不是见底日期或逃顶日期预测。若样本期出现更高价格，当前计时起点会自动更新。':'Historical cycle dates use the Bitstamp BTC/USD UTC daily study. The current sample high, close, and drawdown use Yahoo Finance BTC-USD UTC daily data. Three samples are context only, not bottom or top dates. A new sample high automatically resets the current clock.'}</p>`;
+}
+
 // ── I18N ──
 const T = {
 en:{
@@ -897,14 +1059,14 @@ en:{
   backtestOpen:'Open tool',
   qTitle:'QUERY HISTORICAL EVENTS',
   ql1:'When selected asset',ql2:'in a single day:',
-  oDrop:'closes DOWN more than',oRise:'closes UP more than',oRange:'swings (High→Low) more than',
-  oWick:'wick depth (Close−Low) more than',
+  oDrop:'closes DOWN at least',oRise:'closes UP at least',oRange:'swings (High→Low) at least',
+  oWick:'wick depth (Close−Low) at least',
   warn:'⚠ Statistics use 2017+ data only. Pre-2017 BTC was illiquid - including it would distort results.',
   qBtn:'Look up historical pattern →',
   sCount:'Occurrences',sSince:'since Jan 2017',sAvg:'Avg magnitude',sLast:'Most recent',
-  p1:'Next Day Up',p7:'7 Days Up',p30:'30 Days Up',
-  spikeTitle:'SPIKE / WICK RECOVERY',
-  spikeIf:"Low → Close recovery rate:",spikeOf:'(K-line lower wick - not a buy guarantee)',
+  p1:'Next-day positive share',p7:'7-day positive share',p30:'30-day positive share',
+  spikeTitle:'INTRADAY LOW RECOVERY',
+  spikeIf:"Low to close rebound at least 1%:",spikeOf:'(historical share, not a buy guarantee)',
   tblTitle:'Complete Historical Record',showMore:'Load 10 more',
   genRpt:'Generate Report Card',
   dsTitle:'📚 Data Sources',
@@ -933,9 +1095,9 @@ en:{
   thWick:['Date','Day Low','Close','Wick Depth','Swing','Close %','Next Day','7d','30d'],
   interp:{
     wick:(t,n,u1,a1,u7,a7)=>`${activeCoin} wick depth >${t}% has happened <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 7 days up: <strong>${u7}%</strong> (avg ${a7>=0?"+":""}${a7}%). <strong>Note:</strong> Buying at the exact intraday low is theoretically ideal but very difficult in practice. This data shows how often price recovered from its low - not that you can always catch it. <em>Past data is not a guarantee.</em>`,
-    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has closed down more than ${t}% in a single day <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). If you caught the intraday low, <strong>${ltc}%</strong> of the time it recovered by close (avg rebound +${ltca}%). <em>Past data is not a guarantee.</em>`,
-    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has closed up more than ${t}% in a single day <strong>${n} times</strong> in this dataset. Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). After 30 days up: <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). <em>Past data is not a guarantee.</em>`,
-    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} has swung more than ${t}% intraday <strong>${n} times</strong> in this dataset. This captures wick events missed by close-only data. If bought at the intraday LOW: <strong>${ltc}%</strong> recovered by close (avg +${ltca}%). Next day up: <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). <em>Past data is not a guarantee.</em>`,
+    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} closed down at least ${t}% in a single day <strong>${n} times</strong> in this dataset. The historical next-day positive share was <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). The 30-day positive share was <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). On <strong>${ltc}%</strong> of those days, close finished at least 1% above the intraday low (avg rebound +${ltca}%). <em>Past data does not predict future results.</em>`,
+    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} closed up at least ${t}% in a single day <strong>${n} times</strong> in this dataset. The historical next-day positive share was <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). The 30-day positive share was <strong>${u30}%</strong> (avg ${a30>=0?"+":""}${a30}%). <em>Past data does not predict future results.</em>`,
+    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`${activeCoin} had an intraday range of at least ${t}% <strong>${n} times</strong> in this dataset. On <strong>${ltc}%</strong> of those days, close finished at least 1% above the intraday low (avg +${ltca}%). The historical next-day positive share was <strong>${u1}%</strong> (avg ${a1>=0?"+":""}${a1}%). <em>Past data does not predict future results.</em>`,
   },
   compTh:['Coin','Close','Pct','Low','Low→Close','Next Day','7d','30d'],
   snapBtn:'View 5-Coin Snapshot',
@@ -959,14 +1121,14 @@ zh:{
   backtestOpen:'打开工具',
   qTitle:'历史事件查询',
   ql1:'当所选币种',ql2:'时，历史上发生了什么？',
-  oDrop:'单日收盘下跌超过',oRise:'单日收盘上涨超过',oRange:'单日振幅（最高→最低）超过',
-  oWick:'单日插针深度（收盘−最低）超过',
+  oDrop:'单日收盘下跌至少',oRise:'单日收盘上涨至少',oRange:'单日振幅（最高→最低）至少',
+  oWick:'单日插针深度（收盘−最低）至少',
   warn:'⚠ 统计仅使用2017年后数据。2017年前市场流动性极差，加入会导致统计失真。',
   qBtn:'查询历史规律 →',
   sCount:'历史发生次数',sSince:'2017年1月至今',sAvg:'平均幅度',sLast:'最近一次',
-  p1:'次日收涨概率',p7:'7日后收涨',p30:'30日后收涨',
-  spikeTitle:'当日最低→收盘 回升统计',
-  spikeIf:'最低价→收盘价 回升概率:',spikeOf:'（反映K线下影线，非买入保证）',
+  p1:'次日历史收涨比例',p7:'7日后收涨比例',p30:'30日后收涨比例',
+  spikeTitle:'当日低点回升统计',
+  spikeIf:'收盘较最低价回升至少1%的比例:',spikeOf:'（历史比例，不代表可买在最低点）',
   tblTitle:'完整历史记录',showMore:'再显示10条',
   genRpt:'生成报告卡片',
   dsTitle:'📚 数据来源',
@@ -994,10 +1156,10 @@ zh:{
   thRange:['日期','最高','最低','振幅','收盘%','最低→收盘','次日','7日后'],
   thWick:['日期','当日最低','收盘价','插针深度','振幅','当日涨跌','次日','7日后','30日后'],
   interp:{
-    wick:(t,n,u1,a1,u7,a7)=>`${activeCoin} 插针深度>${t}%在当前数据集中共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；7日后上涨概率<strong>${u7}%</strong>（均值${a7>0?"+":""}${a7}%）。<strong>重要说明：</strong>在最低点买入在理论上最优，但实际操作中极难精确执行。此数据表明历史上价格从当日最低点回升的频率，并不代表你能准确买在最低点。<em>历史数据，不代表未来。</em>`,
-    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日收盘跌幅超过${t}%共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后上涨概率<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。若在当日最低点买入，<strong>${ltc}%</strong>的概率当天收盘即回升（均值+${ltca}%）。<em>历史数据，不代表未来。</em>`,
-    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日收盘涨幅超过${t}%共发生了<strong>${n}次</strong>。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后上涨概率<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。<em>历史数据，不代表未来。</em>`,
-    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日振幅超过${t}%共发生了<strong>${n}次</strong>。此统计可捕捉插针行情，弥补仅用收盘价的不足。若在当日最低点买入：<strong>${ltc}%</strong>的概率当天收盘即回升（均值+${ltca}%）。次日上涨概率<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）。<em>历史数据，不代表未来。</em>`,
+    wick:(t,n,u1,a1,u7,a7)=>`${activeCoin} 插针深度至少${t}%在当前数据集中共发生了<strong>${n}次</strong>。样本内次日收涨比例为<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；7日后收涨比例为<strong>${u7}%</strong>（均值${a7>0?"+":""}${a7}%）。<strong>重要说明：</strong>在最低点买入在理论上最优，但实际操作中极难精确执行。此数据描述历史结果，并不代表你能准确买在最低点。<em>历史数据，不代表未来。</em>`,
+    drop:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日收盘跌幅至少${t}%共发生了<strong>${n}次</strong>。样本内次日收涨比例为<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后收涨比例为<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。其中<strong>${ltc}%</strong>的日期收盘较当日最低价回升至少1%（平均回升+${ltca}%）。<em>历史数据，不代表未来。</em>`,
+    rise:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日收盘涨幅至少${t}%共发生了<strong>${n}次</strong>。样本内次日收涨比例为<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）；30日后收涨比例为<strong>${u30}%</strong>（均值${a30>0?"+":""}${a30}%）。<em>历史数据，不代表未来。</em>`,
+    range:(t,n,u1,a1,u30,a30,ltc,ltca)=>`当前数据集中，${activeCoin} 单日振幅至少${t}%共发生了<strong>${n}次</strong>。其中<strong>${ltc}%</strong>的日期收盘较当日最低价回升至少1%（平均回升+${ltca}%）。样本内次日收涨比例为<strong>${u1}%</strong>（均值${a1>0?"+":""}${a1}%）。<em>历史数据，不代表未来。</em>`,
   }
 }};
 
@@ -1048,12 +1210,13 @@ function latestSignalForData(data){
   if(!last) return null;
   const statsFor = (type, th) => data?.pre?.[type]?.[String(th)] || null;
   let kind = 'none', threshold = null, labelEn = 'No extreme daily signal', labelZh = '未触发极端日线信号', stats = null;
-  if(last.pct != null && last.pct <= -8){ kind='drop'; threshold=8; labelEn='Close dropped over 8%'; labelZh='收盘下跌超过 8%'; stats=statsFor('drop', 8); }
-  else if(last.pct != null && last.pct <= -5){ kind='drop'; threshold=5; labelEn='Close dropped over 5%'; labelZh='收盘下跌超过 5%'; stats=statsFor('drop', 5); }
-  else if(last.pct != null && last.pct <= -3){ kind='drop'; threshold=3; labelEn='Close dropped over 3%'; labelZh='收盘下跌超过 3%'; stats=statsFor('drop', 3); }
-  else if(last.pct != null && last.pct >= 8){ kind='rise'; threshold=8; labelEn='Close rose over 8%'; labelZh='收盘上涨超过 8%'; stats=statsFor('rise', 8); }
-  else if(last.pct != null && last.pct >= 5){ kind='rise'; threshold=5; labelEn='Close rose over 5%'; labelZh='收盘上涨超过 5%'; stats=statsFor('rise', 5); }
-  else if(last.pct != null && last.pct >= 3){ kind='rise'; threshold=3; labelEn='Close rose over 3%'; labelZh='收盘上涨超过 3%'; stats=statsFor('rise', 3); }
+  const closeMove = last.pct_raw ?? last.pct;
+  if(closeMove != null && closeMove <= -8){ kind='drop'; threshold=8; labelEn='Close dropped at least 8%'; labelZh='收盘下跌至少 8%'; stats=statsFor('drop', 8); }
+  else if(closeMove != null && closeMove <= -5){ kind='drop'; threshold=5; labelEn='Close dropped at least 5%'; labelZh='收盘下跌至少 5%'; stats=statsFor('drop', 5); }
+  else if(closeMove != null && closeMove <= -3){ kind='drop'; threshold=3; labelEn='Close dropped at least 3%'; labelZh='收盘下跌至少 3%'; stats=statsFor('drop', 3); }
+  else if(closeMove != null && closeMove >= 8){ kind='rise'; threshold=8; labelEn='Close rose at least 8%'; labelZh='收盘上涨至少 8%'; stats=statsFor('rise', 8); }
+  else if(closeMove != null && closeMove >= 5){ kind='rise'; threshold=5; labelEn='Close rose at least 5%'; labelZh='收盘上涨至少 5%'; stats=statsFor('rise', 5); }
+  else if(closeMove != null && closeMove >= 3){ kind='rise'; threshold=3; labelEn='Close rose at least 3%'; labelZh='收盘上涨至少 3%'; stats=statsFor('rise', 3); }
   else if(last.range_pct != null && last.range_pct >= 8){ kind='range'; threshold=8; labelEn='Intraday swing over 8%'; labelZh='日内振幅超过 8%'; stats=statsFor('range', 8); }
   else if(last.low_to_close != null && last.low_to_close >= 5){ kind='wick'; threshold=5; labelEn='Low-to-close rebound over 5%'; labelZh='最低到收盘回升超过 5%'; stats=data?.wick?.pre?.[String(5)] || null; }
   return { date:last.date, day:last, kind, threshold, labelEn, labelZh, stats };
@@ -1106,8 +1269,8 @@ async function openDailySignal(coin,type,threshold){
 }
 function savedQueryLabel(item){
   const labels=lang==='zh'
-    ? {drop:'收盘跌超',rise:'收盘涨超',range:'振幅超',wick:'插针超'}
-    : {drop:'close down',rise:'close up',range:'range',wick:'wick'};
+    ? {drop:'收盘跌幅至少',rise:'收盘涨幅至少',range:'振幅至少',wick:'插针至少'}
+    : {drop:'close down at least',rise:'close up at least',range:'range at least',wick:'wick at least'};
   return lang==='zh'
     ? `${item.coin} ${labels[item.type]} ${item.threshold}%`
     : `${item.coin} ${labels[item.type]} ${item.threshold}%`;
@@ -1633,6 +1796,7 @@ function applyLang(){
   if(customHint) customHint.textContent = L.cbCustomHint;
   updateDynamicCopy();
   renderMarketDashboard();
+  renderCycleRuler();
   renderSavedQueries();
 }
 
@@ -1724,10 +1888,10 @@ function setProbCell(puId,pbId,paId,pct,avg,validCount){
 function run(){
   const L=T[lang];
   let evts, stats;
-  if(qtype==='drop'){ evts=BTC_DATA.drops.filter(e=>e.pct<=-thresh); stats=BTC_DATA.pre.drop[String(thresh)]; }
-  else if(qtype==='rise'){ evts=BTC_DATA.rises.filter(e=>e.pct>=thresh); stats=BTC_DATA.pre.rise[String(thresh)]; }
-  else if(qtype==='wick'){ evts=BTC_DATA.wick.events.filter(e=>e.wick_depth>=thresh); stats=BTC_DATA.wick.pre[String(thresh)]; }
-  else { evts=BTC_DATA.intraday.filter(e=>e.range_pct>=thresh); stats=BTC_DATA.pre.range[String(thresh)]; }
+  if(qtype==='drop'){ evts=BTC_DATA.drops.filter(e=>(e.pct_raw ?? e.pct)<=-thresh); stats=BTC_DATA.pre.drop[String(thresh)]; }
+  else if(qtype==='rise'){ evts=BTC_DATA.rises.filter(e=>(e.pct_raw ?? e.pct)>=thresh); stats=BTC_DATA.pre.rise[String(thresh)]; }
+  else if(qtype==='wick'){ evts=BTC_DATA.wick.events.filter(e=>(e.wick_depth_raw ?? e.wick_depth)>=thresh); stats=BTC_DATA.wick.pre[String(thresh)]; }
+  else { evts=BTC_DATA.intraday.filter(e=>(e.range_pct_raw ?? e.range_pct)>=thresh); stats=BTC_DATA.pre.range[String(thresh)]; }
 
   if(!stats||!evts.length){ toast(lang==='zh'?'暂无符合条件的数据':'No data for this threshold'); return; }
 
@@ -1749,14 +1913,14 @@ function run(){
 
   // spike box - 只在下跌和振幅查询时显示，上涨查询无意义
   const sb=document.getElementById('spikebox');
-  if(stats.ltc_up_pct!=null && qtype !== 'rise' && qtype !== 'wick'){
+  if(stats.ltc_1_pct!=null && qtype !== 'rise' && qtype !== 'wick'){
     sb.style.display='flex';
-    document.getElementById('spike-pct').textContent=stats.ltc_up_pct+'%';
+    document.getElementById('spike-pct').textContent=stats.ltc_1_pct+'%';
     document.getElementById('spike-sub').textContent=(lang==='zh'?'当日最低→收盘平均反弹：':'avg intraday rebound: ')+'+'+stats.ltc_avg+'%';
   } else { sb.style.display='none'; }
 
   // interp
-  const ltc=stats.ltc_up_pct??'N/A', ltca=stats.ltc_avg??0;
+  const ltc=stats.ltc_1_pct??'N/A', ltca=stats.ltc_avg??0;
   if(qtype==='wick'){
     document.getElementById('interp').innerHTML=L.interp.wick(thresh,stats.count,stats.up1_pct,stats.up1_avg,stats.up7_pct,stats.up7_avg);
   } else {
@@ -1964,23 +2128,6 @@ function exitSnapshot() {
 function showMore(){ shown=Math.min(shown+10, allRows.length); renderTable(); }
 
 // ── REPORT ──
-// C2/C3 day-based price interpolation for historical parallel
-function c2p(d){return terp([[0,650],[60,580],[120,720],[180,950],[240,1100],[300,1500],[360,2900],[420,4400],[480,11000],[525,19666],[580,14000],[640,8200],[700,7300],[760,6500],[820,6400],[880,3500],[940,4000],[1000,8200],[1060,9100],[1140,7900],[1200,8800]],d)}
-function c3p(d){return terp([[0,8821],[60,9200],[120,11200],[180,15500],[240,29000],[300,47000],[360,63000],[420,32000],[480,45000],[547,69000],[600,47000],[660,41000],[720,22000],[780,19000],[820,19000],[880,16500],[923,15479],[960,23000],[1020,28000],[1080,35000],[1140,51000],[1200,65000],[1260,70000]],d)}
-function terp(pts,x){
-  if(x<=pts[0][0])return pts[0][1];
-  if(x>=pts[pts.length-1][0])return pts[pts.length-1][1];
-  for(let i=0;i<pts.length-1;i++){
-    if(x>=pts[i][0]&&x<=pts[i+1][0]){
-      const t=(x-pts[i][0])/(pts[i+1][0]-pts[i][0]);
-      return pts[i][1]+t*(pts[i+1][1]-pts[i][1]);
-    }
-  }
-  return pts[pts.length-1][1];
-}
-
-const HALVING4 = new Date('2024-04-20').getTime();
-const ATH_DATE = new Date('2025-10-06').getTime();
 const BTC_CYCLE_HISTORY = [
   {cycle:'C1', halving:12, peak:1170, gain:9475, drawdown:-86.9, recovery:'1,065d'},
   {cycle:'C2', halving:650, peak:19666, gain:2925, drawdown:-84.1, recovery:'1,067d'},
@@ -1988,7 +2135,7 @@ const BTC_CYCLE_HISTORY = [
 ];
 
 function reportRows(){
-  return (BTC_DATA.daily || []).filter(d => d && d.date && Number.isFinite(d.close) && d.pct != null);
+  return (BTC_DATA.daily || []).filter(d => d && d.date && Number.isFinite(d.close));
 }
 function ravg(arr){
   const v = arr.filter(n => Number.isFinite(n));
@@ -2013,28 +2160,28 @@ function rcolor(v){
 }
 function reportEvent(){
   if(qtype==='drop') return {
-    events: BTC_DATA.drops.filter(e=>e.pct<=-thresh),
+    events: BTC_DATA.drops.filter(e=>(e.pct_raw ?? e.pct)<=-thresh),
     stats: BTC_DATA.pre.drop[String(thresh)],
-    zh:`${activeCoin} 单日收盘下跌超过 ${thresh}%`,
-    en:`${activeCoin} close-to-close drop > ${thresh}%`
+    zh:`${activeCoin} 单日收盘下跌至少 ${thresh}%`,
+    en:`${activeCoin} close-to-close drop at least ${thresh}%`
   };
   if(qtype==='rise') return {
-    events: BTC_DATA.rises.filter(e=>e.pct>=thresh),
+    events: BTC_DATA.rises.filter(e=>(e.pct_raw ?? e.pct)>=thresh),
     stats: BTC_DATA.pre.rise[String(thresh)],
-    zh:`${activeCoin} 单日收盘上涨超过 ${thresh}%`,
-    en:`${activeCoin} close-to-close rise > ${thresh}%`
+    zh:`${activeCoin} 单日收盘上涨至少 ${thresh}%`,
+    en:`${activeCoin} close-to-close rise at least ${thresh}%`
   };
   if(qtype==='wick') return {
-    events: BTC_DATA.wick.events.filter(e=>e.wick_depth>=thresh),
+    events: BTC_DATA.wick.events.filter(e=>(e.wick_depth_raw ?? e.wick_depth)>=thresh),
     stats: BTC_DATA.wick.pre[String(thresh)],
-    zh:`${activeCoin} 当日低点到收盘回升超过 ${thresh}%`,
-    en:`${activeCoin} low-to-close recovery > ${thresh}%`
+    zh:`${activeCoin} 当日低点到收盘回升至少 ${thresh}%`,
+    en:`${activeCoin} low-to-close recovery at least ${thresh}%`
   };
   return {
-    events: BTC_DATA.intraday.filter(e=>e.range_pct>=thresh),
+    events: BTC_DATA.intraday.filter(e=>(e.range_pct_raw ?? e.range_pct)>=thresh),
     stats: BTC_DATA.pre.range[String(thresh)],
-    zh:`${activeCoin} 当日高低振幅超过 ${thresh}%`,
-    en:`${activeCoin} intraday high-low range > ${thresh}%`
+    zh:`${activeCoin} 当日高低振幅至少 ${thresh}%`,
+    en:`${activeCoin} intraday high-low range at least ${thresh}%`
   };
 }
 function reportExtremes(rows){
@@ -2047,11 +2194,12 @@ function reportExtremes(rows){
   const first = rows[0], latest = rows[rows.length-1];
   const totalReturn = first && latest ? (latest.close / first.close - 1) * 100 : null;
   const avgDaily = ravg(rows.map(d => d.pct));
-  const avgVol = ravg(rows.map(d => Math.abs(d.pct)));
+  const avgVol = ravg(rows.map(d => d.pct == null ? null : Math.abs(d.pct)));
   const fromAth = ath && latest ? (latest.close / (ath.high || ath.close) - 1) * 100 : null;
   return {ath, atl, maxRise, maxDrop, maxRiseMetric, maxDropMetric, first, latest, totalReturn, avgDaily, avgVol, fromAth};
 }
 function reportBuckets(rows){
+  const moves = rows.filter(d => Number.isFinite(d.pct));
   const defs = [
     ['> +10%', d => d.pct > 10, '#10b981'],
     ['+5% ~ +10%', d => d.pct > 5 && d.pct <= 10, '#10b981'],
@@ -2062,8 +2210,8 @@ function reportBuckets(rows){
     ['< -10%', d => d.pct < -10, '#ef4444']
   ];
   return defs.map(([label, test, color]) => {
-    const count = rows.filter(test).length;
-    return {label, count, pct: rows.length ? count / rows.length * 100 : 0, color};
+    const count = moves.filter(test).length;
+    return {label, count, pct: moves.length ? count / moves.length * 100 : 0, color};
   });
 }
 function reportStreaks(rows){
@@ -2075,7 +2223,7 @@ function reportStreaks(rows){
       if(dir < 0) down.push(len);
     }
   };
-  rows.forEach(d => {
+  rows.filter(d=>Number.isFinite(d.pct)).forEach(d => {
     const ndir = d.pct > 0 ? 1 : d.pct < 0 ? -1 : 0;
     if(ndir === 0){ flush(); dir = 0; len = 0; return; }
     if(ndir === dir) len += 1;
@@ -2104,16 +2252,24 @@ function reportYearly(rows){
     const y = d.date.slice(0,4);
     (byYear[y] ||= []).push(d);
   });
-  return Object.keys(byYear).sort().map(y => {
+  const years = Object.keys(byYear).sort();
+  const latestYear = rows[rows.length-1]?.date.slice(0,4);
+  return years.map(y => {
     const a = byYear[y], first = a[0], last = a[a.length-1];
+    const firstIndex = rows.indexOf(first);
+    const prior = firstIndex > 0 ? rows[firstIndex-1] : null;
+    const base = prior || first;
     return {
       year:y,
-      start:first.close,
+      label:y + (y === latestYear ? ' YTD' : ''),
+      start:base.close,
       end:last.close,
-      ret:(last.close / first.close - 1) * 100,
-      vol:ravg(a.map(d=>Math.abs(d.pct))),
+      ret:(last.close / base.close - 1) * 100,
+      vol:ravg(a.map(d=>d.pct == null ? null : Math.abs(d.pct))),
       up:a.filter(d=>d.pct>0).length,
-      down:a.filter(d=>d.pct<0).length
+      down:a.filter(d=>d.pct<0).length,
+      flat:a.filter(d=>d.pct===0).length,
+      partial:!prior
     };
   });
 }
@@ -2147,14 +2303,27 @@ function reportDrawdowns(rows){
   };
 }
 function reportSeasonality(rows){
-  const months = Array.from({length:12}, (_,i)=>({month:i+1, rows:[]}));
-  rows.forEach(d => months[new Date(d.date+'T00:00:00Z').getUTCMonth()].rows.push(d));
-  return months.map(m => ({
-    month:m.month,
-    avg:ravg(m.rows.map(d=>d.pct)),
-    up:m.rows.length ? m.rows.filter(d=>d.pct>0).length / m.rows.length * 100 : null,
-    vol:ravg(m.rows.map(d=>Math.abs(d.pct)))
-  }));
+  const periods = {};
+  rows.forEach(d => (periods[d.date.slice(0,7)] ||= []).push(d));
+  const monthly = Object.values(periods).map(a => {
+    const first = a[0], last = a[a.length-1], firstIndex = rows.indexOf(first);
+    const prior = firstIndex > 0 ? rows[firstIndex-1] : null;
+    const base = prior || first;
+    return {
+      month:Number(first.date.slice(5,7)),
+      ret:(last.close / base.close - 1) * 100,
+      partial:!prior
+    };
+  });
+  return Array.from({length:12}, (_,i) => {
+    const samples = monthly.filter(m=>m.month===i+1 && !m.partial);
+    return {
+      month:i+1,
+      avg:ravg(samples.map(m=>m.ret)),
+      up:samples.length ? samples.filter(m=>m.ret>0).length / samples.length * 100 : null,
+      count:samples.length
+    };
+  });
 }
 function rIcon(label, color){
   return `<span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:${color};color:#061018;align-items:center;justify-content:center;font-size:11px;font-weight:900;margin-right:8px">${label}</span>`;
@@ -2182,8 +2351,11 @@ function openReport(){
   const bestMonth = rmaxBy(months, m => m.avg ?? -999);
   const worstMonth = rminBy(months, m => m.avg ?? 999);
   const maxBucket = Math.max(...buckets.map(b=>b.count), 1);
-  const daysHalving = Math.floor((Date.now()-HALVING4)/86400000);
-  const p2 = c2p(daysHalving), p3 = c3p(daysHalving);
+  const cycleClock = btcCycleContext();
+  const bearDays = BTC_CYCLE_TIMING.bear.map(x=>x.days);
+  const bullDays = BTC_CYCLE_TIMING.bull.map(x=>x.days);
+  const halvingPeakDays = BTC_CYCLE_TIMING.bull.map(x=>x.halvingDays);
+  const bearMin = Math.min(...bearDays), bearMax = Math.max(...bearDays);
   const title = zh ? `${activeCoin} 历史数据观察报告` : `${activeCoin} Historical Data Report`;
   const sub = zh ? '基于日线 OHLCV · 事实观察 · 不做预测' : 'Daily OHLCV observations · Facts only · No prediction';
   const eventLabel = zh ? ev.zh : ev.en;
@@ -2209,7 +2381,13 @@ function openReport(){
       ${body}
     </div>`;
   const probColor = p => !Number.isFinite(p) ? '#94a3b8' : p >= 60 ? '#10b981' : p >= 50 ? '#f97316' : '#ef4444';
-  const probCard = (label, p, avg) => card('P', label, Number.isFinite(p) ? `${p}%` : '-', `${zh?'均值':'avg'} ${rpct(avg,2)}`, probColor(p));
+  const probCard = (label, p, avg, median, n) => card(
+    'P',
+    label,
+    Number.isFinite(p) ? `${p}%` : '-',
+    `${zh?'有效样本':'valid n'} ${n ?? '-'} · ${zh?'均值':'avg'} ${rpct(avg,2)} · ${zh?'中位数':'median'} ${rpct(median,2)}`,
+    probColor(p)
+  );
   const distRows = buckets.map(b => `
     <div style="display:grid;grid-template-columns:96px 62px 56px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
       <div style="font-size:12px;font-weight:800;color:${b.color}">${b.label}</div>
@@ -2219,9 +2397,9 @@ function openReport(){
     </div>`).join('');
   const yearlyRows = yearly.map(y => `
     <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
-      <td style="padding:8px 9px;color:#e2e8f0;font-weight:800">${y.year}</td>
+      <td style="padding:8px 9px;color:#e2e8f0;font-weight:800">${y.label}</td>
       <td style="padding:8px 9px;text-align:right;color:${rcolor(y.ret)};font-weight:900">${rpct(y.ret,1)}</td>
-      <td style="padding:8px 9px;text-align:right;color:#94a3b8">${rpct(y.vol,2)}</td>
+      <td style="padding:8px 9px;text-align:right;color:#94a3b8">${Number.isFinite(y.vol) ? y.vol.toFixed(2)+'%' : '-'}</td>
       <td style="padding:8px 9px;text-align:right;color:#10b981">${y.up}</td>
       <td style="padding:8px 9px;text-align:right;color:#ef4444">${y.down}</td>
     </tr>`).join('');
@@ -2249,14 +2427,15 @@ function openReport(){
         <td style="padding:9px 10px;text-align:right;color:#94a3b8;font-weight:800">${c.recovery}</td>
       </tr>`).join('');
   })();
-  const btcCycle = activeCoin === 'BTC' ? section(zh?'BTC 周期对照':'BTC CYCLE CONTEXT', `
+  const btcCycle = activeCoin === 'BTC' ? section(zh?'BTC 历史周期刻度尺':'BTC HISTORICAL CYCLE RULER', `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
-      ${card('2','C2 '+(zh?'平行价':'parallel'),fmtPrice(p2),`${rpct((p2-650)/650*100)} ${zh?'距减半价':'from halving'} · ${rpct((p2-19666)/19666*100)} from peak`,'#94a3b8')}
-      ${card('3','C3 '+(zh?'平行价':'parallel'),fmtPrice(p3),`${rpct((p3-8821)/8821*100)} ${zh?'距减半价':'from halving'} · ${rpct((p3-69000)/69000*100)} from peak`,'#94a3b8')}
-      ${card('4','C4 '+(zh?'当前':'current'),currentPrice,`Day ${daysHalving} · ${fromAth} from ATH`,'#f7931a')}
+      ${card('T',zh?'最近样本高点后':'After latest sample high',cycleClock ? cycleClock.daysSincePeak+'d' : '-',cycleClock ? `${cycleClock.peak.date} → ${cycleClock.latest.date}` : '','#f7931a')}
+      ${card('B',zh?'历史顶部到底部区间':'Historical peak-to-bottom range',`${bearMin}-${bearMax}d`,`${bearDays.join(' / ')}d · n=3`,'#ef4444')}
+      ${card('H',zh?'历史低点到高点区间':'Historical low-to-peak range',`${Math.min(...bullDays)}-${Math.max(...bullDays)}d`,`${zh?'减半到高点':'halving to peak'} ${Math.min(...halvingPeakDays)}-${Math.max(...halvingPeakDays)}d`,'#94a3b8')}
     </div>
+    <div style="margin:8px 2px 0;color:#64748b;font-size:9px;line-height:1.55">${zh?'时间样本来自 Bitstamp BTC/USD UTC 日线研究；当前高点、收盘和回撤来自 Yahoo Finance BTC-USD UTC 日线。三个历史样本只用于时间对照，不是见底日期或逃顶日期预测。':'Timing samples use the Bitstamp BTC/USD UTC daily study. The current sample high, close, and drawdown use Yahoo Finance BTC-USD UTC daily data. Three historical samples are context only, not bottom or top date forecasts.'}</div>
     <div style="margin-top:10px;background:#0f1319;border:1px solid rgba(255,255,255,.05);border-radius:10px;overflow:hidden">
-      <div style="padding:10px 12px;color:#f7931a;font-size:10px;font-weight:950;letter-spacing:.1em;text-transform:uppercase">${zh?'四周期关键数据':'Four-cycle key data'}</div>
+      <div style="padding:10px 12px;color:#f7931a;font-size:10px;font-weight:950;letter-spacing:.1em;text-transform:uppercase">${zh?'价格周期摘要（口径见说明）':'Price-cycle summary (see methodology)'}</div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <thead style="background:#151b25">
           <tr>
@@ -2273,7 +2452,7 @@ function openReport(){
     </div>`) : section(zh?'市场阶段':'MARKET STAGE', `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
       ${card('S',zh?'数据起点':'Data start',ext.first.date,fmtPrice(ext.first.close),'#94a3b8')}
-      ${card('A',zh?'历史高点':'All-time high',athPrice,ext.ath.date,'#f7931a')}
+      ${card('A',zh?'样本期最高价':'Sample-period high',athPrice,ext.ath.date,'#f7931a')}
       ${card('D',zh?'距高点':'From ATH',fromAth,`${sinceAth} ${zh?'天':'days'} since ATH`,'#ef4444')}
     </div>`);
   const drawdownBody = dd.worst ? `
@@ -2302,22 +2481,22 @@ function openReport(){
   ${section(zh?'当前查询':'CURRENT QUERY', `
     <div style="display:grid;grid-template-columns:1.1fr repeat(3,1fr);gap:9px">
       ${card('Q',zh?'查询条件':'Condition',eventLabel,`${stats.count} ${zh?'次历史样本':'historical samples'}`,'#f7931a')}
-      ${probCard(zh?'次日上涨':'Next day up', stats.up1_pct, stats.up1_avg)}
-      ${probCard(zh?'7日后上涨':'7 days up', stats.up7_pct, stats.up7_avg)}
-      ${probCard(zh?'30日后上涨':'30 days up', stats.up30_pct, stats.up30_avg)}
+      ${probCard(zh?'次日收涨比例':'Next-day positive share', stats.up1_pct, stats.up1_avg, stats.med1, stats.n1)}
+      ${probCard(zh?'7日后收涨比例':'7-day positive share', stats.up7_pct, stats.up7_avg, stats.med7, stats.n7)}
+      ${probCard(zh?'30日后收涨比例':'30-day positive share', stats.up30_pct, stats.up30_avg, stats.med30, stats.n30)}
     </div>
-    ${(stats.ltc_up_pct!=null && qtype!=='rise') ? `<div style="margin-top:9px;background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.22);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:12px;color:#e2e8f0;font-weight:800">${rIcon('L','#ec4899')}${zh?'当日低点修复统计':'Intraday low recovery'}</div>
-      <div style="font-size:12px;color:#94a3b8">${zh?'最低价到收盘为正的概率':'Low-to-close recovered'} <strong style="color:#10b981;font-size:18px">${stats.ltc_up_pct}%</strong> · ${zh?'平均修复':'avg'} ${rpct(stats.ltc_avg,2)}</div>
+    ${(stats.ltc_1_pct!=null && qtype!=='rise' && qtype!=='wick') ? `<div style="margin-top:9px;background:rgba(247,147,26,.08);border:1px solid rgba(247,147,26,.22);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:16px">
+      <div style="font-size:12px;color:#e2e8f0;font-weight:800">${rIcon('L','#f7931a')}${zh?'当日低点回升':'Intraday low recovery'}</div>
+      <div style="font-size:12px;color:#94a3b8;text-align:right">${zh?'收盘较最低价回升至少 1% 的历史比例':'Historical share closing at least 1% above the low'} <strong style="color:#f7931a;font-size:18px">${stats.ltc_1_pct}%</strong> · ${zh?'平均回升':'avg rebound'} ${rpct(stats.ltc_avg,2)}</div>
     </div>` : ''}
   `)}
 
   ${section(zh?'当前市场快照':'MARKET SNAPSHOT', `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">
       ${card('P',zh?'当前价格':'Current price',currentPrice,currentPriceNote,'#f7931a')}
-      ${card('A',zh?'历史高点':'All-time high',athPrice,ext.ath.date,'#10b981')}
-      ${card('R',zh?'距高点':'From ATH',fromAth,`${sinceAth} ${zh?'天':'days'} ${zh?'以来':'since ATH'}`,'#ef4444')}
-      ${card('V',zh?'日均波动':'Avg daily move',rpct(ext.avgVol,2),zh?'平均绝对涨跌幅':'average absolute daily move','#94a3b8')}
+      ${card('A',zh?'样本期最高价':'Sample-period high',athPrice,ext.ath.date,'#10b981')}
+      ${card('R',zh?'距样本期高点':'From sample high',fromAth,zh?`高点距今 ${sinceAth} 天`:`sample high set ${sinceAth} days ago`,'#ef4444')}
+      ${card('V',zh?'平均绝对日涨跌幅':'Avg absolute daily move',Number.isFinite(ext.avgVol) ? ext.avgVol.toFixed(2)+'%' : '-',zh?'非收益率标准差':'not return standard deviation','#94a3b8')}
     </div>
   `)}
 
@@ -2328,7 +2507,7 @@ function openReport(){
       ${card('T',zh?'总收益率':'Total return',rpct(ext.totalReturn,1),`${ext.first.date} → ${ext.latest.date}`,'#10b981')}
       ${card('U',zh?'单日最高涨幅':'Max intraday up',rpct(ext.maxRiseMetric,2),ext.maxRise.date,'#10b981')}
       ${card('D',zh?'单日最大下探':'Max intraday drawdown',rpct(ext.maxDropMetric,2),ext.maxDrop.date,'#ef4444')}
-      ${card('L',zh?'历史最低价':'Lowest low',fmtPrice(ext.atl.low || ext.atl.close),ext.atl.date,'#94a3b8')}
+      ${card('L',zh?'样本期最低价':'Sample-period low',fmtPrice(ext.atl.low || ext.atl.close),ext.atl.date,'#94a3b8')}
     </div>
   `)}
 
@@ -2340,8 +2519,8 @@ function openReport(){
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:9px">
       ${card('U',zh?'最长连涨':'Longest up streak',streak.maxUp+'d',`${zh?'平均':'avg'} ${streak.avgUp.toFixed(1)}d`,'#10b981')}
       ${card('D',zh?'最长连跌':'Longest down streak',streak.maxDown+'d',`${zh?'平均':'avg'} ${streak.avgDown.toFixed(1)}d`,'#ef4444')}
-      ${card('M',zh?'最强月份':'Best month','M'+bestMonth.month,`${zh?'平均':'avg'} ${rpct(bestMonth.avg,2)}`,'#10b981')}
-      ${card('M',zh?'最弱月份':'Weakest month','M'+worstMonth.month,`${zh?'平均':'avg'} ${rpct(worstMonth.avg,2)}`,'#ef4444')}
+      ${card('M',zh?'历史最强月份':'Best calendar month','M'+bestMonth.month,`${zh?'平均月收益':'avg monthly return'} ${rpct(bestMonth.avg,2)} · n=${bestMonth.count}`,'#10b981')}
+      ${card('M',zh?'历史最弱月份':'Weakest calendar month','M'+worstMonth.month,`${zh?'平均月收益':'avg monthly return'} ${rpct(worstMonth.avg,2)} · n=${worstMonth.count}`,'#ef4444')}
     </div>
   `)}
 
@@ -2349,10 +2528,11 @@ function openReport(){
     <div style="background:#0f1319;border-radius:10px;overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr style="background:#161c26">
-          ${(zh?['年份','年度涨跌','日均波动','上涨天数','下跌天数']:['Year','Return','Avg move','Up days','Down days']).map(h=>`<th style="padding:9px;text-align:right;color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:.08em">${h}</th>`).join('')}
+          ${(zh?['年份','年度/YTD涨跌','平均绝对日涨跌','上涨天数','下跌天数']:['Year','Annual/YTD return','Avg absolute move','Up days','Down days']).map(h=>`<th style="padding:9px;text-align:right;color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:.08em">${h}</th>`).join('')}
         </tr></thead>
         <tbody>${yearlyRows}</tbody>
       </table>
+      <div style="padding:9px 12px;color:#64748b;font-size:9px;line-height:1.55">${zh?'年度收益按上一年末收盘到本年末收盘计算；最新年份标记为 YTD。上涨/下跌天数不含平盘日。2017 为数据起始年的区间收益。':'Annual returns use the prior year-end close to the current year-end close; the latest year is YTD. Up/down counts exclude flat days. 2017 is a partial dataset-start return.'}</div>
     </div>
   `)}
 
@@ -2361,22 +2541,22 @@ function openReport(){
   ${section(zh?'自动观察摘要':'AUTO-GENERATED OBSERVATIONS', `
     <div style="background:rgba(247,147,26,.08);border-left:3px solid #f7931a;border-radius:0 10px 10px 0;padding:13px 15px;font-size:12px;line-height:1.75;color:#cbd5e1">
       <div>${zh?'当前查询显示':'This query shows'} <strong style="color:#f7931a">${eventLabel}</strong> ${zh?'共出现':'occurred'} <strong>${stats.count}</strong> ${zh?'次。':'times.'}</div>
-      <div>${zh?'样本内 30 日后上涨概率为':'The 30-day positive rate was'} <strong style="color:${probColor(stats.up30_pct)}">${stats.up30_pct}%</strong> ${zh?'，平均表现为':'with an average move of'} <strong>${rpct(stats.up30_avg,2)}</strong>.</div>
-      <div>${zh?'当前价格距历史高点':'Current price is'} <strong style="color:#ef4444">${fromAth}</strong> ${zh?'，可与回撤和周期/阶段数据一起观察。':'from ATH; compare it with drawdown and cycle/stage context.'}</div>
+      <div>${zh?'样本内 30 日后收涨比例为':'The historical 30-day positive share was'} <strong style="color:${probColor(stats.up30_pct)}">${stats.up30_pct}%</strong> ${zh?'，平均表现为':'with an average move of'} <strong>${rpct(stats.up30_avg,2)}</strong>${zh?'，中位数为':' and a median of'} <strong>${rpct(stats.med30,2)}</strong>${zh?'。':'.'}</div>
+      <div>${zh?'当前价格距样本期高点':'Current price is'} <strong style="color:#ef4444">${fromAth}</strong> ${zh?'，可与回撤和周期/阶段数据一起观察。':'from the sample-period high; compare it with drawdown and cycle/stage context.'}</div>
       <div style="color:#94a3b8;margin-top:4px">${zh?'历史数据只是观察材料，不构成买卖建议。':'Historical data is context only, not a trading signal.'}</div>
     </div>
   `)}
 
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;margin-top:18px;border-top:1px solid rgba(255,255,255,.08)">
-    <div style="font-size:10px;color:#475569;max-width:520px;line-height:1.6">${zh?'历史 OHLCV 来源：Yahoo Finance。历史高点与盘中极值按 high/low 相对前日收盘计算；收盘涨跌分布和回测按 close 相对前日 close。报告不含手续费、滑点或未来预测。':'Historical OHLCV source: Yahoo Finance. ATH and intraday extremes use high/low versus the previous close; close-to-close distributions and backtests use close versus previous close. Fees, slippage, and predictions are not included.'}</div>
+    <div style="font-size:10px;color:#475569;max-width:560px;line-height:1.6">${zh?'样本期 OHLCV 来源：Yahoo Finance。事件阈值使用未四舍五入的收益率；结果按收盘价计算，盘中极值使用 high/low。相邻事件可能重叠，历史比例不是未来概率。报告不含手续费、滑点或未来预测。':'Sample-period OHLCV source: Yahoo Finance. Event thresholds use unrounded returns; outcomes use close prices and intraday extremes use high/low. Adjacent events may overlap, and historical shares are not future probabilities. Fees, slippage, and predictions are not included.'}</div>
     <div style="font-size:15px;font-weight:950;color:#f7931a;margin-left:18px">www.mybtcbox.com</div>
   </div>
 </div>`;
   const shareMoveZh = qtype==='drop' ? '下跌' : qtype==='rise' ? '上涨' : qtype==='wick' ? '低点到收盘回升' : '振幅';
   const shareMoveEn = qtype==='drop' ? 'dropped' : qtype==='rise' ? 'rose' : qtype==='wick' ? 'recovered low-to-close' : 'moved';
   shareText = zh
-    ? `刚刚用 My BTC Box 查了一下：当 ${activeCoin} 单日${shareMoveZh}超过 ${thresh}% 时，历史上发生了 ${stats.count} 次。但次日反弹概率高达 ${stats.up1_pct}%！30日后上涨概率 ${stats.up30_pct}%。${stats.ltc_up_pct ? '而最低价到收盘的回升率竟然有 ' + stats.ltc_up_pct + '%！' : ''}别盲目操作，先看历史数据：${shareUrl('event')}`
-    : `Just checked My BTC Box: when ${activeCoin} ${shareMoveEn} >${thresh}%, it happened ${stats.count}x. Next day bounced ${stats.up1_pct}% of the time! 30d: ${stats.up30_pct}%.${stats.ltc_up_pct ? ' Low→close recovery: ' + stats.ltc_up_pct + '%! ' : ' '}Check the data before you trade: ${shareUrl('event')}`;
+    ? `刚刚用 My BTC Box 查了一下：当 ${activeCoin} 单日${shareMoveZh}至少 ${thresh}% 时，历史上发生了 ${stats.count} 次。样本内次日收涨比例 ${stats.up1_pct}%，30日后收涨比例 ${stats.up30_pct}%。历史比例不代表未来概率：${shareUrl('event')}`
+    : `Just checked My BTC Box: when ${activeCoin} ${shareMoveEn} at least ${thresh}%, it happened ${stats.count} times. Historical positive share: next day ${stats.up1_pct}%, 30 days ${stats.up30_pct}%. Past shares are not future probabilities: ${shareUrl('event')}`;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -2650,11 +2830,9 @@ function shareWeibo(){
   }else{
     var count = (document.getElementById('sn')||{}).textContent || '-';
     var up1 = (document.getElementById('pu1')||{}).textContent || '-';
-    var ltc = document.getElementById('spike-pct');
-    var ltcText = ltc ? ltc.textContent : '';
     title = lang==='zh'
-      ? '刚刚用 My BTC Box 查到：当 '+activeCoin+' 单日跌超 '+thresh+'% 时，历史上发生了 '+count+' 次。但次日反弹概率高达 '+up1+'！'+(ltcText?'最低→收盘回升率 '+ltcText+'！':'')+' 别盲目操作→'
-      : 'Just checked My BTC Box: when '+activeCoin+' drops >'+thresh+'%, it happened '+count+'x. Next day bounced '+up1+'!'+(ltcText?' Low→close: '+ltcText+'! ':' ')+'Check the data:';
+      ? '刚刚用 My BTC Box 查到：当 '+activeCoin+' 单日跌幅至少 '+thresh+'% 时，历史上发生了 '+count+' 次，样本内次日收涨比例 '+up1+'。历史比例不代表未来概率。'
+      : 'My BTC Box: when '+activeCoin+' dropped at least '+thresh+'%, it happened '+count+' times. The historical next-day positive share was '+up1+'. Past shares are not future probabilities.';
   }
   window.open('https://service.weibo.com/share/share.php?url='+encodeURIComponent(url)+'&title='+encodeURIComponent(title)+'&appkey=&searchPic=true','_blank','width=620,height=560');
 }
