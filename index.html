@@ -1308,6 +1308,10 @@ const requestedQueryType = requestedKind === 'event' && ['drop','rise','range','
   ? requestedTypeCandidate : null;
 const requestedQueryThreshold = Number(PAGE_PARAMS.get('threshold') || PAGE_PRESET.threshold);
 const hasRequestedQuery = requestedQueryType && [3,5,8,10,15,20,30].includes(requestedQueryThreshold);
+const requestedMode = PAGE_PARAMS.get('kind') || PAGE_PRESET.mode || (PAGE_PRESET.type ? 'event' : null);
+const requestedBacktestStart = PAGE_PARAMS.get('start') || PAGE_PRESET.start || '';
+const requestedBacktestThreshold = Number(PAGE_PARAMS.get('drop') || PAGE_PRESET.drop);
+const requestedBacktestAmount = Number(PAGE_PARAMS.get('amount') || PAGE_PRESET.amount);
 const SAVED_QUERY_KEY='btcPatternSavedQueries';
 function loadSavedQueries(){
   try{
@@ -1327,6 +1331,13 @@ function shareUrl(kind='event',ref='x'){
   if(kind === 'event'){
     params.set('type',qtype);
     params.set('threshold',String(thresh));
+  }
+  if(kind === 'backtest'){
+    const start=document.getElementById('cb-start')?.value;
+    const amount=document.getElementById('cb-amount')?.value;
+    if(start) params.set('start',start);
+    params.set('drop',String(cbThresh));
+    if(amount) params.set('amount',amount);
   }
   return `${SITE_URL}/?${params.toString()}`;
 }
@@ -1963,11 +1974,19 @@ function updateDynamicCopy(){
     const queryNames = lang === 'zh'
       ? {drop:'单日收盘下跌',rise:'单日收盘上涨',range:'单日振幅',wick:'插针深度'}
       : {drop:'daily close falls',rise:'daily close rises',range:'daily range reaches',wick:'wick depth reaches'};
-    heroTitle.innerHTML = hasRequestedQuery
+    heroTitle.innerHTML = requestedMode === 'cycle'
       ? (lang === 'zh'
+          ? 'BTC 当前周期走了多久？<br>与过去三轮相比在什么位置？'
+          : 'How long has the current BTC cycle run,<br>compared with the last three cycles?')
+      : requestedMode === 'backtest'
+        ? (lang === 'zh'
+            ? 'BTC 条件买入与每周定投，<br>历史结果有什么差别？'
+            : 'BTC conditional buying versus weekly DCA,<br>what did history show?')
+        : hasRequestedQuery
+          ? (lang === 'zh'
           ? `${coinName} ${queryNames[requestedQueryType]}至少 <span class="hl">${requestedQueryThreshold}%</span>，<br>历史上后来怎样？`
           : `When ${coinName} ${queryNames[requestedQueryType]} <span class="hl">${requestedQueryThreshold}%</span>,<br>what happened next?`)
-      : (lang === 'zh'
+          : (lang === 'zh'
           ? `${coinName} 出现大幅波动时，<br>历史上接下来会怎样？`
           : `When ${coinName} moves sharply,<br>what happened next?`);
   }
@@ -3248,6 +3267,16 @@ async function initializeApp(){
     onType();
     setT(requestedQueryThreshold);
     run();
+  }
+  if(requestedMode === 'backtest'){
+    const tool=document.getElementById('backtest-tool');
+    const startInput=document.getElementById('cb-start');
+    const amountInput=document.getElementById('cb-amount');
+    if(tool) tool.open=true;
+    if(startInput && /^\d{4}-\d{2}-\d{2}$/.test(requestedBacktestStart)) startInput.value=requestedBacktestStart;
+    if(amountInput && Number.isFinite(requestedBacktestAmount) && requestedBacktestAmount >= 1) amountInput.value=String(requestedBacktestAmount);
+    if(Number.isFinite(requestedBacktestThreshold) && requestedBacktestThreshold >= 1 && requestedBacktestThreshold <= 80) setCBThresh(requestedBacktestThreshold);
+    updateCB();
   }
 }
 initializeApp();

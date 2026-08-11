@@ -218,6 +218,7 @@ run();
   mobileHistory: document.getElementById('mobile-history').innerHTML,
   probSample: document.getElementById('pa30').textContent,
   eventShareUrl: shareUrl('event','test'),
+  backtestShareUrl: shareUrl('backtest','test'),
 });
 `, context);
 
@@ -254,6 +255,9 @@ assertEqual(result.probSample.includes('样本'), true, 'Probability copy should
 assertEqual(result.eventShareUrl.includes('asset=doge'), true, 'Shared event URL should preserve the selected asset');
 assertEqual(result.eventShareUrl.includes('type=drop'), true, 'Shared event URL should preserve the event type');
 assertEqual(result.eventShareUrl.includes('threshold=8'), true, 'Shared event URL should preserve the event threshold');
+assertEqual(result.backtestShareUrl.includes('start=2024-06-01'), true, 'Shared backtest URL should preserve the selected start date');
+assertEqual(result.backtestShareUrl.includes('drop=8'), true, 'Shared backtest URL should preserve the drop threshold');
+assertEqual(result.backtestShareUrl.includes('amount=100'), true, 'Shared backtest URL should preserve the buy amount');
 
 const presetContext = createContext('2017-01-01', {
   location: { search: '' },
@@ -269,6 +273,21 @@ assertEqual(presetState.requestedCoin, 'BTC', 'Tool route preset should select i
 assertEqual(presetState.requestedQueryType, 'wick', 'Tool route preset should select its configured event type');
 assertEqual(presetState.requestedQueryThreshold, 5, 'Tool route preset should select its configured threshold');
 assertEqual(presetState.hasRequestedQuery, true, 'A valid tool route preset should automatically run the real query');
+
+const backtestPresetContext = createContext('2017-01-01', {
+  location: { search: '' },
+  MYBTCBOX_PRESET: { asset: 'btc', mode: 'backtest', start: '2020-01-01', drop: 5, amount: 100 },
+});
+const backtestPresetState = vm.runInContext(`({
+  requestedMode,
+  requestedBacktestStart,
+  requestedBacktestThreshold,
+  requestedBacktestAmount
+})`, backtestPresetContext);
+assertEqual(backtestPresetState.requestedMode, 'backtest', 'Backtest tool route should select backtest mode');
+assertEqual(backtestPresetState.requestedBacktestStart, '2020-01-01', 'Backtest tool route should preserve its start date');
+assertEqual(backtestPresetState.requestedBacktestThreshold, 5, 'Backtest tool route should preserve its threshold');
+assertEqual(backtestPresetState.requestedBacktestAmount, 100, 'Backtest tool route should preserve its amount');
 
 assertEqual(html.includes('id="pulse-score"'), false, 'Homepage should not include a proprietary market score');
 assertEqual(html.includes('id="daily-brief"'), true, 'Homepage should include the daily observation mount point');
@@ -361,7 +380,7 @@ assertEqual(html.includes('"@type":"WebApplication"'), true, 'Homepage should pu
 assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), true, 'Robots file should disclose the sitemap');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/</loc>'), true, 'Sitemap should include the core tool homepage');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/methodology.html</loc>'), true, 'Sitemap should include the public methodology page');
-for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-history','btc-wick-history']) {
+for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-history','btc-wick-history','btc-cycle-clock','btc-conditional-buy-backtest']) {
   assertEqual(toolFunction.includes(`'${slug}'`), true, `Pages Function should define the ${slug} tool route`);
   assertEqual(sitemap.includes(`<loc>https://www.mybtcbox.com/tools/${slug}</loc>`), true, `Sitemap should include the ${slug} tool route`);
 }

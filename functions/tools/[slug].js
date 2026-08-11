@@ -27,6 +27,21 @@ const TOOLS = {
     title: 'BTC插针历史查询：最低到收盘回升5%后发生了什么 | My BTC Box',
     description: '查询BTC当日最低价到收盘价回升至少5%的历史插针样本，以及次日和7日后的历史表现。',
   },
+  'btc-cycle-clock': {
+    asset: 'btc',
+    mode: 'cycle',
+    title: 'BTC历史周期刻度尺：当前走了多久 | My BTC Box',
+    description: '把BTC当前样本高点后的完整日线天数，与过去三轮顶部到底部和底部到高点时间进行对照。只比较历史时间，不预测见底或逃顶日期。',
+  },
+  'btc-conditional-buy-backtest': {
+    asset: 'btc',
+    mode: 'backtest',
+    start: '2020-01-01',
+    drop: 5,
+    amount: 100,
+    title: 'BTC条件买入与定投历史回测 | My BTC Box',
+    description: '比较BTC单日下跌5%时条件买入100美元与每周定投的历史投入、持币数量、收益率和最大回撤。历史回测不是投资建议。',
+  },
 };
 
 function replaceMeta(html, pattern, replacement) {
@@ -63,7 +78,10 @@ export async function onRequestGet(context) {
     provider: { '@type': 'Organization', name: 'My BTC Box', url: 'https://www.mybtcbox.com/' },
   };
   html = replaceMeta(html, /<script type="application\/ld\+json">[\s\S]*?<\/script>/, `<script type="application/ld+json">${JSON.stringify(schema)}</script>`);
-  html = html.replace('</head>', `<base href="/">\n<script>window.MYBTCBOX_PRESET=${JSON.stringify({asset:tool.asset,type:tool.type,threshold:tool.threshold})};</script>\n</head>`);
+  const preset = Object.fromEntries(['asset','type','threshold','mode','start','drop','amount']
+    .filter(key => tool[key] !== undefined)
+    .map(key => [key,tool[key]]));
+  html = html.replace('</head>', `<base href="/">\n<script>window.MYBTCBOX_PRESET=${JSON.stringify(preset)};</script>\n</head>`);
 
   const headers = new Headers(assetResponse.headers);
   headers.set('Content-Type', 'text/html; charset=UTF-8');
