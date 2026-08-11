@@ -4,6 +4,8 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 const methodologyHtml = fs.readFileSync('methodology.html', 'utf8');
 const headers = fs.readFileSync('_headers', 'utf8');
+const robots = fs.readFileSync('robots.txt', 'utf8');
+const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
   .find(script => script.includes('function buildBtcData'));
@@ -214,6 +216,7 @@ run();
   heroTitle: document.getElementById('hero-title').innerHTML,
   mobileHistory: document.getElementById('mobile-history').innerHTML,
   probSample: document.getElementById('pa30').textContent,
+  eventShareUrl: shareUrl('event','test'),
 });
 `, context);
 
@@ -247,6 +250,9 @@ assertEqual(result.tickerPrice, '$0.1100', 'Top ticker should use shared live pr
 assertEqual(result.heroTitle.includes('狗狗币'), true, 'Hero title should follow the selected asset');
 assertEqual(result.mobileHistory.includes('30日后'), true, 'Mobile history should retain long-horizon outcomes');
 assertEqual(result.probSample.includes('样本'), true, 'Probability copy should disclose its valid sample denominator');
+assertEqual(result.eventShareUrl.includes('asset=doge'), true, 'Shared event URL should preserve the selected asset');
+assertEqual(result.eventShareUrl.includes('type=drop'), true, 'Shared event URL should preserve the event type');
+assertEqual(result.eventShareUrl.includes('threshold=8'), true, 'Shared event URL should preserve the event threshold');
 
 assertEqual(html.includes('id="pulse-score"'), false, 'Homepage should not include a proprietary market score');
 assertEqual(html.includes('id="daily-brief"'), true, 'Homepage should include the daily observation mount point');
@@ -334,6 +340,11 @@ assertEqual(methodologyHtml.includes('超过2个UTC日未更新即标记延迟')
 assertEqual(methodologyHtml.includes('SHA-256'), true, 'Methodology page should expose the published dataset checksum');
 assertEqual(headers.includes('/data/*'), true, 'Hosting headers should cover published data files');
 assertEqual(headers.includes('max-age=0, must-revalidate'), true, 'Published daily data should not remain silently stale in browser cache');
+assertEqual(html.includes('<link rel="canonical" href="https://www.mybtcbox.com/">'), true, 'Homepage should publish one stable canonical URL');
+assertEqual(html.includes('"@type":"WebApplication"'), true, 'Homepage should publish WebApplication structured data');
+assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), true, 'Robots file should disclose the sitemap');
+assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/</loc>'), true, 'Sitemap should include the core tool homepage');
+assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/methodology.html</loc>'), true, 'Sitemap should include the public methodology page');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`

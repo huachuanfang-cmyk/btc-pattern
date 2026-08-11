@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <!-- Google tag (gtag.js) -->
@@ -11,13 +11,14 @@
   gtag('config', 'G-VCFSRS674P');
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>My BTC Box - Crypto Historical Event Lookup</title>
-<meta name="description" content="Look up how major crypto assets behaved after big drops, surges, or spike days. Real data since 2017. No predictions.">
+<title>比特币历史数据查询、周期比较与回测 | My BTC Box</title>
+<meta name="description" content="查询比特币和主流币大跌、大涨、振幅与插针后的历史表现，对比BTC周期并进行条件买入回测。只提供历史数据参考，不预测涨跌。">
+<link rel="canonical" href="https://www.mybtcbox.com/">
 <meta property="og:title" content="My BTC Box - Crypto Historical Event Lookup">
 <meta property="og:description" content="When BTC drops 10% in a day - what happened next? Real data 2017-2026. Facts only. You decide.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="My BTC Box">
-<meta property="og:url" content="https://www.mybtcbox.com/?v=20260514">
+<meta property="og:url" content="https://www.mybtcbox.com/">
 <meta property="og:image" content="https://www.mybtcbox.com/og-image.png?v=20260514">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,6 +27,7 @@
 <meta name="twitter:description" content="When BTC drops 10% in a day - what happened next? Real data 2017-2026. Facts only.">
 <meta name="twitter:image" content="https://www.mybtcbox.com/og-image.png?v=20260514">
 <meta name="twitter:image:alt" content="My BTC Box crypto historical pattern and backtest report">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"My BTC Box","url":"https://www.mybtcbox.com/","applicationCategory":"FinanceApplication","operatingSystem":"Web","isAccessibleForFree":true,"description":"基于真实UTC日线的加密货币历史事件查询、BTC周期比较和条件买入回测工具，不预测涨跌。","featureList":["加密货币历史事件查询","BTC历史周期比较","条件买入与定投回测","历史数据报告生成"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f7931a'/%3E%3Ctext x='32' y='42' font-size='34' text-anchor='middle' font-family='Arial' font-weight='700' fill='%23080b10'%3E%E2%82%BF%3C/text%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -837,8 +839,10 @@ COIN_ORDER.forEach(code => {
 if (!RAW_COINS?.BTC || !Array.isArray(RAW_COINS.BTC.daily)) {
   throw new Error('Crypto daily data failed to load. Make sure data/btc.daily.js exists next to this HTML file.');
 }
+const PAGE_PARAMS = new URLSearchParams(window.location?.search || '');
 const savedCoin = localStorage.getItem('btcPatternCoin');
-const requestedCoin = COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
+const urlCoin = (PAGE_PARAMS.get('asset') || '').toUpperCase();
+const requestedCoin = COIN_ORDER.includes(urlCoin) ? urlCoin : COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
 const PX = 'https://mybtcbox-proxy.huachuanfang.workers.dev/api?url=';
 let activeCoin = 'BTC';
 let BTC_DAILY_RAW = RAW_COINS[activeCoin];
@@ -1297,6 +1301,10 @@ zh:{
 
 const savedLang = localStorage.getItem('btcPatternLang');
 let lang=savedLang === 'en' ? 'en' : 'zh', qtype='drop', thresh=8;
+const requestedQueryType = PAGE_PARAMS.get('kind') === 'event' && ['drop','rise','range','wick'].includes(PAGE_PARAMS.get('type'))
+  ? PAGE_PARAMS.get('type') : null;
+const requestedQueryThreshold = Number(PAGE_PARAMS.get('threshold'));
+const hasRequestedQuery = requestedQueryType && [3,5,8,10,15,20,30].includes(requestedQueryThreshold);
 const SAVED_QUERY_KEY='btcPatternSavedQueries';
 function loadSavedQueries(){
   try{
@@ -1313,6 +1321,10 @@ const SITE_URL='https://www.mybtcbox.com';
 const OG_VERSION='20260514';
 function shareUrl(kind='event',ref='x'){
   const params=new URLSearchParams({ref,asset:activeCoin.toLowerCase(),kind,v:OG_VERSION});
+  if(kind === 'event'){
+    params.set('type',qtype);
+    params.set('threshold',String(thresh));
+  }
   return `${SITE_URL}/?${params.toString()}`;
 }
 const ATH=124723, NEXT_HALF=new Date('2028-04-17').getTime();
@@ -3216,12 +3228,19 @@ updatePrice(); setInterval(updatePrice,60000);
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
 
 // init
-applyLang();
-if(requestedCoin !== activeCoin){
-  selectCoin(requestedCoin);
-}else{
-  updateCB();
+async function initializeApp(){
+  applyLang();
+  if(requestedCoin !== activeCoin) await selectCoin(requestedCoin);
+  else updateCB();
+  if(hasRequestedQuery){
+    qtype=requestedQueryType;
+    document.getElementById('qtype').value=requestedQueryType;
+    onType();
+    setT(requestedQueryThreshold);
+    run();
+  }
 }
+initializeApp();
 </script>
 </body>
 </html>
