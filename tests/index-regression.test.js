@@ -9,14 +9,12 @@ const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const toolFunction = fs.readFileSync('functions/tools/[slug].js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const serviceWorker = fs.readFileSync('sw.js', 'utf8');
+const coreScript = fs.readFileSync('assets/core.js', 'utf8');
+const appScript = fs.readFileSync('assets/app.js', 'utf8');
 function readPngInfo(path) {
   const bytes = fs.readFileSync(path);
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), colorType: bytes[25] };
 }
-const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-  .map(match => match[1])
-  .find(script => script.includes('function buildBtcData'));
-
 class ClassList {
   constructor() { this.items = new Set(); }
   add(...names) { names.forEach(name => this.items.add(name)); }
@@ -127,7 +125,8 @@ function createContext(startDate = '2017-01-01', pageWindow = {}) {
   for (const coin of ['btc', 'eth', 'sol', 'doge', 'bnb']) {
     vm.runInContext(fs.readFileSync(`data/${coin}.daily.js`, 'utf8'), context);
   }
-  vm.runInContext(inlineScript, context);
+  vm.runInContext(coreScript, context);
+  vm.runInContext(appScript, context);
   return context;
 }
 
@@ -395,6 +394,7 @@ assertEqual(methodologyHtml.includes('SHA-256'), true, 'Methodology page should 
 assertEqual(headers.includes('/data/*'), true, 'Hosting headers should cover published data files');
 assertEqual(headers.includes('max-age=0, must-revalidate'), true, 'Published daily data should not remain silently stale in browser cache');
 assertEqual(headers.includes('/sw.js'), true, 'Service worker updates should always be revalidated');
+assertEqual(headers.includes('/assets/*'), true, 'Application modules should always be revalidated after deployment');
 assertEqual(html.includes('<link rel="canonical" href="https://www.mybtcbox.com/">'), true, 'Homepage should publish one stable canonical URL');
 assertEqual(html.includes('"@type":"WebApplication"'), true, 'Homepage should publish WebApplication structured data');
 assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), true, 'Robots file should disclose the sitemap');
@@ -420,9 +420,15 @@ for (const size of [192, 512]) {
 assertEqual(manifest.shortcuts.length, 3, 'Installed app should expose three useful tool shortcuts');
 assertEqual(serviceWorker.includes("fetch(request)"), true, 'Service worker should try the network before cached data');
 assertEqual(serviceWorker.indexOf('fetch(request)') < serviceWorker.indexOf('caches.match(request)'), true, 'Service worker should not prefer stale cached daily data');
+assertEqual(html.includes('href="/assets/app.css"'), true, 'Homepage should load the extracted application stylesheet');
+assertEqual(html.includes('src="/assets/core.js"'), true, 'Homepage should load the independently testable calculation core');
+assertEqual(html.includes('src="/assets/app.js"'), true, 'Homepage should load the extracted application controller');
+for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/app.js']) {
+  assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache ${asset}`);
+}
 assertEqual(html.includes('rel="manifest" href="/manifest.webmanifest"'), true, 'Homepage should link the web app manifest');
 assertEqual(html.includes('rel="apple-touch-icon" href="/app-icon-180.png"'), true, 'Homepage should provide an iOS home-screen icon');
-assertEqual(html.includes("navigator.serviceWorker.register('/sw.js')"), true, 'Homepage should register the service worker');
+assertEqual(appScript.includes("navigator.serviceWorker.register('/sw.js')"), true, 'Application controller should register the service worker');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`

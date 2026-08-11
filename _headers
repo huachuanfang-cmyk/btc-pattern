@@ -6,6 +6,10 @@
   Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
 
+/assets/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
