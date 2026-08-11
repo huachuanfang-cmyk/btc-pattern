@@ -7,7 +7,11 @@
     "health:check": "node scripts/check-data-health.js",
     "health:online": "node scripts/check-data-health.js --url https://www.mybtcbox.com/data/health.json",
     "quality:score": "node scripts/check-quality-scorecard.js",
+    "test:e2e": "playwright test",
     "update:crypto": "node update-btc-data.js",
     "update:btc": "node update-btc-data.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
