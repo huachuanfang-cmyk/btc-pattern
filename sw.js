@@ -1,5 +1,5 @@
 const CACHE_NAME='mybtcbox-shell-v2';
-const SHELL=['/','/methodology.html','/status.html','/manifest.webmanifest','/assets/app.css','/assets/core.js','/assets/backtest-core.js','/assets/app.js','/assets/status.css','/assets/status.js','/data/health.js','/app-icon.svg','/app-icon-180.png','/app-icon-192.png','/app-icon-512.png','/og-image.png'];
+const SHELL=['/','/methodology.html','/status.html','/manifest.webmanifest','/assets/app.css','/assets/core.js','/assets/backtest-core.js','/assets/report-core.js','/assets/app.js','/assets/status.css','/assets/status.js','/data/health.js','/app-icon.svg','/app-icon-180.png','/app-icon-192.png','/app-icon-512.png','/og-image.png'];
 
 self.addEventListener('install',event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)));

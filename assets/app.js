@@ -19,6 +19,18 @@ const {
   weeklyRows: coreWeeklyRows,
   yearlyBacktest: coreYearlyBacktest
 } = window.MYBTCBOX_BACKTEST;
+const {
+  average: coreReportAverage,
+  buckets: coreReportBuckets,
+  dateDiff: coreReportDateDiff,
+  drawdowns: coreReportDrawdowns,
+  extremes: coreReportExtremes,
+  maxBy: coreReportMaxBy,
+  minBy: coreReportMinBy,
+  seasonality: coreReportSeasonality,
+  streaks: coreReportStreaks,
+  yearly: coreReportYearly
+} = window.MYBTCBOX_REPORT;
 const COIN_ORDER = ['BTC', 'ETH', 'SOL', 'DOGE', 'BNB'];
 const COIN_DISPLAY = {
   BTC:{en:'Bitcoin',zh:'比特币'},
@@ -1304,17 +1316,16 @@ function reportRows(){
   return (BTC_DATA.daily || []).filter(d => d && d.date && Number.isFinite(d.close));
 }
 function ravg(arr){
-  const v = arr.filter(n => Number.isFinite(n));
-  return v.length ? v.reduce((s,n)=>s+n,0) / v.length : null;
+  return coreReportAverage(arr);
 }
 function rmaxBy(arr, fn){
-  return arr.reduce((best,item) => !best || fn(item) > fn(best) ? item : best, null);
+  return coreReportMaxBy(arr,fn);
 }
 function rminBy(arr, fn){
-  return arr.reduce((best,item) => !best || fn(item) < fn(best) ? item : best, null);
+  return coreReportMinBy(arr,fn);
 }
 function rdateDiff(a,b){
-  return Math.max(0, Math.round((new Date(b+'T00:00:00Z') - new Date(a+'T00:00:00Z')) / 86400000));
+  return coreReportDateDiff(a,b);
 }
 function rpct(v, d=1){
   if(v == null || !Number.isFinite(v)) return '-';
@@ -1351,145 +1362,22 @@ function reportEvent(){
   };
 }
 function reportExtremes(rows){
-  const ath = rmaxBy(rows, d => Number.isFinite(d.high) ? d.high : d.close);
-  const atl = rminBy(rows, d => Number.isFinite(d.low) ? d.low : d.close);
-  const maxRise = rmaxBy(rows, d => d.rise_to_high ?? d.pct);
-  const maxDrop = rminBy(rows, d => d.drop_to_low ?? d.pct);
-  const maxRiseMetric = maxRise ? (maxRise.rise_to_high ?? maxRise.pct) : null;
-  const maxDropMetric = maxDrop ? (maxDrop.drop_to_low ?? maxDrop.pct) : null;
-  const first = rows[0], latest = rows[rows.length-1];
-  const totalReturn = first && latest ? (latest.close / first.close - 1) * 100 : null;
-  const avgDaily = ravg(rows.map(d => d.pct));
-  const avgVol = ravg(rows.map(d => d.pct == null ? null : Math.abs(d.pct)));
-  const fromAth = ath && latest ? (latest.close / (ath.high || ath.close) - 1) * 100 : null;
-  return {ath, atl, maxRise, maxDrop, maxRiseMetric, maxDropMetric, first, latest, totalReturn, avgDaily, avgVol, fromAth};
+  return coreReportExtremes(rows);
 }
 function reportBuckets(rows){
-  const moves = rows.filter(d => Number.isFinite(d.pct));
-  const defs = [
-    ['> +10%', d => d.pct > 10, '#10b981'],
-    ['+5% ~ +10%', d => d.pct > 5 && d.pct <= 10, '#10b981'],
-    ['+3% ~ +5%', d => d.pct > 3 && d.pct <= 5, '#22c55e'],
-    ['-3% ~ +3%', d => d.pct >= -3 && d.pct <= 3, '#94a3b8'],
-    ['-3% ~ -5%', d => d.pct < -3 && d.pct >= -5, '#f97316'],
-    ['-5% ~ -10%', d => d.pct < -5 && d.pct >= -10, '#ef4444'],
-    ['< -10%', d => d.pct < -10, '#ef4444']
-  ];
-  return defs.map(([label, test, color]) => {
-    const count = moves.filter(test).length;
-    return {label, count, pct: moves.length ? count / moves.length * 100 : 0, color};
-  });
+  return coreReportBuckets(rows);
 }
 function reportStreaks(rows){
-  const up = [], down = [];
-  let dir = 0, len = 0;
-  const flush = () => {
-    if(len > 1){
-      if(dir > 0) up.push(len);
-      if(dir < 0) down.push(len);
-    }
-  };
-  rows.filter(d=>Number.isFinite(d.pct)).forEach(d => {
-    const ndir = d.pct > 0 ? 1 : d.pct < 0 ? -1 : 0;
-    if(ndir === 0){ flush(); dir = 0; len = 0; return; }
-    if(ndir === dir) len += 1;
-    else { flush(); dir = ndir; len = 1; }
-  });
-  flush();
-  const bucket = arr => ({
-    d2: arr.filter(n=>n===2).length,
-    d3: arr.filter(n=>n===3).length,
-    d4: arr.filter(n=>n===4).length,
-    d57: arr.filter(n=>n>=5 && n<=7).length,
-    d8: arr.filter(n=>n>7).length
-  });
-  return {
-    maxUp: up.length ? Math.max(...up) : 0,
-    maxDown: down.length ? Math.max(...down) : 0,
-    avgUp: ravg(up) || 0,
-    avgDown: ravg(down) || 0,
-    upBucket: bucket(up),
-    downBucket: bucket(down)
-  };
+  return coreReportStreaks(rows);
 }
 function reportYearly(rows){
-  const byYear = {};
-  rows.forEach(d => {
-    const y = d.date.slice(0,4);
-    (byYear[y] ||= []).push(d);
-  });
-  const years = Object.keys(byYear).sort();
-  const latestYear = rows[rows.length-1]?.date.slice(0,4);
-  return years.map(y => {
-    const a = byYear[y], first = a[0], last = a[a.length-1];
-    const firstIndex = rows.indexOf(first);
-    const prior = firstIndex > 0 ? rows[firstIndex-1] : null;
-    const base = prior || first;
-    return {
-      year:y,
-      label:y + (y === latestYear ? ' YTD' : ''),
-      start:base.close,
-      end:last.close,
-      ret:(last.close / base.close - 1) * 100,
-      vol:ravg(a.map(d=>d.pct == null ? null : Math.abs(d.pct))),
-      up:a.filter(d=>d.pct>0).length,
-      down:a.filter(d=>d.pct<0).length,
-      flat:a.filter(d=>d.pct===0).length,
-      partial:!prior
-    };
-  });
+  return coreReportYearly(rows);
 }
 function reportDrawdowns(rows){
-  if(!rows.length) return {worst:null, count20:0, avgDays:null};
-  let peak = rows[0], active = null;
-  const periods = [];
-  rows.forEach(d => {
-    if(d.close >= peak.close){
-      if(active){ active.endDate = d.date; periods.push(active); active = null; }
-      peak = d;
-      return;
-    }
-    const dd = (d.close / peak.close - 1) * 100;
-    if(dd <= -20 && !active){
-      active = {peakDate:peak.date, peakPrice:peak.close, bottomDate:d.date, bottomPrice:d.close, dd};
-    }
-    if(active && dd < active.dd){
-      active.bottomDate = d.date;
-      active.bottomPrice = d.close;
-      active.dd = dd;
-    }
-  });
-  if(active) periods.push(active);
-  periods.forEach(p => p.days = rdateDiff(p.peakDate, p.bottomDate));
-  return {
-    worst: periods.length ? rminBy(periods, p=>p.dd) : null,
-    count20: periods.length,
-    avgDays: periods.length ? ravg(periods.map(p=>p.days)) : null,
-    top: periods.sort((a,b)=>a.dd-b.dd).slice(0,4)
-  };
+  return coreReportDrawdowns(rows);
 }
 function reportSeasonality(rows){
-  const periods = {};
-  rows.forEach(d => (periods[d.date.slice(0,7)] ||= []).push(d));
-  const monthly = Object.values(periods).map(a => {
-    const first = a[0], last = a[a.length-1], firstIndex = rows.indexOf(first);
-    const prior = firstIndex > 0 ? rows[firstIndex-1] : null;
-    const base = prior || first;
-    return {
-      month:Number(first.date.slice(5,7)),
-      ret:(last.close / base.close - 1) * 100,
-      partial:!prior
-    };
-  });
-  return Array.from({length:12}, (_,i) => {
-    const samples = monthly.filter(m=>m.month===i+1 && !m.partial);
-    return {
-      month:i+1,
-      avg:ravg(samples.map(m=>m.ret)),
-      up:samples.length ? samples.filter(m=>m.ret>0).length / samples.length * 100 : null,
-      count:samples.length
-    };
-  });
+  return coreReportSeasonality(rows);
 }
 function rIcon(label, color){
   return `<span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:${color};color:#061018;align-items:center;justify-content:center;font-size:11px;font-weight:900;margin-right:8px">${label}</span>`;
