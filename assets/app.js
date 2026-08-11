@@ -1,6 +1,7 @@
 const RAW_COINS = window.CRYPTO_DAILY_DATA?.coins || {};
 const {
   btcCycleContext: coreBtcCycleContext,
+  buildMarketData: buildBtcData,
   dailyObservationContext: coreDailyObservationContext,
   nextDailyVisit,
   queryMatchesLatest,
@@ -33,136 +34,14 @@ const requestedCoin = COIN_ORDER.includes(urlCoin) ? urlCoin : COIN_ORDER.includ
 const PX = 'https://mybtcbox-proxy.huachuanfang.workers.dev/api?url=';
 let activeCoin = 'BTC';
 let BTC_DAILY_RAW = RAW_COINS[activeCoin];
-function bRound(n, d=2){ return n == null || !Number.isFinite(n) ? null : Math.round(n * 10**d) / 10**d; }
-function bPct(a,b){ return !a || !b ? null : bRound((a / b - 1) * 100, 2); }
-function priceRound(n){
-  if(n == null || !Number.isFinite(n)) return null;
-  const a = Math.abs(n);
-  const d = a >= 1000 ? 2 : a >= 1 ? 4 : a >= 0.1 ? 5 : a >= 0.01 ? 6 : 8;
-  return bRound(n, d);
+function fmtPrice(value){
+  if(value == null || !Number.isFinite(value)) return '-';
+  const numeric = Number(value);
+  const absolute = Math.abs(numeric);
+  const digits = absolute >= 1000 ? 0 : absolute >= 1 ? 2 : absolute >= 0.1 ? 4 : absolute >= 0.01 ? 5 : absolute >= 0.001 ? 6 : 8;
+  return (numeric < 0 ? '-' : '') + '$' + absolute.toLocaleString('en-US', { minimumFractionDigits:digits, maximumFractionDigits:digits });
 }
-function fmtPrice(v){
-  if(v == null || !Number.isFinite(v)) return '-';
-  const n = Number(v);
-  const a = Math.abs(n);
-  const d = a >= 1000 ? 0 : a >= 1 ? 2 : a >= 0.1 ? 4 : a >= 0.01 ? 5 : a >= 0.001 ? 6 : 8;
-  return (n < 0 ? '-' : '') + '$' + a.toLocaleString('en-US', { minimumFractionDigits:d, maximumFractionDigits:d });
-}
-function fmtDollars(v){ return v == null || !Number.isFinite(v) ? '-' : '$' + Math.round(v).toLocaleString('en-US'); }
-function buildBtcData(source){
-  const rows = source.daily.map(d => ({
-    date: d.date,
-    open: +d.open,
-    high: +d.high,
-    low: +d.low,
-    close: +d.close,
-    volume: +(d.volume || 0)
-  })).filter(d => d.date && d.open && d.high && d.low && d.close).sort((a,b)=>a.date.localeCompare(b.date));
-
-  rows.forEach((d,i) => {
-    d.prev_close = i > 0 ? rows[i-1].close : null;
-    d.pct_raw = d.prev_close ? (d.close / d.prev_close - 1) * 100 : null;
-    d.pct = d.pct_raw == null ? null : bRound(d.pct_raw, 2);
-    d.close_pct = d.pct;
-    d.range_pct_raw = (d.high / d.low - 1) * 100;
-    d.range_pct = bRound(d.range_pct_raw, 2);
-    d.low_to_close_raw = (d.close / d.low - 1) * 100;
-    d.low_to_close = bRound(d.low_to_close_raw, 2);
-    d.drop_to_low_raw = d.prev_close ? (d.low / d.prev_close - 1) * 100 : null;
-    d.drop_to_low = d.drop_to_low_raw == null ? null : bRound(d.drop_to_low_raw, 2);
-    d.rise_to_high_raw = d.prev_close ? (d.high / d.prev_close - 1) * 100 : null;
-    d.rise_to_high = d.rise_to_high_raw == null ? null : bRound(d.rise_to_high_raw, 2);
-    d.wick_depth = d.low_to_close;
-    d.wick_depth_raw = d.low_to_close_raw;
-  });
-
-  const futureRaw = (i,n) => rows[i+n] ? (rows[i+n].close / rows[i].close - 1) * 100 : null;
-  const future = (i,n) => {
-    const value = futureRaw(i,n);
-    return value == null ? null : bRound(value, 2);
-  };
-  const base = (d,i) => ({
-    date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
-    pct:d.pct, next1:future(i,1), next7:future(i,7), next30:future(i,30),
-    next1_raw:futureRaw(i,1), next7_raw:futureRaw(i,7), next30_raw:futureRaw(i,30),
-    range_pct:d.range_pct, wick_depth:d.wick_depth, low_to_close:d.low_to_close,
-    drop_to_low:d.drop_to_low, rise_to_high:d.rise_to_high,
-    pct_raw:d.pct_raw, range_pct_raw:d.range_pct_raw, wick_depth_raw:d.wick_depth_raw,
-    low_to_close_raw:d.low_to_close_raw, drop_to_low_raw:d.drop_to_low_raw, rise_to_high_raw:d.rise_to_high_raw,
-    volume:Math.round(d.volume || 0)
-  });
-  const desc = (a,b) => b.date.localeCompare(a.date);
-  const daily = rows.map(base);
-  const drops = daily.filter(d => d.pct_raw != null && d.pct_raw < 0).sort(desc);
-  const rises = daily.filter(d => d.pct_raw != null && d.pct_raw >= 0).sort(desc);
-  const intraday = rows.map((d,i)=>({
-    date:d.date, open:priceRound(d.open), high:priceRound(d.high), low:priceRound(d.low), close:priceRound(d.close),
-    close_pct:d.close_pct, range_pct:d.range_pct, low_to_close:d.low_to_close, drop_to_low:d.drop_to_low,
-    range_pct_raw:d.range_pct_raw, low_to_close_raw:d.low_to_close_raw,
-    next1:future(i,1), next7:future(i,7), next30:future(i,30),
-    next1_raw:futureRaw(i,1), next7_raw:futureRaw(i,7), next30_raw:futureRaw(i,30),
-    volume:Math.round(d.volume || 0)
-  })).filter(d => d.range_pct_raw >= 5).sort(desc);
-  const wickEvents = rows.map((d,i)=>({
-    date:d.date, low:priceRound(d.low), close:priceRound(d.close), wick_depth:d.wick_depth, range_pct:d.range_pct,
-    day_pct:d.pct, wick_depth_raw:d.wick_depth_raw, low_to_close_raw:d.low_to_close_raw,
-    next1:future(i,1), next7:future(i,7), next30:future(i,30),
-    next1_raw:futureRaw(i,1), next7_raw:futureRaw(i,7), next30_raw:futureRaw(i,30),
-    volume:Math.round(d.volume || 0)
-  })).filter(d => d.wick_depth_raw >= 3).sort(desc);
-
-  function stat(selected){
-    const values = k => selected.map(e => e[k + '_raw'] ?? e[k]).filter(Number.isFinite);
-    const valid = k => values(k);
-    const upPct = k => { const v = values(k); return v.length ? bRound(v.filter(n => n > 0).length / v.length * 100, 1) : null; };
-    const avg = k => { const v = values(k); return v.length ? bRound(v.reduce((s,n)=>s+n,0) / v.length, 2) : null; };
-    const median = k => {
-      const v = values(k).sort((a,b)=>a-b);
-      if(!v.length) return null;
-      const mid = Math.floor(v.length / 2);
-      return bRound(v.length % 2 ? v[mid] : (v[mid-1] + v[mid]) / 2, 2);
-    };
-    const ltc = selected.filter(e => e.low_to_close != null);
-    return {
-      count:selected.length,
-      n1:valid('next1').length, n7:valid('next7').length, n30:valid('next30').length,
-      up1_pct:upPct('next1'), up1_avg:avg('next1'),
-      up7_pct:upPct('next7'), up7_avg:avg('next7'),
-      up30_pct:upPct('next30'), up30_avg:avg('next30'),
-      med1:median('next1'), med7:median('next7'), med30:median('next30'),
-      ltc_up_pct:ltc.length ? bRound(ltc.filter(e => e.low_to_close > 0).length / ltc.length * 100, 1) : null,
-      ltc_1_pct:ltc.length ? bRound(ltc.filter(e => (e.low_to_close_raw ?? e.low_to_close) >= 1).length / ltc.length * 100, 1) : null,
-      ltc_avg:ltc.length ? bRound(ltc.reduce((s,e)=>s+e.low_to_close,0) / ltc.length, 2) : null
-    };
-  }
-  function summarize(events, metric, thresholds, mode){
-    const out = {};
-    for (const th of thresholds) {
-      const selected = events.filter(e => {
-        const value = e[metric + '_raw'] ?? e[metric];
-        return mode === 'lte' ? value <= -th : value >= th;
-      });
-      out[String(th)] = selected.length ? stat(selected) : null;
-    }
-    return out;
-  }
-  return {
-    ...source,
-    _ath: rows.reduce((m, d) => Math.max(m, d.high || d.close || 0), 0),
-    data_through: source.data_through || rows[rows.length-1].date,
-    date_range: source.date_range || (rows[0].date + ' to ' + rows[rows.length-1].date),
-    daily,
-    drops,
-    rises,
-    intraday,
-    wick:{ events:wickEvents, pre:summarize(wickEvents, 'wick_depth', [5,8,10,15,20], 'gte') },
-    pre:{
-      drop:summarize(daily, 'pct', [3,5,8,10,15,20,30], 'lte'),
-      rise:summarize(daily, 'pct', [3,5,8,10,15,20,30], 'gte'),
-      range:summarize(intraday, 'range_pct', [5,8,10,15,20,25,30], 'gte')
-    }
-  };
-}
+function fmtDollars(value){ return value == null || !Number.isFinite(value) ? '-' : '$' + Math.round(value).toLocaleString('en-US'); }
 let BTC_DATA = buildBtcData(BTC_DAILY_RAW);
 
 // ── CROSS-COIN COMPARISON ──

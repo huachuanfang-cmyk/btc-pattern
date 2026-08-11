@@ -1,12 +1,32 @@
 const assert = require('assert');
 const {
   btcCycleContext,
+  buildMarketData,
   dailyObservationContext,
   nextDailyVisit,
   queryMatchesLatest,
   utcAddDays,
   utcDayDiff,
 } = require('../assets/core.js');
+
+assert.throws(() => buildMarketData({ daily: [] }), /no valid OHLC rows/, 'Empty datasets should fail before rendering misleading statistics');
+const market = buildMarketData({
+  symbol: 'TEST-USD',
+  daily: [
+    { date: '2026-01-04', open: 99, high: 100, low: 95, close: 96, volume: 40 },
+    { date: '2026-01-02', open: 100, high: 105, low: 80, close: 90, volume: 20 },
+    { date: '2026-01-01', open: 99, high: 101, low: 99, close: 100, volume: 10 },
+    { date: '2026-01-03', open: 90, high: 100, low: 89, close: 99, volume: 30 },
+  ],
+});
+assert.deepStrictEqual(market.daily.map(row => row.date), ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'], 'Market rows should be sorted before forward returns are calculated');
+assert.strictEqual(market._ath, 105, 'Market builder should calculate the sample all-time high from intraday highs');
+assert.strictEqual(market.pre.drop['3'].count, 2, 'Drop summary should use raw returns at inclusive thresholds');
+assert.strictEqual(market.pre.drop['8'].count, 1, 'Large-drop summary should select only qualifying events');
+assert.strictEqual(market.pre.drop['8'].n1, 1, 'Forward-return sample count should exclude unavailable horizons');
+assert.strictEqual(market.pre.drop['8'].up1_pct, 100, 'Forward-return probability should use only valid samples');
+assert.strictEqual(market.pre.range['8'].count, 2, 'Range summary should use high-to-low amplitude');
+assert.strictEqual(market.wick.pre['5'].count, 2, 'Wick summary should use low-to-close recovery depth');
 
 assert.strictEqual(utcDayDiff('2024-02-28', '2024-03-01'), 2, 'UTC day difference should cross leap day exactly');
 assert.strictEqual(utcDayDiff('2026-08-11', '2026-08-10'), 0, 'Negative elapsed time should clamp to zero');
