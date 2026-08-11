@@ -105,6 +105,9 @@ button.daily-signal:hover{border-color:rgba(247,147,26,.5);background:rgba(247,1
 .cycle-now::before{content:"";position:absolute;left:50%;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
 .cycle-scale-label{position:absolute;top:0;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);transform:translateX(-50%);white-space:nowrap;font-weight:800}
 .cycle-range-label{position:absolute;right:0;top:43px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink2);white-space:nowrap;font-weight:700}
+.cycle-ruler-insight{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 12px;margin:0 0 13px;border-left:2px solid var(--accent);background:rgba(247,147,26,.07)}
+.cycle-ruler-insight strong{font-size:12px;color:var(--accent)}
+.cycle-ruler-insight span{font-size:10px;color:var(--ink2);text-align:right}
 .cycle-benchmarks{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:13px;border-top:1px solid var(--border)}
 .cycle-benchmark{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-width:0}
 .cycle-benchmark-label{font-size:11px;color:var(--ink2);line-height:1.5}
@@ -386,6 +389,8 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   .cycle-track{height:66px;margin:13px 2px 0}
   .cycle-scale-label{font-size:10px}
   .cycle-range-label{font-size:9px}
+  .cycle-ruler-insight{display:block;padding:9px 10px}
+  .cycle-ruler-insight span{display:block;text-align:left;margin-top:3px;line-height:1.45}
   .cycle-benchmark{align-items:flex-start}
   .cycle-benchmark-value{font-size:10px}
   .qcard{padding:12px}
@@ -981,6 +986,26 @@ function btcCycleContext(){
   const drawdown = peakPrice ? (latest.close / peakPrice - 1) * 100 : null;
   return {latest, peak, peakPrice, daysSincePeak, drawdown};
 }
+function utcAddDays(date, days){
+  return new Date(new Date(date+'T00:00:00Z').getTime() + days * 86400000).toISOString().slice(0,10);
+}
+function btcCycleStageComparisons(daysSincePeak){
+  const rows = COIN_DATA.BTC?.daily || [];
+  const byDate = new Map(rows.map(row => [row.date,row]));
+  return BTC_CYCLE_TIMING.bear.map(cycle => {
+    const peak = byDate.get(cycle.peak);
+    const date = utcAddDays(cycle.peak,daysSincePeak);
+    const target = byDate.get(date);
+    const peakPrice = peak ? (peak.high || peak.close) : null;
+    if(!peakPrice || !target) return null;
+    return {
+      label:cycle.label,
+      date,
+      close:target.close,
+      drawdown:(target.close / peakPrice - 1) * 100
+    };
+  }).filter(Boolean).reverse();
+}
 function renderCycleRuler(){
   const host = document.getElementById('cycle-ruler');
   if(!host) return;
@@ -1002,6 +1027,12 @@ function renderCycleRuler(){
     <span class="cycle-tick" style="left:${pct(item.days)}%" aria-hidden="true"></span>`).join('');
   const markerDays = BTC_CYCLE_TIMING.bear.map(item => item.days).sort((a,b) => a-b).join(' / ');
   const drawdownText = Number.isFinite(ctx.drawdown) ? `${ctx.drawdown.toFixed(1)}%` : '-';
+  const distanceToRange = bearMin - ctx.daysSincePeak;
+  const insight = distanceToRange > 0
+    ? (zh ? `距历史最早触底样本还有 ${distanceToRange} 天` : `${distanceToRange} days before the earliest historical bottom sample`)
+    : ctx.daysSincePeak <= bearMax
+      ? (zh ? '当前已进入历史顶部到底部时间区间' : 'Now within the historical peak-to-bottom time range')
+      : (zh ? `已超过历史最长样本 ${ctx.daysSincePeak-bearMax} 天` : `${ctx.daysSincePeak-bearMax} days beyond the longest historical sample`);
   host.innerHTML = `
     <div class="cycle-ruler-head">
       <div>
@@ -1035,6 +1066,7 @@ function renderCycleRuler(){
       <span class="cycle-scale-label" style="left:${pct(ctx.daysSincePeak)}%">${zh?'当前':'NOW'} ${ctx.daysSincePeak}d</span>
       <span class="cycle-range-label">${zh?'历史样本':'HISTORY'} ${markerDays}d</span>
     </div>
+    <div class="cycle-ruler-insight"><strong>${insight}</strong><span>${zh?'仅为历史时间距离，不是见底倒计时':'Historical distance only, not a countdown to a bottom'}</span></div>
     <div class="cycle-benchmarks">
       <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'三轮顶部到底部':'Three peak-to-bottom samples'}</span><span class="cycle-benchmark-value">363 / 376 / 411d</span></div>
       <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'三轮低点到高点':'Three low-to-peak samples'}</span><span class="cycle-benchmark-value">${bullDays.join(' / ')}d</span></div>
@@ -2360,6 +2392,7 @@ function openReport(){
   const bullDays = BTC_CYCLE_TIMING.bull.map(x=>x.days);
   const halvingPeakDays = BTC_CYCLE_TIMING.bull.map(x=>x.halvingDays);
   const bearMin = Math.min(...bearDays), bearMax = Math.max(...bearDays);
+  const stageComparisons = cycleClock ? btcCycleStageComparisons(cycleClock.daysSincePeak) : [];
   const title = zh ? `${activeCoin} 历史数据观察报告` : `${activeCoin} Historical Data Report`;
   const sub = zh ? '基于日线 OHLCV · 事实观察 · 不做预测' : 'Daily OHLCV observations · Facts only · No prediction';
   const eventLabel = zh ? ev.zh : ev.en;
@@ -2431,6 +2464,19 @@ function openReport(){
         <td style="padding:9px 10px;text-align:right;color:#94a3b8;font-weight:800">${c.recovery}</td>
       </tr>`).join('');
   })();
+  const stageComparisonRows = cycleClock ? [{
+    label:zh?'当前周期':'Current cycle',
+    date:cycleClock.latest.date,
+    close:cycleClock.latest.close,
+    drawdown:cycleClock.drawdown,
+    current:true
+  }].concat(stageComparisons).map(row => `
+    <tr style="border-bottom:1px solid rgba(255,255,255,.06);${row.current?'background:rgba(247,147,26,.08)':''}">
+      <td style="padding:8px 10px;color:${row.current?'#f7931a':'#94a3b8'};font-weight:900">${row.label}</td>
+      <td style="padding:8px 10px;text-align:right;color:#94a3b8">${row.date}</td>
+      <td style="padding:8px 10px;text-align:right;color:#e2e8f0;font-weight:800">${fmtPrice(row.close)}</td>
+      <td style="padding:8px 10px;text-align:right;color:#ef4444;font-weight:900">${rpct(row.drawdown,1)}</td>
+    </tr>`).join('') : '';
   const btcCycle = activeCoin === 'BTC' ? section(zh?'BTC 历史周期刻度尺':'BTC HISTORICAL CYCLE RULER', `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px">
       ${card('T',zh?'最近样本高点后':'After latest sample high',cycleClock ? cycleClock.daysSincePeak+'d' : '-',cycleClock ? `${cycleClock.peak.date} → ${cycleClock.latest.date}` : '','#f7931a')}
@@ -2438,6 +2484,21 @@ function openReport(){
       ${card('H',zh?'历史低点到高点区间':'Historical low-to-peak range',`${Math.min(...bullDays)}-${Math.max(...bullDays)}d`,`${zh?'减半到高点':'halving to peak'} ${Math.min(...halvingPeakDays)}-${Math.max(...halvingPeakDays)}d`,'#94a3b8')}
     </div>
     <div style="margin:8px 2px 0;color:#64748b;font-size:9px;line-height:1.55">${zh?'时间样本来自 Bitstamp BTC/USD UTC 日线研究；当前高点、收盘和回撤来自 Yahoo Finance BTC-USD UTC 日线。三个历史样本只用于时间对照，不是见底日期或逃顶日期预测。':'Timing samples use the Bitstamp BTC/USD UTC daily study. The current sample high, close, and drawdown use Yahoo Finance BTC-USD UTC daily data. Three historical samples are context only, not bottom or top date forecasts.'}</div>
+    <div style="margin-top:10px;background:#0f1319;border:1px solid rgba(255,255,255,.05);border-radius:10px;overflow:hidden">
+      <div style="padding:10px 12px;color:#f7931a;font-size:10px;font-weight:950;letter-spacing:.1em;text-transform:uppercase">${zh?`第 ${cycleClock.daysSincePeak} 天同阶段回撤`:`Day ${cycleClock.daysSincePeak} stage comparison`}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead style="background:#151b25">
+          <tr>
+            <th style="padding:8px 10px;text-align:left;color:#64748b">${zh?'周期':'Cycle'}</th>
+            <th style="padding:8px 10px;text-align:right;color:#64748b">${zh?'同阶段日期':'Aligned date'}</th>
+            <th style="padding:8px 10px;text-align:right;color:#64748b">${zh?'当日收盘':'Close'}</th>
+            <th style="padding:8px 10px;text-align:right;color:#64748b">${zh?'距周期高点':'From peak'}</th>
+          </tr>
+        </thead>
+        <tbody>${stageComparisonRows}</tbody>
+      </table>
+      <div style="padding:9px 10px;color:#64748b;font-size:9px;line-height:1.55">${zh?'按当前已完成日线天数对齐。明日完整日线进入后自动更新为下一天。本站数据从2017年开始，因此同阶段回撤仅展示两轮可验证历史样本，不提前展示未来结果。':'Aligned by completed daily candles. It advances automatically after the next complete daily candle. Data begins in 2017, so same-stage drawdown includes two verifiable prior cycles and never displays future results.'}</div>
+    </div>
     <div style="margin-top:10px;background:#0f1319;border:1px solid rgba(255,255,255,.05);border-radius:10px;overflow:hidden">
       <div style="padding:10px 12px;color:#f7931a;font-size:10px;font-weight:950;letter-spacing:.1em;text-transform:uppercase">${zh?'价格周期摘要（口径见说明）':'Price-cycle summary (see methodology)'}</div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">

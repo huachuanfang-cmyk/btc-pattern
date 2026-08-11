@@ -168,6 +168,7 @@ const savedQueryStorage = localStorage.getItem(SAVED_QUERY_KEY);
 renderCycleRuler();
 const cycleRulerHtml = document.getElementById('cycle-ruler').innerHTML;
 const cycleClock = btcCycleContext();
+const cycleStage = btcCycleStageComparisons(cycleClock.daysSincePeak);
 MARKET_PRICES.BTC = { price: 100000, change24h: 2.5 };
 MARKET_SENTIMENT = { fundingRate: 0.002, lsRatio: 1.43 };
 const initialBtcAth = BTC_DATA._ath;
@@ -199,6 +200,7 @@ run();
   cyclePeakDate: cycleClock.peak.date,
   cycleDaysSincePeak: cycleClock.daysSincePeak,
   cycleExpectedDays: utcDayDiff(cycleClock.peak.date, cycleClock.latest.date),
+  cycleStage,
   tickerSymbol: document.getElementById('ticker-symbol').textContent,
   tickerPrice: document.getElementById('tp').textContent,
   heroTitle: document.getElementById('hero-title').innerHTML,
@@ -225,6 +227,9 @@ assertEqual(result.cycleRulerHtml.includes('363 / 376 / 411d'), true, 'Cycle rul
 assertEqual(result.cycleRulerHtml.includes('不是见底日期或逃顶日期预测'), true, 'Cycle ruler should explicitly reject date forecasting');
 assertEqual(result.cyclePeakDate, '2025-10-06', 'Cycle ruler should derive the latest BTC sample high from daily data');
 assertEqual(result.cycleDaysSincePeak, result.cycleExpectedDays, 'Cycle clock should use completed UTC daily candles');
+assertEqual(result.cycleRulerHtml.includes('距历史最早触底样本还有 56 天'), true, 'Cycle ruler should explain the distance to the earliest historical sample');
+assertEqual(result.cycleStage.length, 2, 'Same-stage comparison should include two verifiable prior cycles');
+assertEqual(Number(result.cycleStage[0].drawdown.toFixed(1)), -70.5, 'Previous cycle day-aligned drawdown should match source daily data');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
 assertEqual(result.tickerPrice, '$0.1100', 'Top ticker should use shared live price data for selected asset');
 assertEqual(result.heroTitle.includes('狗狗币'), true, 'Hero title should follow the selected asset');
@@ -277,6 +282,7 @@ const bestMonth = rmaxBy(reportMonths, m => m.avg ?? -999);
   hasCycleTable: reportHtml.includes('价格周期摘要（口径见说明）') && reportHtml.includes('C4 ▶') && reportHtml.includes('恢复天数'),
   hasMethodLabels: reportHtml.includes('样本期最低价') && reportHtml.includes('2026 YTD') && reportHtml.includes('有效样本 427'),
   hasCycleTimingDisclosure: reportHtml.includes('BTC 历史周期刻度尺') && reportHtml.includes('363-411d') && reportHtml.includes('不是见底日期或逃顶日期预测'),
+  hasStageComparison: reportHtml.includes('第 307 天同阶段回撤') && reportHtml.includes('2021-2022') && reportHtml.includes('-70.5%') && reportHtml.includes('不提前展示未来结果'),
   omitsTautologicalRecovery: !reportHtml.includes('96.3%') && reportHtml.includes('回升至少 1%'),
   drop3Count: BTC_DATA.pre.drop['3'].count,
   drop3NextDayShare: BTC_DATA.pre.drop['3'].up1_pct,
@@ -294,6 +300,7 @@ const bestMonth = rmaxBy(reportMonths, m => m.avg ?? -999);
 assertEqual(reportUi.hasCycleTable, true, 'BTC report should include four-cycle key data');
 assertEqual(reportUi.hasMethodLabels, true, 'Report should expose sample-period, YTD, and effective-sample labels');
 assertEqual(reportUi.hasCycleTimingDisclosure, true, 'Report should include the historical cycle timing ruler and forecast boundary');
+assertEqual(reportUi.hasStageComparison, true, 'BTC report should include an automatically advancing same-stage drawdown comparison');
 assertEqual(reportUi.omitsTautologicalRecovery, true, 'Report should replace the tautological positive low-to-close metric');
 assertEqual(reportUi.drop3Count, 427, '3% drop threshold should use unrounded returns');
 assertEqual(reportUi.drop3NextDayShare, 56, '3% drop next-day positive share should match the source dataset');
