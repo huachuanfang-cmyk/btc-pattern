@@ -1,5 +1,7 @@
+const fs = require('fs');
 const {
   addDerivedFields,
+  buildHealthManifest,
   keepCompletedUtcDays,
   utcDay,
   validate,
@@ -29,5 +31,25 @@ assertEqual(derivedRows.at(-1).next1, null, 'Latest completed candle must not ha
 assertEqual(derivedRows[0].next1, 2.86, 'Completed candles should retain derived future returns');
 
 validate(derivedRows, 'TEST-USD');
+
+const health = buildHealthManifest([{
+  coin: 'BTC',
+  name: 'Bitcoin',
+  symbol: 'BTC-USD',
+  data_through: '2026-08-09',
+  last_checked_at: now.toISOString(),
+  source: { ohlcv: 'Yahoo Finance BTC-USD' },
+  daily: derivedRows,
+}], now.toISOString());
+assertEqual(health.assets[0].rows, 2, 'Health manifest should expose the validated row count');
+assertEqual(health.assets[0].data_through, '2026-08-09', 'Health manifest should expose the latest completed candle');
+
+const publishedHealth = JSON.parse(fs.readFileSync('data/health.json', 'utf8'));
+assertEqual(publishedHealth.assets.length, 5, 'Published health manifest should include all five assets');
+for (const asset of publishedHealth.assets) {
+  const dataset = JSON.parse(fs.readFileSync(`data/${asset.coin.toLowerCase()}.daily.json`, 'utf8'));
+  assertEqual(asset.data_through, dataset.data_through, `${asset.coin} health date should match its dataset`);
+  assertEqual(asset.rows, dataset.daily.length, `${asset.coin} health row count should match its dataset`);
+}
 
 console.log('update data checks passed');

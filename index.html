@@ -300,9 +300,15 @@ td.date-col{color:var(--ink2);font-size:12px;text-align:left}
 .status-item{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:7px;padding:10px 11px}
 .status-lbl{color:var(--ink3);font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .status-val{font-size:12px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-weight:600;word-break:break-word}
+.status-val.health-ok{color:var(--green)}
+.status-val.health-warn{color:var(--accent)}
+.status-val.health-bad{color:var(--red)}
+.method-link{display:inline-flex;margin-top:13px;color:var(--accent);font-size:12px;font-weight:700;text-decoration:none}
+.method-link:hover{text-decoration:underline}
 
 .disc{text-align:center;padding:16px 24px 40px;color:var(--ink3);font-size:12px;max-width:640px;margin:0 auto}
 footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;color:var(--ink3);font-size:12px}
+footer a{color:var(--ink2);text-decoration:none}footer a:hover{color:var(--accent)}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);color:var(--ink);padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* CROSS-COIN COMPARISON */
@@ -756,11 +762,13 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
       <div class="dsitem"><div class="dslbl" data-i="ds4">Live Price</div>CoinGecko API · 60s<br><a href="https://www.coingecko.com" target="_blank">coingecko.com →</a></div>
     </div>
     <div class="status-grid" aria-label="Data status">
+      <div class="status-item"><div class="status-lbl" data-i="stHealth">Data health</div><div class="status-val" id="st-health">-</div></div>
       <div class="status-item"><div class="status-lbl" data-i="stAsset">Asset</div><div class="status-val" id="st-asset">BTC-USD</div></div>
       <div class="status-item"><div class="status-lbl" data-i="stThrough">Dataset through</div><div class="status-val" id="st-through">-</div></div>
       <div class="status-item"><div class="status-lbl" data-i="stChecked">Last checked</div><div class="status-val" id="st-checked">-</div></div>
       <div class="status-item"><div class="status-lbl" data-i="stSource">Source</div><div class="status-val">Yahoo Finance</div></div>
     </div>
+    <a class="method-link" href="methodology.html" data-i="methodLink">View data sources and calculation methods →</a>
   </div>
 
   <div class="disc" data-i="disc">Historical data only. Not investment advice. Past patterns ≠ future results. Crypto is highly volatile. Always make your own decisions.</div>
@@ -781,10 +789,11 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   </div>
 </div>
 
-<footer>© 2026 My BTC Box · <span data-i="foot">Facts only · You decide · Yahoo Finance OHLCV</span> · www.mybtcbox.com</footer>
+<footer>© 2026 My BTC Box · <span data-i="foot">Facts only · You decide · Yahoo Finance OHLCV</span> · <a href="methodology.html" data-i="methodFoot">Data & methodology</a> · www.mybtcbox.com</footer>
 <div class="toast" id="toast"></div>
 
 <script src="data/btc.daily.js"></script>
+<script src="data/health.js"></script>
 <script>
 const RAW_COINS = window.CRYPTO_DAILY_DATA?.coins || {};
 const COIN_ORDER = ['BTC', 'ETH', 'SOL', 'DOGE', 'BNB'];
@@ -1107,7 +1116,8 @@ en:{
   genRpt:'Generate Report Card',
   dsTitle:'📚 Data Sources',
   ds1:'Daily OHLC',ds2:'Volume',ds3:'Range',ds3note:'Pre-2017 excluded',ds4:'Live Price',
-  stAsset:'Asset',stThrough:'Dataset through',stChecked:'Last checked',stSource:'Source',
+  stHealth:'Data health',stAsset:'Asset',stThrough:'Dataset through',stChecked:'Last checked',stSource:'Source',
+  methodLink:'View data sources and calculation methods →',methodFoot:'Data & methodology',
   disc:'Historical data only. Not investment advice. Past patterns ≠ future results. Crypto is highly volatile. Always make your own decisions.',
   mshare:'X Share',mdl:'Download PNG',mclose:'Close',mcopy:'📋 Copy Link',
   mnote:'Download PNG to save · Screenshot to share',
@@ -1169,7 +1179,8 @@ zh:{
   genRpt:'生成报告卡片',
   dsTitle:'📚 数据来源',
   ds1:'每日OHLC',ds2:'成交量',ds3:'数据范围',ds3note:'已排除2017年前',ds4:'实时价格',
-  stAsset:'当前币种',stThrough:'数据截止',stChecked:'上次检查',stSource:'数据源',
+  stHealth:'数据健康',stAsset:'当前币种',stThrough:'数据截止',stChecked:'上次检查',stSource:'数据源',
+  methodLink:'查看数据来源与计算方法 →',methodFoot:'数据与方法',
   disc:'仅供历史数据参考，不构成投资建议。历史规律不代表未来走势。加密货币风险极高。请自行判断，谨慎决策。',
   mshare:'X 分享',mdl:'下载 PNG',mclose:'关闭',mcopy:'📋 复制链接',
   mnote:'点击下载PNG保存报告 · 截图可直接分享',
@@ -1863,9 +1874,24 @@ function updateDynamicCopy(){
   const checkedAt = BTC_DAILY_RAW.last_checked_at || BTC_DAILY_RAW.generated || '';
   const checkedText = checkedAt ? checkedAt.replace('T', ' ').replace(/\.\d+Z$/, ' UTC').replace(/Z$/, ' UTC') : '-';
   const stAsset = document.getElementById('st-asset');
+  const stHealth = document.getElementById('st-health');
   const stThrough = document.getElementById('st-through');
   const stChecked = document.getElementById('st-checked');
   if(stAsset) stAsset.textContent = `${activeCoin} · ${symbol}`;
+  if(stHealth){
+    const todayUtc = new Date().toISOString().slice(0,10);
+    const lag = end ? Math.round((Date.parse(todayUtc+'T00:00:00Z') - Date.parse(end+'T00:00:00Z')) / 86400000) : null;
+    const invalid = lag == null || lag < 0;
+    const state = invalid || lag > 3 ? 'bad' : lag === 3 ? 'warn' : 'ok';
+    stHealth.className = `status-val health-${state}`;
+    stHealth.textContent = invalid
+      ? (lang === 'zh' ? '数据日期异常' : 'Invalid data date')
+      : state === 'ok'
+        ? (lang === 'zh' ? '正常 · 完整日线' : 'Healthy · completed candles')
+        : state === 'warn'
+          ? (lang === 'zh' ? '需检查 · 3天未更新' : 'Check · 3 days behind')
+          : (lang === 'zh' ? `延迟 · ${lag}天未更新` : `Delayed · ${lag} days behind`);
+  }
   if(stThrough) stThrough.textContent = end || '-';
   if(stChecked) stChecked.textContent = checkedText;
   const dsOhlcv = document.getElementById('ds-ohlcv');

@@ -2,6 +2,7 @@ const fs = require('fs');
 const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
+const methodologyHtml = fs.readFileSync('methodology.html', 'utf8');
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
   .find(script => script.includes('function buildBtcData'));
@@ -312,6 +313,11 @@ assertEqual(reportUi.bestMonth, 10, 'Best calendar month should use compounded m
 assertEqual(reportUi.bestMonthReturn, 18.2, 'Best calendar month should report average monthly return');
 assertEqual(reportUi.totalReturn, 6395.4, 'Total return should start at the first available close');
 assertEqual(reportUi.logosHaveLabels, true, 'Coin snapshot logos should use labeled 32x32 SVGs');
+assertEqual(html.includes('id="st-health"'), true, 'Homepage should expose the current dataset health');
+assertEqual(html.includes('href="methodology.html"'), true, 'Homepage should link to the data methodology page');
+assertEqual(methodologyHtml.includes('健康判断规则'), true, 'Methodology page should publish the health thresholds');
+assertEqual(methodologyHtml.includes('收盘涨跌幅'), true, 'Methodology page should publish indicator formulas');
+assertEqual(methodologyHtml.includes('data/health.js'), true, 'Methodology page should use the lightweight health manifest');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>数据来源与计算方法 | My BTC Box</title>
+  <meta name="description" content="My BTC Box 数据来源、更新状态、健康判断规则与历史指标计算公式。">
+  <link rel="canonical" href="https://www.mybtcbox.com/methodology.html">
+  <style>
+    :root{--bg:#080b10;--bg2:#0f1319;--bg3:#151b25;--border:#202735;--border2:#2b3546;--ink:#e2e8f0;--ink2:#94a3b8;--ink3:#64748b;--accent:#f7931a;--green:#10b981;--red:#ef4444}
+    *{box-sizing:border-box}
+    html{background:var(--bg);color:var(--ink);font-family:Arial,"Microsoft YaHei",sans-serif;line-height:1.65}
+    body{margin:0;background:var(--bg)}
+    a{color:var(--accent)}
+    header{height:64px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(8,11,16,.96)}
+    .brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:800}
+    .mark{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:var(--accent);color:#080b10;font-weight:950}
+    .back{text-decoration:none;color:var(--ink2);font-size:13px}.back:hover{color:var(--accent)}
+    main{max-width:980px;margin:0 auto;padding:58px 24px 80px}
+    .intro{max-width:720px;margin-bottom:34px}
+    h1{font-size:clamp(30px,5vw,48px);line-height:1.12;letter-spacing:-.035em;margin:0 0 16px}
+    .lead{font-size:16px;color:var(--ink2);margin:0;max-width:660px}
+    .health-summary{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:16px 18px;background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--green);margin-bottom:16px}
+    .health-summary.warn{border-left-color:var(--accent)}.health-summary.bad{border-left-color:var(--red)}
+    .health-main{font-size:16px;font-weight:850}.health-main.ok{color:var(--green)}.health-main.warn{color:var(--accent)}.health-main.bad{color:var(--red)}
+    .health-note{font-size:12px;color:var(--ink2);text-align:right}
+    .asset-list{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:42px}
+    .asset-head,.asset-row{display:grid;grid-template-columns:1fr 1.2fr 1fr .7fr .7fr;gap:14px;align-items:center;padding:11px 14px}
+    .asset-head{background:var(--bg3);color:var(--ink3);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+    .asset-row{font-family:Consolas,"SFMono-Regular",monospace;font-size:12px;border-top:1px solid var(--border)}
+    .coin{font-weight:800;color:var(--ink)}.state-ok{color:var(--green)}.state-warn{color:var(--accent)}.state-bad{color:var(--red)}
+    section{padding:28px 0;border-top:1px solid var(--border)}
+    h2{font-size:22px;margin:0 0 14px}h3{font-size:15px;margin:0 0 6px}
+    section>p{color:var(--ink2);max-width:760px;margin:0 0 14px}
+    .source-grid,.formula-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+    .source,.formula{padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px}
+    .source p,.formula p{margin:5px 0 0;color:var(--ink2);font-size:13px}
+    .formula code{display:block;margin-top:9px;color:var(--accent);font-family:Consolas,"SFMono-Regular",monospace;font-size:12px;white-space:normal}
+    .rules{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:18px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .rule{padding:15px;background:var(--bg2)}.rule+.rule{border-left:1px solid var(--border)}
+    .rule strong{display:block;margin-bottom:3px}.rule span{color:var(--ink2);font-size:12px}
+    .boundary{padding:16px 18px;border-left:3px solid var(--accent);background:rgba(247,147,26,.07);color:var(--ink2);margin-top:18px}
+    footer{border-top:1px solid var(--border);padding:22px;text-align:center;color:var(--ink3);font-size:12px}
+    @media(max-width:680px){
+      header{height:56px;padding:0 14px}main{padding:38px 14px 60px}.health-summary{display:block}.health-note{text-align:left;margin-top:5px}
+      .asset-head{display:none}.asset-row{grid-template-columns:1fr auto;grid-template-areas:"coin state" "range range" "through count";gap:5px 12px;padding:13px}
+      .asset-row .coin{grid-area:coin}.asset-row .range{grid-area:range;color:var(--ink2)}.asset-row .through{grid-area:through;color:var(--ink3);font-size:10px}.asset-row .count{grid-area:count;color:var(--ink3);font-size:10px;text-align:right}.asset-row .asset-state{grid-area:state;text-align:right}
+      .asset-row .through::before{content:"截止 "}.asset-row .count::after{content:" 条日线"}
+      .source-grid,.formula-grid,.rules{grid-template-columns:1fr}.rule+.rule{border-left:0;border-top:1px solid var(--border)}
+    }
+  </style>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"My BTC Box 数据来源与计算方法","url":"https://www.mybtcbox.com/methodology.html","description":"公开数据来源、更新状态、健康判断规则与指标公式。"}</script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html"><span class="mark">B</span><span>My BTC Box</span></a>
+    <a class="back" href="index.html">返回工具首页</a>
+  </header>
+  <main>
+    <div class="intro">
+      <h1>数据从哪里来，指标怎样计算</h1>
+      <p class="lead">这里公开数据截止时间、来源、计算公式和异常判断规则。历史数据用于观察，不构成未来预测。</p>
+    </div>
+
+    <div class="health-summary" id="health-summary">
+      <div><div class="health-main" id="health-main">正在读取数据状态</div><div id="health-detail" style="font-size:12px;color:var(--ink2);margin-top:3px">-</div></div>
+      <div class="health-note" id="health-checked">-</div>
+    </div>
+    <div class="asset-list" aria-label="五个资产的数据健康状态">
+      <div class="asset-head"><span>资产</span><span>覆盖范围</span><span>数据截止</span><span>日线数</span><span>状态</span></div>
+      <div id="asset-rows"><div class="asset-row"><span>暂无状态数据</span></div></div>
+    </div>
+
+    <section>
+      <h2>数据来源</h2>
+      <p>价格指标尽量使用统一日线来源，避免把不同交易所和不同时间边界的数据混在同一次计算中。</p>
+      <div class="source-grid">
+        <div class="source"><h3>历史OHLCV</h3><p>Yahoo Finance 的币种美元日线。开盘、最高、最低、收盘和成交量来自同一数据集。</p></div>
+        <div class="source"><h3>实时价格</h3><p>CoinGecko API，约60秒刷新。实时价格只用于页面快照，不替代完整日线计算。</p></div>
+        <div class="source"><h3>BTC周期日期</h3><p>历史周期时间样本参考 Bitstamp BTC/USD UTC日线研究；当前周期价格仍使用Yahoo Finance。</p></div>
+        <div class="source"><h3>成交量说明</h3><p>展示的是Yahoo Finance来源成交量，不代表全球全部交易所的总成交量。</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>更新与健康判断规则</h2>
+      <p>更新任务每天抓取数据并运行结构校验。当天尚未完成的UTC日线会被排除，避免盘中数值被误当作最终结果。</p>
+      <div class="rules">
+        <div class="rule"><strong class="state-ok">正常</strong><span>数据截止日期距当前UTC日期0-2天。</span></div>
+        <div class="rule"><strong class="state-warn">需检查</strong><span>连续3天没有新的完整日线。</span></div>
+        <div class="rule"><strong class="state-bad">延迟</strong><span>超过3天未更新，或数据日期异常。</span></div>
+      </div>
+      <div class="boundary">“上次检查”表示自动任务最近访问数据源的时间；“数据截止”表示最后一根已经完成并进入计算的UTC日线。</div>
+    </section>
+
+    <section>
+      <h2>主要指标公式</h2>
+      <div class="formula-grid">
+        <div class="formula"><h3>收盘涨跌幅</h3><p>今日收盘相对前一日收盘的变化。</p><code>(今日收盘 / 前日收盘 - 1) × 100%</code></div>
+        <div class="formula"><h3>日内振幅</h3><p>当日最高价相对最低价的幅度。</p><code>(最高价 / 最低价 - 1) × 100%</code></div>
+        <div class="formula"><h3>最低到收盘回升</h3><p>收盘价相对当日最低价的回升。</p><code>(收盘价 / 最低价 - 1) × 100%</code></div>
+        <div class="formula"><h3>未来N日结果</h3><p>事件日收盘到第N个日历日线收盘的变化，只在目标日已经发生后计算。</p><code>(第N日收盘 / 事件日收盘 - 1) × 100%</code></div>
+        <div class="formula"><h3>距周期高点回撤</h3><p>最新完整日线收盘相对样本期最高价的变化。</p><code>(最新收盘 / 样本最高价 - 1) × 100%</code></div>
+        <div class="formula"><h3>同阶段周期比较</h3><p>从每轮指定高点起，按相同完整日线天数寻找对应日期，再比较各自回撤。</p><code>目标日期 = 周期高点日期 + 当前已运行天数</code></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>统计边界</h2>
+      <p>事件可能相邻或重叠，因此样本并不完全独立。历史上涨比例不是未来上涨概率，也不包含手续费、滑点、税费或实际成交条件。</p>
+      <p>网站不会补造缺失数据。数据覆盖不足时会减少样本并公开说明，例如同阶段周期回撤目前只展示2017年之后可验证的两轮历史样本。</p>
+    </section>
+  </main>
+  <footer>© 2026 My BTC Box · 只看数据，自己判断 · <a href="index.html">返回工具首页</a></footer>
+  <script src="data/health.js"></script>
+  <script>
+    function utcLagDays(date){
+      const today = new Date().toISOString().slice(0,10);
+      return Math.round((Date.parse(today+'T00:00:00Z') - Date.parse(date+'T00:00:00Z')) / 86400000);
+    }
+    function healthState(date){
+      const lag = date ? utcLagDays(date) : null;
+      if(lag == null || lag < 0 || lag > 3) return {key:'bad',label:'延迟',lag};
+      if(lag === 3) return {key:'warn',label:'需检查',lag};
+      return {key:'ok',label:'正常',lag};
+    }
+    const manifest = window.CRYPTO_DATA_HEALTH;
+    const assets = manifest?.assets || [];
+    const states = assets.map(asset => ({asset,state:healthState(asset.data_through)}));
+    const worst = states.some(x=>x.state.key==='bad') ? 'bad' : states.some(x=>x.state.key==='warn') ? 'warn' : 'ok';
+    const summary = document.getElementById('health-summary');
+    const main = document.getElementById('health-main');
+    if(assets.length){
+      summary.classList.add(worst);
+      main.className = 'health-main '+worst;
+      main.textContent = worst === 'ok' ? '五个资产数据正常' : worst === 'warn' ? '部分数据需要检查' : '部分数据出现延迟';
+      document.getElementById('health-detail').textContent = `已读取 ${assets.length} 个资产，状态按UTC数据截止日期判断`;
+      document.getElementById('health-checked').textContent = `状态清单生成于 ${manifest.generated_at.replace('T',' ').replace(/\.\d+Z$/,' UTC')}`;
+      document.getElementById('asset-rows').innerHTML = states.map(({asset,state}) => `
+        <div class="asset-row">
+          <span class="coin">${asset.coin}</span>
+          <span class="range">${asset.start} 至 ${asset.data_through}</span>
+          <span class="through">${asset.data_through}</span>
+          <span class="count">${asset.rows.toLocaleString('en-US')}</span>
+          <span class="asset-state state-${state.key}">${state.label}</span>
+        </div>`).join('');
+    } else {
+      main.className = 'health-main bad';
+      main.textContent = '数据状态暂时无法读取';
+      summary.classList.add('bad');
+    }
+  </script>
+</body>
+</html>

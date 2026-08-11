@@ -175,6 +175,22 @@ function validate(rows, symbol) {
   }
 }
 
+function buildHealthManifest(datasets, generatedAt = new Date().toISOString()) {
+  return {
+    generated_at: generatedAt,
+    assets: datasets.map((dataset) => ({
+      coin: dataset.coin,
+      name: dataset.name,
+      symbol: dataset.symbol,
+      start: dataset.daily[0]?.date || null,
+      data_through: dataset.data_through,
+      last_checked_at: dataset.last_checked_at,
+      rows: dataset.daily.length,
+      source: dataset.source?.ohlcv || null,
+    })),
+  };
+}
+
 async function buildCoinDataset(config) {
   const rawRows = await fetchYahooDaily(config.symbol);
   if (!rawRows.length) throw new Error(`${config.symbol}: no rows returned from Yahoo Finance.`);
@@ -205,10 +221,12 @@ async function buildCoinDataset(config) {
 
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
+  const datasets = [];
 
   for (const config of COINS) {
     console.log(`Fetching ${config.coin} (${config.symbol})...`);
     const dataset = await buildCoinDataset(config);
+    datasets.push(dataset);
 
     const base = config.coin.toLowerCase();
     const jsonPath = path.join(OUT_DIR, `${base}.daily.json`);
@@ -226,6 +244,10 @@ async function main() {
     console.log(`  Rows: ${dataset.daily.length}`);
     console.log(`  Range: ${dataset.date_range}`);
   }
+
+  const health = buildHealthManifest(datasets);
+  fs.writeFileSync(path.join(OUT_DIR, 'health.json'), JSON.stringify(health));
+  fs.writeFileSync(path.join(OUT_DIR, 'health.js'), `window.CRYPTO_DATA_HEALTH=${JSON.stringify(health)};\n`);
 }
 
 if (require.main === module) {
@@ -238,6 +260,7 @@ if (require.main === module) {
 module.exports = {
   START_DATE,
   addDerivedFields,
+  buildHealthManifest,
   keepCompletedUtcDays,
   utcDay,
   validate,
