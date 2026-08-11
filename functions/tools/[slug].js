@@ -49,6 +49,20 @@ export async function onRequestGet(context) {
   html = replaceMeta(html, /<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${tool.title}">`);
   html = replaceMeta(html, /<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${tool.description}">`);
   html = replaceMeta(html, /<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${canonical}">`);
+  html = replaceMeta(html, /<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${tool.title}">`);
+  html = replaceMeta(html, /<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${tool.description}">`);
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: tool.title.replace(' | My BTC Box', ''),
+    url: canonical,
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Web',
+    isAccessibleForFree: true,
+    description: tool.description,
+    provider: { '@type': 'Organization', name: 'My BTC Box', url: 'https://www.mybtcbox.com/' },
+  };
+  html = replaceMeta(html, /<script type="application\/ld\+json">[\s\S]*?<\/script>/, `<script type="application/ld+json">${JSON.stringify(schema)}</script>`);
   html = html.replace('</head>', `<base href="/">\n<script>window.MYBTCBOX_PRESET=${JSON.stringify({asset:tool.asset,type:tool.type,threshold:tool.threshold})};</script>\n</head>`);
 
   const headers = new Headers(assetResponse.headers);

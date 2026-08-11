@@ -366,6 +366,8 @@ for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-histor
   assertEqual(sitemap.includes(`<loc>https://www.mybtcbox.com/tools/${slug}</loc>`), true, `Sitemap should include the ${slug} tool route`);
 }
 assertEqual(toolFunction.includes('window.MYBTCBOX_PRESET='), true, 'Tool routes should reuse the real query app with a route preset');
+assertEqual(toolFunction.includes("url: canonical"), true, 'Each tool route should publish its own structured-data URL');
+assertEqual(toolFunction.includes('twitter:title'), true, 'Each tool route should publish route-specific Twitter metadata');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`
