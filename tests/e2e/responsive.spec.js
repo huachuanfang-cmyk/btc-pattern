@@ -51,6 +51,7 @@ test('daily observation and historical query remain usable', async ({ page }) =>
   await page.goto('/?kind=event&asset=btc&type=drop&threshold=8', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#daily-brief')).toContainText('今日观察');
   await expect(page.locator('#daily-scan-count')).toContainText('/5');
+  await expect(page.getByRole('button', { name: '分享今日观察' })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   const queryButton = page.getByRole('button', { name: '查询历史规律 →' });
@@ -59,6 +60,10 @@ test('daily observation and historical query remain usable', async ({ page }) =>
   await expect(page.locator('#results')).toHaveClass(/show/);
   await expect(page.locator('#sn')).not.toHaveText('-');
   await expect(page.getByRole('button', { name: '生成报告卡片' })).toBeVisible();
+  await page.getByRole('button', { name: '保存这个关注条件' }).click();
+  await expect(page.locator('.daily-saved-item')).toHaveCount(1);
+  await expect(page.locator('.daily-saved-item')).toContainText('BTC 跌 8%');
+  expect((await page.locator('.daily-saved-item').boundingBox()).height).toBeGreaterThanOrEqual(44);
   expect(errors).toEqual([]);
 });
 

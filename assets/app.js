@@ -154,11 +154,57 @@ function savedQueryTriggered(item){
   const latest=rows[rows.length-1];
   return queryMatchesLatest(latest,item);
 }
+function dailySavedQueryLabel(item){
+  const labels=lang==='zh'
+    ? {drop:'跌',rise:'涨',range:'振幅',wick:'插针'}
+    : {drop:'down',rise:'up',range:'range',wick:'wick'};
+  return `${item.coin} ${labels[item.type] || item.type} ${item.threshold}%`;
+}
+function dailySavedQueryRows(){
+  return (Array.isArray(SAVED_QUERIES) ? SAVED_QUERIES : []).map((item,index) => ({
+    item,
+    index,
+    triggered:savedQueryTriggered(item),
+    label:dailySavedQueryLabel(item),
+  }));
+}
 function dailyHabitContext(latestDate){
   const visit=updateDailyVisit(latestDate);
   const savedCount=Array.isArray(SAVED_QUERIES) ? SAVED_QUERIES.length : 0;
   const triggeredCount=savedCount ? SAVED_QUERIES.filter(savedQueryTriggered).length : 0;
   return {...visit,savedCount,triggeredCount};
+}
+function dailyObservationSharePayload(){
+  const ctx=dailyObservationContext();
+  if(!ctx) return null;
+  const rows=dailySavedQueryRows();
+  const triggered=rows.filter(row => row.triggered);
+  const move=Number.isFinite(ctx.dailyMove) ? ctx.dailyMove : 0;
+  const url=`https://www.mybtcbox.com/?view=daily&date=${encodeURIComponent(ctx.latest.date)}&ref=daily-share`;
+  const title=lang==='zh' ? `BTC 每日观察 ${ctx.latest.date}` : `BTC daily observation ${ctx.latest.date}`;
+  const text=lang==='zh'
+    ? `BTC 完整日线 ${signedPct(move)}，距样本高点 ${ctx.drawdown.toFixed(1)}%，周期第 ${ctx.daysSincePeak} 天。${rows.length?`我的 ${rows.length} 个观察条件今日触发 ${triggered.length} 个。`:'未设置个人观察条件。'}历史数据仅供参考，不预测涨跌。`
+    : `BTC completed daily candle ${signedPct(move)}, ${ctx.drawdown.toFixed(1)}% from the sample high, cycle day ${ctx.daysSincePeak}. ${rows.length?`${triggered.length} of my ${rows.length} saved conditions triggered today.`:'No personal observation conditions saved.'} Historical data only, not a price forecast.`;
+  return {title,text,url};
+}
+async function shareDailyObservation(){
+  const payload=dailyObservationSharePayload();
+  if(!payload) return;
+  if(typeof navigator.share==='function'){
+    try{
+      await navigator.share(payload);
+      return;
+    }catch(error){
+      if(error?.name==='AbortError') return;
+    }
+  }
+  const copy=`${payload.title}\n${payload.text}\n${payload.url}`;
+  try{
+    await navigator.clipboard.writeText(copy);
+    toast(lang==='zh' ? '今日观察已复制' : 'Daily observation copied');
+  }catch(error){
+    toast(lang==='zh' ? '复制失败，请使用浏览器分享菜单' : 'Copy failed. Use the browser share menu');
+  }
 }
 function viewSavedQueries(){
   document.getElementById('saved-queries')?.scrollIntoView({behavior:'smooth',block:'center'});
@@ -187,6 +233,7 @@ function renderDailyObservation(){
     ? `BTC 最新完整日线${moveWord}${moveAbs}%，距样本高点回撤${Math.abs(ctx.drawdown).toFixed(1)}%；${changeCopy}，周期计时推进至第${ctx.daysSincePeak}天。`
     : `BTC's latest completed daily candle ${moveWord} ${moveAbs}%. Drawdown from the sample high is ${Math.abs(ctx.drawdown).toFixed(1)}%. ${changeCopy}. The cycle clock is now at day ${ctx.daysSincePeak}.`;
   const habit=dailyHabitContext(ctx.latest.date);
+  const savedRows=dailySavedQueryRows();
   const habitText=habit.savedCount
     ? (zh
         ? `${habit.streak>1?`连续观察 <strong>${habit.streak}</strong> 个数据日`:'今日开始观察'} · 已保存 <strong>${habit.savedCount}</strong> 个条件，今日 <strong>${habit.triggeredCount}</strong> 个触发`
@@ -214,10 +261,15 @@ function renderDailyObservation(){
         <strong class="daily-brief-value">${ctx.daysSincePeak}${zh?'天':'d'}</strong>
       </div>
     </div>
+    ${savedRows.length ? `<div class="daily-saved" aria-label="${zh?'我的观察条件':'My saved conditions'}">
+      <span class="daily-saved-label">${zh?'我的条件':'My conditions'}</span>
+      <div class="daily-saved-list">${savedRows.map(row => `<button type="button" class="daily-saved-item ${row.triggered?'triggered':''}" onclick="applySavedQuery(${row.index})"><span>${row.label}</span><b>${row.triggered?(zh?'已触发':'triggered'):(zh?'未触发':'quiet')}</b></button>`).join('')}</div>
+    </div>` : ''}
     <div class="daily-brief-habit" title="${zh?'记录仅保存在本设备':'Stored on this device only'}">
       <span>${habitText}</span>
       <span class="daily-brief-actions">
         ${habit.savedCount?`<button type="button" onclick="viewSavedQueries()">${zh?'查看条件':'View saved queries'}</button>`:''}
+        <button type="button" onclick="shareDailyObservation()">${zh?'分享今日观察':'Share today'}</button>
         ${appInstalled?'':`<button type="button" onclick="installDailyApp()">${zh?'固定到主屏幕':'Add to home screen'}</button>`}
       </span>
     </div>`;

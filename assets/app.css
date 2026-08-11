@@ -46,6 +46,12 @@ header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;just
 .daily-brief-metric:last-child{border-right:0}
 .daily-brief-label{font-size:10px;color:var(--ink3);line-height:1.35;margin-bottom:5px}
 .daily-brief-value{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:900;line-height:1.2;white-space:nowrap}
+.daily-saved{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;align-items:start;gap:10px 14px;padding-top:11px;border-top:1px solid var(--border)}
+.daily-saved-label{padding-top:7px;color:var(--ink3);font-size:10px;font-weight:750;white-space:nowrap}
+.daily-saved-list{display:flex;flex-wrap:wrap;gap:7px}
+.daily-saved-item{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--ink2);font:700 10px/1.2 'JetBrains Mono',monospace;cursor:pointer}
+.daily-saved-item b{color:var(--ink3);font:750 10px/1.2 'Inter',sans-serif}.daily-saved-item.triggered{border-color:rgba(247,147,26,.55);color:var(--ink)}.daily-saved-item.triggered b{color:var(--accent)}
+.daily-saved-item:hover{border-color:var(--border2)}
 .daily-brief-habit{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:11px;border-top:1px solid var(--border);font-size:12px;color:var(--ink2)}
 .daily-brief-habit strong{color:var(--ink);font-weight:750}
 .daily-brief-habit button{display:inline-flex;align-items:center;min-height:44px;padding:0 2px;border:0;background:none;color:var(--accent);font:inherit;font-weight:750;cursor:pointer;white-space:nowrap}
@@ -374,6 +380,7 @@ footer a{color:var(--ink2);text-decoration:none}footer a:hover{color:var(--accen
   .daily-brief-metric:first-child{padding-left:0}
   .daily-brief-metric:last-child{padding-right:0}
   .daily-brief-value{font-size:13px}
+  .daily-saved{grid-template-columns:1fr;gap:6px}.daily-saved-label{padding-top:0}.daily-saved-list{display:grid;grid-template-columns:1fr}.daily-saved-item{justify-content:space-between;width:100%}
   .daily-brief-habit{align-items:flex-start;flex-wrap:wrap;gap:5px 10px;font-size:12px}
   .daily-brief-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
   .daily-scan{padding:12px}

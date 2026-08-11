@@ -194,6 +194,7 @@ const cycleStage = btcCycleStageComparisons(cycleClock.daysSincePeak);
 renderDailyObservation();
 const dailyBriefHtml = document.getElementById('daily-brief').innerHTML;
 const dailyBriefContext = dailyObservationContext();
+const dailySharePayload = dailyObservationSharePayload();
 MARKET_PRICES.BTC = { price: 100000, change24h: 2.5 };
 MARKET_SENTIMENT = { fundingRate: 0.002, lsRatio: 1.43 };
 const initialBtcAth = BTC_DATA._ath;
@@ -225,6 +226,7 @@ run();
   dailyBriefHtml,
   dailyBriefChange:dailyBriefContext.drawdownChange,
   dailyBriefExpectedChange:dailyBriefContext.drawdown - dailyBriefContext.previousDrawdown,
+  dailySharePayload,
   habitFirst,
   habitSecond,
   habitRepeat,
@@ -271,6 +273,13 @@ assertEqual(result.habitRepeat.streak, 2, 'Repeated renders on the same data day
 assertEqual(result.dailyBriefHtml.includes('连续观察 <strong>2</strong> 个数据日'), true, 'Daily observation should show the local data-day streak');
 assertEqual(result.dailyBriefHtml.includes('已保存 <strong>1</strong> 个条件'), true, 'Daily observation should show the saved-query count');
 assertEqual(result.dailyBriefHtml.includes('今日 <strong>0</strong> 个触发'), true, 'Daily observation should show how many saved conditions triggered today');
+assertEqual(result.dailyBriefHtml.includes('我的条件'), true, 'Daily observation should expose saved conditions without opening another view');
+assertEqual(result.dailyBriefHtml.includes('BTC 跌 8%'), true, 'Daily observation should label each saved condition compactly');
+assertEqual(result.dailyBriefHtml.includes('未触发'), true, 'Daily observation should disclose the current state of each saved condition');
+assertEqual(result.dailyBriefHtml.includes('分享今日观察'), true, 'Daily observation should provide a direct sharing action');
+assertEqual(result.dailySharePayload.url.includes('view=daily'), true, 'Daily observation share URL should open the daily homepage context');
+assertEqual(result.dailySharePayload.url.includes(result.latestSignalDate), true, 'Daily observation share URL should preserve the data date');
+assertEqual(result.dailySharePayload.text.includes('不预测涨跌'), true, 'Daily observation share copy should retain the forecasting boundary');
 assertEqual(result.cycleStage.length, 2, 'Same-stage comparison should include two verifiable prior cycles');
 assertEqual(Number(result.cycleStage[0].drawdown.toFixed(1)), -70.5, 'Previous cycle day-aligned drawdown should match source daily data');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
