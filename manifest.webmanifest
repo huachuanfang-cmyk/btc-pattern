@@ -1,0 +1,37 @@
+{
+  "id": "/",
+  "name": "My BTC Box 比特币历史数据工具",
+  "short_name": "My BTC Box",
+  "description": "查询加密货币历史事件、BTC周期和条件买入回测，只提供历史数据参考。",
+  "lang": "zh-CN",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080b10",
+  "theme_color": "#080b10",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "BTC大跌历史查询",
+      "short_name": "大跌查询",
+      "url": "/tools/btc-drop-history?source=pwa"
+    },
+    {
+      "name": "BTC周期刻度尺",
+      "short_name": "周期刻度",
+      "url": "/tools/btc-cycle-clock?source=pwa"
+    },
+    {
+      "name": "条件买入回测",
+      "short_name": "条件回测",
+      "url": "/tools/btc-conditional-buy-backtest?source=pwa"
+    }
+  ]
+}

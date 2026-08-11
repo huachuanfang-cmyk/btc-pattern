@@ -7,6 +7,8 @@ const headers = fs.readFileSync('_headers', 'utf8');
 const robots = fs.readFileSync('robots.txt', 'utf8');
 const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const toolFunction = fs.readFileSync('functions/tools/[slug].js', 'utf8');
+const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
+const serviceWorker = fs.readFileSync('sw.js', 'utf8');
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
   .find(script => script.includes('function buildBtcData'));
@@ -159,6 +161,10 @@ const latestSignal = latestSignalForData(BTC_DATA);
 const btcLast = BTC_DATA.daily[BTC_DATA.daily.length - 1];
 const syntheticRangeSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, pct_raw:0.5, range_pct:9, range_pct_raw:9, low_to_close:1, low_to_close_raw:1}]});
 const syntheticWickSignal = latestSignalForData({...BTC_DATA, daily:[{...btcLast, pct:0.5, pct_raw:0.5, range_pct:6, range_pct_raw:6, low_to_close:5.5, low_to_close_raw:5.5}]});
+localStorage.removeItem(DAILY_VISIT_KEY);
+const habitFirst = updateDailyVisit(BTC_DATA.daily[BTC_DATA.daily.length-2].date);
+const habitSecond = updateDailyVisit(btcLast.date);
+const habitRepeat = updateDailyVisit(btcLast.date);
 COIN_DATA.BTC = {...BTC_DATA, daily:[...BTC_DATA.daily.slice(0,-1), {...btcLast, pct:-8.2, pct_raw:-8.2}]};
 renderDailySignals();
 const dailySignalHtml = document.getElementById('daily-signal-list').innerHTML;
@@ -208,6 +214,9 @@ run();
   dailyBriefHtml,
   dailyBriefChange:dailyBriefContext.drawdownChange,
   dailyBriefExpectedChange:dailyBriefContext.drawdown - dailyBriefContext.previousDrawdown,
+  habitFirst,
+  habitSecond,
+  habitRepeat,
   cyclePeakDate: cycleClock.peak.date,
   cycleDaysSincePeak: cycleClock.daysSincePeak,
   cycleExpectedDays: utcDayDiff(cycleClock.peak.date, cycleClock.latest.date),
@@ -245,6 +254,12 @@ assertEqual(result.dailyBriefHtml.includes('今日观察'), true, 'Homepage shou
 assertEqual(result.dailyBriefHtml.includes('回撤较前一日'), true, 'Daily observation should compare drawdown with the prior completed candle');
 assertEqual(result.dailyBriefHtml.includes(`周期计时推进至第${result.cycleDaysSincePeak}天`), true, 'Daily observation should advance with the completed cycle clock');
 assertEqual(Number(result.dailyBriefChange.toFixed(8)), Number(result.dailyBriefExpectedChange.toFixed(8)), 'Daily drawdown change should use the same sample high for both completed candles');
+assertEqual(result.habitFirst.streak, 1, 'First local observation should start a one-day streak');
+assertEqual(result.habitSecond.streak, 2, 'Next completed data day should extend the local observation streak');
+assertEqual(result.habitRepeat.streak, 2, 'Repeated renders on the same data day should not inflate the streak');
+assertEqual(result.dailyBriefHtml.includes('连续观察 <strong>2</strong> 个数据日'), true, 'Daily observation should show the local data-day streak');
+assertEqual(result.dailyBriefHtml.includes('已保存 <strong>1</strong> 个条件'), true, 'Daily observation should show the saved-query count');
+assertEqual(result.dailyBriefHtml.includes('今日 <strong>0</strong> 个触发'), true, 'Daily observation should show how many saved conditions triggered today');
 assertEqual(result.cycleStage.length, 2, 'Same-stage comparison should include two verifiable prior cycles');
 assertEqual(Number(result.cycleStage[0].drawdown.toFixed(1)), -70.5, 'Previous cycle day-aligned drawdown should match source daily data');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
@@ -375,6 +390,7 @@ assertEqual(methodologyHtml.includes('超过2个UTC日未更新即标记延迟')
 assertEqual(methodologyHtml.includes('SHA-256'), true, 'Methodology page should expose the published dataset checksum');
 assertEqual(headers.includes('/data/*'), true, 'Hosting headers should cover published data files');
 assertEqual(headers.includes('max-age=0, must-revalidate'), true, 'Published daily data should not remain silently stale in browser cache');
+assertEqual(headers.includes('/sw.js'), true, 'Service worker updates should always be revalidated');
 assertEqual(html.includes('<link rel="canonical" href="https://www.mybtcbox.com/">'), true, 'Homepage should publish one stable canonical URL');
 assertEqual(html.includes('"@type":"WebApplication"'), true, 'Homepage should publish WebApplication structured data');
 assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), true, 'Robots file should disclose the sitemap');
@@ -387,6 +403,13 @@ for (const slug of ['btc-drop-history','btc-rise-history','btc-volatility-histor
 assertEqual(toolFunction.includes('window.MYBTCBOX_PRESET='), true, 'Tool routes should reuse the real query app with a route preset');
 assertEqual(toolFunction.includes("url: canonical"), true, 'Each tool route should publish its own structured-data URL');
 assertEqual(toolFunction.includes('twitter:title'), true, 'Each tool route should publish route-specific Twitter metadata');
+assertEqual(manifest.display, 'standalone', 'Web app manifest should support a standalone home-screen experience');
+assertEqual(manifest.icons.some(icon => icon.sizes === 'any' && icon.purpose.includes('maskable')), true, 'Web app manifest should include an adaptive app icon');
+assertEqual(manifest.shortcuts.length, 3, 'Installed app should expose three useful tool shortcuts');
+assertEqual(serviceWorker.includes("fetch(request)"), true, 'Service worker should try the network before cached data');
+assertEqual(serviceWorker.indexOf('fetch(request)') < serviceWorker.indexOf('caches.match(request)'), true, 'Service worker should not prefer stale cached daily data');
+assertEqual(html.includes('rel="manifest" href="/manifest.webmanifest"'), true, 'Homepage should link the web app manifest');
+assertEqual(html.includes("navigator.serviceWorker.register('/sw.js')"), true, 'Homepage should register the service worker');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`

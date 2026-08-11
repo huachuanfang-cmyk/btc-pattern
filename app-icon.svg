@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="My BTC Box">
+  <rect width="512" height="512" rx="104" fill="#f7931a"/>
+  <rect x="28" y="28" width="456" height="456" rx="84" fill="none" stroke="#080b10" stroke-opacity=".16" stroke-width="12"/>
+  <text x="256" y="342" text-anchor="middle" font-family="Arial, sans-serif" font-size="260" font-weight="700" fill="#080b10">₿</text>
+</svg>

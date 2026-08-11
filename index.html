@@ -27,6 +27,11 @@
 <meta name="twitter:description" content="When BTC drops 10% in a day - what happened next? Real data 2017-2026. Facts only.">
 <meta name="twitter:image" content="https://www.mybtcbox.com/og-image.png?v=20260514">
 <meta name="twitter:image:alt" content="My BTC Box crypto historical pattern and backtest report">
+<meta name="theme-color" content="#080b10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My BTC Box">
+<link rel="manifest" href="/manifest.webmanifest">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"My BTC Box","url":"https://www.mybtcbox.com/","applicationCategory":"FinanceApplication","operatingSystem":"Web","isAccessibleForFree":true,"description":"基于真实UTC日线的加密货币历史事件查询、BTC周期比较和条件买入回测工具，不预测涨跌。","featureList":["加密货币历史事件查询","BTC历史周期比较","条件买入与定投回测","历史数据报告生成"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f7931a'/%3E%3Ctext x='32' y='42' font-size='34' text-anchor='middle' font-family='Arial' font-weight='700' fill='%23080b10'%3E%E2%82%BF%3C/text%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -80,6 +85,11 @@ header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;just
 .daily-brief-metric:last-child{border-right:0}
 .daily-brief-label{font-size:10px;color:var(--ink3);line-height:1.35;margin-bottom:5px}
 .daily-brief-value{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:900;line-height:1.2;white-space:nowrap}
+.daily-brief-habit{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:11px;border-top:1px solid var(--border);font-size:12px;color:var(--ink2)}
+.daily-brief-habit strong{color:var(--ink);font-weight:750}
+.daily-brief-habit button{display:inline-flex;align-items:center;min-height:44px;padding:0 2px;border:0;background:none;color:var(--accent);font:inherit;font-weight:750;cursor:pointer;white-space:nowrap}
+.daily-brief-habit button:hover{text-decoration:underline}
+.daily-brief-actions{display:flex;align-items:center;gap:12px}
 .daily-brief-empty{font-size:12px;color:var(--ink2)}
 .daily-scan{margin:0 0 10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
 .daily-scan-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:12px}
@@ -397,6 +407,8 @@ footer a{color:var(--ink2);text-decoration:none}footer a:hover{color:var(--accen
   .daily-brief-metric:first-child{padding-left:0}
   .daily-brief-metric:last-child{padding-right:0}
   .daily-brief-value{font-size:13px}
+  .daily-brief-habit{align-items:flex-start;flex-wrap:wrap;gap:5px 10px;font-size:12px}
+  .daily-brief-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
   .daily-scan{padding:12px}
   .daily-scan-head{display:block}
   .daily-scan-count{margin-top:8px}
@@ -1039,6 +1051,75 @@ function dailyObservationContext(){
     drawdownChange
   };
 }
+const DAILY_VISIT_KEY='btcPatternDailyVisit';
+let deferredInstallPrompt=null;
+let appInstalled=typeof window.matchMedia==='function' && window.matchMedia('(display-mode: standalone)').matches;
+if(typeof navigator!=='undefined' && navigator.standalone) appInstalled=true;
+if(typeof window.addEventListener==='function'){
+  window.addEventListener('beforeinstallprompt',event => {
+    event.preventDefault();
+    deferredInstallPrompt=event;
+    renderDailyObservation();
+  });
+  window.addEventListener('appinstalled',() => {
+    appInstalled=true;
+    deferredInstallPrompt=null;
+    renderDailyObservation();
+  });
+}
+async function installDailyApp(){
+  if(appInstalled){
+    toast(lang==='zh' ? '已经固定到主屏幕' : 'Already installed');
+    return;
+  }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice=await deferredInstallPrompt.userChoice;
+    if(choice?.outcome==='accepted') appInstalled=true;
+    deferredInstallPrompt=null;
+    renderDailyObservation();
+    return;
+  }
+  toast(lang==='zh'
+    ? '请使用浏览器菜单中的“添加到主屏幕”或“安装应用”'
+    : 'Use your browser menu and choose Add to Home Screen or Install App');
+}
+function updateDailyVisit(latestDate){
+  let state={lastDate:null,streak:0,totalDays:0};
+  try{
+    const saved=JSON.parse(localStorage.getItem(DAILY_VISIT_KEY) || 'null');
+    if(saved && typeof saved==='object') state={...state,...saved};
+  }catch(e){}
+  if(!latestDate || state.lastDate===latestDate) return state;
+  const gap=state.lastDate ? utcDayDiff(state.lastDate,latestDate) : null;
+  state={
+    lastDate:latestDate,
+    streak:gap===1 ? Math.max(1,Number(state.streak)||1)+1 : 1,
+    totalDays:Math.max(0,Number(state.totalDays)||0)+1
+  };
+  try{ localStorage.setItem(DAILY_VISIT_KEY,JSON.stringify(state)); }catch(e){}
+  return state;
+}
+function savedQueryTriggered(item){
+  const rows=COIN_DATA[item?.coin]?.daily || [];
+  const latest=rows[rows.length-1];
+  const threshold=Number(item?.threshold);
+  if(!latest || !Number.isFinite(threshold)) return false;
+  if(item.type==='drop') return Number(latest.pct) <= -threshold;
+  if(item.type==='rise') return Number(latest.pct) >= threshold;
+  if(item.type==='range') return Number(latest.range_pct) >= threshold;
+  if(item.type==='wick') return Number(latest.low_to_close) >= threshold;
+  return false;
+}
+function dailyHabitContext(latestDate){
+  const visit=updateDailyVisit(latestDate);
+  const savedCount=Array.isArray(SAVED_QUERIES) ? SAVED_QUERIES.length : 0;
+  const triggeredCount=savedCount ? SAVED_QUERIES.filter(savedQueryTriggered).length : 0;
+  return {...visit,savedCount,triggeredCount};
+}
+function viewSavedQueries(){
+  document.getElementById('saved-queries')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
 function renderDailyObservation(){
   const host = document.getElementById('daily-brief');
   if(!host) return;
@@ -1062,6 +1143,12 @@ function renderDailyObservation(){
   const sentence = zh
     ? `BTC 最新完整日线${moveWord}${moveAbs}%，距样本高点回撤${Math.abs(ctx.drawdown).toFixed(1)}%；${changeCopy}，周期计时推进至第${ctx.daysSincePeak}天。`
     : `BTC's latest completed daily candle ${moveWord} ${moveAbs}%. Drawdown from the sample high is ${Math.abs(ctx.drawdown).toFixed(1)}%. ${changeCopy}. The cycle clock is now at day ${ctx.daysSincePeak}.`;
+  const habit=dailyHabitContext(ctx.latest.date);
+  const habitText=habit.savedCount
+    ? (zh
+        ? `${habit.streak>1?`连续观察 <strong>${habit.streak}</strong> 个数据日`:'今日开始观察'} · 已保存 <strong>${habit.savedCount}</strong> 个条件，今日 <strong>${habit.triggeredCount}</strong> 个触发`
+        : `${habit.streak>1?`Observed <strong>${habit.streak}</strong> data days in a row`:'Observation started today'} · <strong>${habit.savedCount}</strong> saved, <strong>${habit.triggeredCount}</strong> triggered today`)
+    : (zh ? '观察记录仅保存在本设备。保存常用查询后，这里会每天核对。' : 'Observation history stays on this device. Save a query to check it here each day.');
   host.innerHTML = `
     <div class="daily-brief-main">
       <div class="daily-brief-head">
@@ -1083,6 +1170,13 @@ function renderDailyObservation(){
         <span class="daily-brief-label">${zh?'周期计时':'cycle clock'}</span>
         <strong class="daily-brief-value">${ctx.daysSincePeak}${zh?'天':'d'}</strong>
       </div>
+    </div>
+    <div class="daily-brief-habit" title="${zh?'记录仅保存在本设备':'Stored on this device only'}">
+      <span>${habitText}</span>
+      <span class="daily-brief-actions">
+        ${habit.savedCount?`<button type="button" onclick="viewSavedQueries()">${zh?'查看条件':'View saved queries'}</button>`:''}
+        ${appInstalled?'':`<button type="button" onclick="installDailyApp()">${zh?'固定到主屏幕':'Add to home screen'}</button>`}
+      </span>
     </div>`;
 }
 function utcAddDays(date, days){
@@ -1455,6 +1549,7 @@ function saveCurrentQuery(){
   SAVED_QUERIES=[next,...SAVED_QUERIES].slice(0,5);
   persistSavedQueries();
   renderSavedQueries();
+  renderDailyObservation();
   toast(lang==='zh' ? '已保存到这台设备' : 'Saved on this device');
 }
 async function applySavedQuery(index){
@@ -1473,6 +1568,7 @@ function removeSavedQuery(index){
   SAVED_QUERIES.splice(index,1);
   persistSavedQueries();
   renderSavedQueries();
+  renderDailyObservation();
 }
 function renderTopTicker(){
   const data = COIN_DATA[activeCoin] || BTC_DATA;
@@ -3280,6 +3376,9 @@ async function initializeApp(){
   }
 }
 initializeApp();
+if(typeof navigator!=='undefined' && 'serviceWorker' in navigator){
+  window.addEventListener('load',() => navigator.serviceWorker.register('/sw.js').catch(() => {}),{once:true});
+}
 </script>
 </body>
 </html>
