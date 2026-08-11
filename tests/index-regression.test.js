@@ -3,6 +3,7 @@ const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
 const methodologyHtml = fs.readFileSync('methodology.html', 'utf8');
+const headers = fs.readFileSync('_headers', 'utf8');
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
   .find(script => script.includes('function buildBtcData'));
@@ -329,6 +330,10 @@ assertEqual(html.includes('href="methodology.html"'), true, 'Homepage should lin
 assertEqual(methodologyHtml.includes('健康判断规则'), true, 'Methodology page should publish the health thresholds');
 assertEqual(methodologyHtml.includes('收盘涨跌幅'), true, 'Methodology page should publish indicator formulas');
 assertEqual(methodologyHtml.includes('data/health.js'), true, 'Methodology page should use the lightweight health manifest');
+assertEqual(methodologyHtml.includes('超过2个UTC日未更新即标记延迟'), true, 'Methodology page should publish the operational stale-data threshold');
+assertEqual(methodologyHtml.includes('SHA-256'), true, 'Methodology page should expose the published dataset checksum');
+assertEqual(headers.includes('/data/*'), true, 'Hosting headers should cover published data files');
+assertEqual(headers.includes('max-age=0, must-revalidate'), true, 'Published daily data should not remain silently stale in browser cache');
 
 const sentimentContext = createContext();
 const sentimentResult = vm.runInContext(`

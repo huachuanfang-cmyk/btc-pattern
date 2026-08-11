@@ -13,7 +13,7 @@
     {"id":"correctness","name":"数据正确性","baseline":8,"current":8,"evidence":["tests/update-data.test.js","tests/index-regression.test.js"],"nextMilestone":"增加上游数据定期抽查和发布门禁"},
     {"id":"retention","name":"用户粘性","baseline":5,"current":5,"evidence":["index.html"],"nextMilestone":"完成主动订阅提醒和隐私友好的回访衡量"},
     {"id":"seo","name":"SEO获客","baseline":5,"current":5,"evidence":["index.html","methodology.html"],"nextMilestone":"建立独立工具 URL、sitemap 和结构化数据"},
-    {"id":"data-operations","name":"数据运维","baseline":6,"current":6,"evidence":[".github/workflows/update-btc-data.yml","data/health.json"],"nextMilestone":"完成测试门禁、异常通知、运行手册和恢复演练"},
+    {"id":"data-operations","name":"数据运维","baseline":6,"current":6,"evidence":[".github/workflows/update-btc-data.yml","data/health.json","docs/data-recovery-runbook.md"],"nextMilestone":"完成一次真实告警验证和30分钟恢复演练后重新评分"},
     {"id":"extensibility","name":"代码扩展性","baseline":5,"current":5,"evidence":["index.html","update-btc-data.js"],"nextMilestone":"拆分数据、计算、渲染和报告模块"}
   ]
 }

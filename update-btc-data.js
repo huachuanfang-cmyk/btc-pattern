@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const START_DATE = '2017-01-01';
@@ -23,6 +24,10 @@ function utcDate(ts) {
 
 function utcDay(date = new Date()) {
   return new Date(date).toISOString().slice(0, 10);
+}
+
+function utcDayDiff(a, b) {
+  return Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 86400000);
 }
 
 function keepCompletedUtcDays(rows, now = new Date()) {
@@ -162,12 +167,20 @@ function validate(rows, symbol) {
   const problems = [];
   const seen = new Set();
 
-  for (const row of rows) {
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
     if (seen.has(row.date)) problems.push(`duplicate date ${row.date}`);
     seen.add(row.date);
+    if (![row.open, row.high, row.low, row.close].every(Number.isFinite)) problems.push(`${row.date}: non-finite OHLC value`);
+    if (!Number.isFinite(row.volume) || row.volume < 0) problems.push(`${row.date}: invalid volume`);
     if (row.low > row.high) problems.push(`${row.date}: low > high`);
     if (row.open < row.low || row.open > row.high) problems.push(`${row.date}: open outside low/high`);
     if (row.close < row.low || row.close > row.high) problems.push(`${row.date}: close outside low/high`);
+    if (index > 0) {
+      const previous = rows[index - 1];
+      const gap = utcDayDiff(previous.date, row.date);
+      if (gap !== 1) problems.push(`${previous.date} to ${row.date}: expected 1 UTC day, found ${gap}`);
+    }
   }
 
   if (problems.length) {
@@ -176,9 +189,10 @@ function validate(rows, symbol) {
 }
 
 function buildHealthManifest(datasets, generatedAt = new Date().toISOString()) {
-  return {
-    generated_at: generatedAt,
-    assets: datasets.map((dataset) => ({
+  const generatedDay = utcDay(generatedAt);
+  const assets = datasets.map((dataset) => {
+    const lagDays = dataset.data_through ? utcDayDiff(dataset.data_through, generatedDay) : null;
+    return {
       coin: dataset.coin,
       name: dataset.name,
       symbol: dataset.symbol,
@@ -186,8 +200,16 @@ function buildHealthManifest(datasets, generatedAt = new Date().toISOString()) {
       data_through: dataset.data_through,
       last_checked_at: dataset.last_checked_at,
       rows: dataset.daily.length,
+      lag_days: lagDays,
+      status: Number.isFinite(lagDays) && lagDays <= 2 ? 'healthy' : 'stale',
+      sha256: crypto.createHash('sha256').update(JSON.stringify(dataset.daily)).digest('hex'),
       source: dataset.source?.ohlcv || null,
-    })),
+    };
+  });
+  return {
+    generated_at: generatedAt,
+    status: assets.every((asset) => asset.status === 'healthy') ? 'healthy' : 'degraded',
+    assets,
   };
 }
 
@@ -263,5 +285,6 @@ module.exports = {
   buildHealthManifest,
   keepCompletedUtcDays,
   utcDay,
+  utcDayDiff,
   validate,
 };

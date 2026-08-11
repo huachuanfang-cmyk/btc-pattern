@@ -118,15 +118,14 @@
       const today = new Date().toISOString().slice(0,10);
       return Math.round((Date.parse(today+'T00:00:00Z') - Date.parse(date+'T00:00:00Z')) / 86400000);
     }
-    function healthState(date){
-      const lag = date ? utcLagDays(date) : null;
-      if(lag == null || lag < 0 || lag > 3) return {key:'bad',label:'延迟',lag};
-      if(lag === 3) return {key:'warn',label:'需检查',lag};
+    function healthState(asset){
+      const lag = Number.isFinite(asset?.lag_days) ? asset.lag_days : (asset?.data_through ? utcLagDays(asset.data_through) : null);
+      if(lag == null || lag < 0 || asset?.status === 'stale' || lag > 2) return {key:'bad',label:'延迟',lag};
       return {key:'ok',label:'正常',lag};
     }
     const manifest = window.CRYPTO_DATA_HEALTH;
     const assets = manifest?.assets || [];
-    const states = assets.map(asset => ({asset,state:healthState(asset.data_through)}));
+    const states = assets.map(asset => ({asset,state:healthState(asset)}));
     const worst = states.some(x=>x.state.key==='bad') ? 'bad' : states.some(x=>x.state.key==='warn') ? 'warn' : 'ok';
     const summary = document.getElementById('health-summary');
     const main = document.getElementById('health-main');
@@ -134,7 +133,7 @@
       summary.classList.add(worst);
       main.className = 'health-main '+worst;
       main.textContent = worst === 'ok' ? '五个资产数据正常' : worst === 'warn' ? '部分数据需要检查' : '部分数据出现延迟';
-      document.getElementById('health-detail').textContent = `已读取 ${assets.length} 个资产，状态按UTC数据截止日期判断`;
+      document.getElementById('health-detail').textContent = `已读取 ${assets.length} 个资产，超过2个UTC日未更新即标记延迟`;
       document.getElementById('health-checked').textContent = `状态清单生成于 ${manifest.generated_at.replace('T',' ').replace(/\.\d+Z$/,' UTC')}`;
       document.getElementById('asset-rows').innerHTML = states.map(({asset,state}) => `
         <div class="asset-row">
@@ -142,7 +141,7 @@
           <span class="range">${asset.start} 至 ${asset.data_through}</span>
           <span class="through">${asset.data_through}</span>
           <span class="count">${asset.rows.toLocaleString('en-US')}</span>
-          <span class="asset-state state-${state.key}">${state.label}</span>
+          <span class="asset-state state-${state.key}" title="${asset.sha256 ? `SHA-256 ${asset.sha256}` : '暂无校验指纹'}">${state.label}${Number.isFinite(state.lag)?` · ${state.lag}天`:''}</span>
         </div>`).join('');
     } else {
       main.className = 'health-main bad';

@@ -1,9 +1,11 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const {
   addDerivedFields,
   buildHealthManifest,
   keepCompletedUtcDays,
   utcDay,
+  utcDayDiff,
   validate,
 } = require('../update-btc-data');
 
@@ -21,6 +23,7 @@ const sourceRows = [
 ];
 
 assertEqual(utcDay(now), '2026-08-10', 'UTC day should be stable');
+assertEqual(utcDayDiff('2026-08-09', '2026-08-10'), 1, 'UTC day difference should use calendar days');
 
 const completedRows = keepCompletedUtcDays(sourceRows, now);
 assertEqual(completedRows.length, 2, 'Current UTC candle must be excluded');
@@ -31,6 +34,16 @@ assertEqual(derivedRows.at(-1).next1, null, 'Latest completed candle must not ha
 assertEqual(derivedRows[0].next1, 2.86, 'Completed candles should retain derived future returns');
 
 validate(derivedRows, 'TEST-USD');
+let gapRejected = false;
+try {
+  validate([
+    sourceRows[0],
+    { ...sourceRows[1], date: '2026-08-10' },
+  ], 'GAP-TEST-USD');
+} catch (error) {
+  gapRejected = String(error.message).includes('expected 1 UTC day');
+}
+assertEqual(gapRejected, true, 'Dataset validation should reject missing UTC dates');
 
 const health = buildHealthManifest([{
   coin: 'BTC',
@@ -43,6 +56,9 @@ const health = buildHealthManifest([{
 }], now.toISOString());
 assertEqual(health.assets[0].rows, 2, 'Health manifest should expose the validated row count');
 assertEqual(health.assets[0].data_through, '2026-08-09', 'Health manifest should expose the latest completed candle');
+assertEqual(health.assets[0].lag_days, 1, 'Health manifest should expose source lag in UTC days');
+assertEqual(health.assets[0].status, 'healthy', 'One-day source lag should be healthy');
+assertEqual(health.status, 'healthy', 'Manifest should aggregate healthy asset states');
 
 const publishedHealth = JSON.parse(fs.readFileSync('data/health.json', 'utf8'));
 assertEqual(publishedHealth.assets.length, 5, 'Published health manifest should include all five assets');
@@ -50,6 +66,10 @@ for (const asset of publishedHealth.assets) {
   const dataset = JSON.parse(fs.readFileSync(`data/${asset.coin.toLowerCase()}.daily.json`, 'utf8'));
   assertEqual(asset.data_through, dataset.data_through, `${asset.coin} health date should match its dataset`);
   assertEqual(asset.rows, dataset.daily.length, `${asset.coin} health row count should match its dataset`);
+  if (asset.sha256) {
+    const expectedHash = crypto.createHash('sha256').update(JSON.stringify(dataset.daily)).digest('hex');
+    assertEqual(asset.sha256, expectedHash, `${asset.coin} health checksum should match its published daily rows`);
+  }
 }
 
 console.log('update data checks passed');

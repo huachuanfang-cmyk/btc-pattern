@@ -1957,7 +1957,8 @@ function updateDynamicCopy(){
   }
   const dsRange = document.getElementById('ds-range');
   if(dsRange) dsRange.textContent = range;
-  const checkedAt = BTC_DAILY_RAW.last_checked_at || BTC_DAILY_RAW.generated || '';
+  const manifestAsset = window.CRYPTO_DATA_HEALTH?.assets?.find(asset => asset.coin === activeCoin);
+  const checkedAt = manifestAsset?.last_checked_at || BTC_DAILY_RAW.last_checked_at || BTC_DAILY_RAW.generated || '';
   const checkedText = checkedAt ? checkedAt.replace('T', ' ').replace(/\.\d+Z$/, ' UTC').replace(/Z$/, ' UTC') : '-';
   const stAsset = document.getElementById('st-asset');
   const stHealth = document.getElementById('st-health');
@@ -1966,16 +1967,16 @@ function updateDynamicCopy(){
   if(stAsset) stAsset.textContent = `${activeCoin} · ${symbol}`;
   if(stHealth){
     const todayUtc = new Date().toISOString().slice(0,10);
-    const lag = end ? Math.round((Date.parse(todayUtc+'T00:00:00Z') - Date.parse(end+'T00:00:00Z')) / 86400000) : null;
+    const lag = Number.isFinite(manifestAsset?.lag_days)
+      ? manifestAsset.lag_days
+      : end ? Math.round((Date.parse(todayUtc+'T00:00:00Z') - Date.parse(end+'T00:00:00Z')) / 86400000) : null;
     const invalid = lag == null || lag < 0;
-    const state = invalid || lag > 3 ? 'bad' : lag === 3 ? 'warn' : 'ok';
+    const state = invalid || manifestAsset?.status === 'stale' || lag > 2 ? 'bad' : 'ok';
     stHealth.className = `status-val health-${state}`;
     stHealth.textContent = invalid
       ? (lang === 'zh' ? '数据日期异常' : 'Invalid data date')
-      : state === 'ok'
-        ? (lang === 'zh' ? '正常 · 完整日线' : 'Healthy · completed candles')
-        : state === 'warn'
-          ? (lang === 'zh' ? '需检查 · 3天未更新' : 'Check · 3 days behind')
+        : state === 'ok'
+          ? (lang === 'zh' ? `正常 · 延迟${lag}天` : `Healthy · ${lag} day lag`)
           : (lang === 'zh' ? `延迟 · ${lag}天未更新` : `Delayed · ${lag} days behind`);
   }
   if(stThrough) stThrough.textContent = end || '-';
