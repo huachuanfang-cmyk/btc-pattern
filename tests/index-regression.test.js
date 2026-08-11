@@ -12,6 +12,7 @@ const serviceWorker = fs.readFileSync('sw.js', 'utf8');
 const statusHtml = fs.readFileSync('status.html', 'utf8');
 const statusScript = fs.readFileSync('assets/status.js', 'utf8');
 const coreScript = fs.readFileSync('assets/core.js', 'utf8');
+const backtestCoreScript = fs.readFileSync('assets/backtest-core.js', 'utf8');
 const appScript = fs.readFileSync('assets/app.js', 'utf8');
 function readPngInfo(path) {
   const bytes = fs.readFileSync(path);
@@ -128,6 +129,7 @@ function createContext(startDate = '2017-01-01', pageWindow = {}) {
     vm.runInContext(fs.readFileSync(`data/${coin}.daily.js`, 'utf8'), context);
   }
   vm.runInContext(coreScript, context);
+  vm.runInContext(backtestCoreScript, context);
   vm.runInContext(appScript, context);
   return context;
 }
@@ -429,8 +431,9 @@ assertEqual(serviceWorker.includes("fetch(request)"), true, 'Service worker shou
 assertEqual(serviceWorker.indexOf('fetch(request)') < serviceWorker.indexOf('caches.match(request)'), true, 'Service worker should not prefer stale cached daily data');
 assertEqual(html.includes('href="/assets/app.css"'), true, 'Homepage should load the extracted application stylesheet');
 assertEqual(html.includes('src="/assets/core.js"'), true, 'Homepage should load the independently testable calculation core');
+assertEqual(html.includes('src="/assets/backtest-core.js"'), true, 'Homepage should load the independently testable backtest core');
 assertEqual(html.includes('src="/assets/app.js"'), true, 'Homepage should load the extracted application controller');
-for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/app.js']) {
+for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/backtest-core.js', '/assets/app.js']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache ${asset}`);
 }
 for (const asset of ['/status.html', '/assets/status.css', '/assets/status.js', '/data/health.js']) {

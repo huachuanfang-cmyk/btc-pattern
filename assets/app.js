@@ -8,6 +8,17 @@ const {
   utcAddDays,
   utcDayDiff
 } = window.MYBTCBOX_CORE;
+const {
+  addUtcDays: backtestAddDays,
+  backtestDrawdowns: coreBacktestDrawdowns,
+  buyStats: coreBuyStats,
+  monthlyReturns: coreMonthlyReturns,
+  monthlyTriggers: coreMonthlyTriggers,
+  nearestDaily: coreNearestDaily,
+  tieredStats: coreTieredStats,
+  weeklyRows: coreWeeklyRows,
+  yearlyBacktest: coreYearlyBacktest
+} = window.MYBTCBOX_BACKTEST;
 const COIN_ORDER = ['BTC', 'ETH', 'SOL', 'DOGE', 'BNB'];
 const COIN_DISPLAY = {
   BTC:{en:'Bitcoin',zh:'比特币'},
@@ -732,29 +743,16 @@ async function selectCoin(coin){
 }
 
 function nearestDaily(dateStr){
-  for(const d of DAILY_SERIES){ if(d.date >= dateStr) return d; }
-  return null;
+  return coreNearestDaily(DAILY_SERIES,dateStr);
 }
 function addDays(dateStr, days){
-  const d = new Date(dateStr + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0,10);
+  return backtestAddDays(dateStr,days);
 }
 function calcBuyStats(rows, amount){
-  const invested = rows.length * amount;
-  const btc = rows.reduce((sum,d) => sum + amount / d.close, 0);
-  const currentValue = btc * LATEST_DAILY.close;
-  return { count:rows.length, invested, btc, currentValue, avgBuy:btc ? invested / btc : 0, roi:invested ? (currentValue / invested - 1) * 100 : 0 };
+  return coreBuyStats(rows,amount,LATEST_DAILY?.close);
 }
 function buildWeeklyRows(startDate){
-  const rows = [];
-  let d = startDate;
-  while(d <= LATEST_DAILY.date){
-    const day = nearestDaily(d);
-    if(day && (!rows.length || rows[rows.length - 1].date !== day.date)) rows.push(day);
-    d = addDays(d, 7);
-  }
-  return rows;
+  return coreWeeklyRows(DAILY_SERIES,startDate,LATEST_DAILY.date);
 }
 function setCBThresh(t) {
   if(!Number.isFinite(t) || t <= 0) return;
@@ -779,23 +777,7 @@ function getTierRules(){
   return rules.sort((a,b)=>a.threshold-b.threshold);
 }
 function calcTieredStats(rows, rules){
-  let invested=0, btc=0, buys=0, days=0;
-  for(const d of rows){
-    if(!d.prevClose || !d.low) continue;
-    let dayBuys=0;
-    for(const r of rules){
-      const triggerPrice = d.prevClose * (1 - r.threshold / 100);
-      if(d.low <= triggerPrice){
-        invested += r.amount;
-        btc += r.amount / triggerPrice;
-        buys++;
-        dayBuys++;
-      }
-    }
-    if(dayBuys>0) days++;
-  }
-  const currentValue = btc * LATEST_DAILY.close;
-  return { count:days, buys, invested, btc, currentValue, avgBuy:btc ? invested / btc : 0, roi:invested ? (currentValue / invested - 1) * 100 : 0 };
+  return coreTieredStats(rows,rules,LATEST_DAILY?.close);
 }
 function markWinner(leftId, rightId, leftValue, rightValue, lowerIsBetter=false){
   const left=document.getElementById(leftId), right=document.getElementById(rightId);
@@ -900,142 +882,23 @@ function updateCB() {
 // ── ENHANCED BACKTEST ANALYTICS ──
 
 function buildWeeklyRowsRange(startDate, endDate) {
-  const rows = [];
-  let d = startDate;
-  while (d <= endDate) {
-    const day = nearestDaily(d);
-    if (day && day.date <= endDate && (!rows.length || rows[rows.length - 1].date !== day.date)) rows.push(day);
-    d = addDays(d, 7);
-  }
-  return rows;
+  return coreWeeklyRows(DAILY_SERIES,startDate,endDate);
 }
 
 function calcYearlyBacktest(startDate, tiered, rules, amount) {
-  const years = {};
-  const startYear = Math.max(parseInt(startDate.slice(0, 4)), 2017);
-  const endYear = parseInt(LATEST_DAILY.date.slice(0, 4));
-  if (startYear > endYear) return years;
-
-  let cumStratBtc = 0, cumDcaBtc = 0, cumStratInv = 0, cumDcaInv = 0;
-
-  for (let y = startYear; y <= endYear; y++) {
-    const yearStart = `${y}-01-01`;
-    const yearEnd = `${y}-12-31`;
-    const segStart = y === startYear && startDate > yearStart ? startDate : yearStart;
-    const segEnd = LATEST_DAILY.date < yearEnd ? LATEST_DAILY.date : yearEnd;
-    if (segStart > segEnd) continue;
-    const eligible = DAILY_SERIES.filter(d => d.date >= segStart && d.date <= segEnd && d.pct != null);
-    if (!eligible.length) continue;
-
-    const strat = tiered ? calcTieredStats(eligible, rules) : calcBuyStats(eligible.filter(d => d.pct <= -cbThresh), amount);
-    const weeklyRows = buildWeeklyRowsRange(segStart, segEnd);
-    const dca = calcBuyStats(weeklyRows, amount);
-
-    cumStratBtc += strat.btc; cumDcaBtc += dca.btc;
-    cumStratInv += strat.invested; cumDcaInv += dca.invested;
-    const yep = eligible[eligible.length - 1].close;
-    const cumStratVal = cumStratBtc * yep;
-    const cumDcaVal = cumDcaBtc * yep;
-    const stratROI = cumStratInv ? (cumStratVal / cumStratInv - 1) * 100 : 0;
-    const dcaROI = cumDcaInv ? (cumDcaVal / cumDcaInv - 1) * 100 : 0;
-
-    years[y] = {
-      stratTriggers: strat.count, stratInvested: strat.invested, stratBtcAdded: strat.btc,
-      cumStratBtc: cumStratBtc, cumStratInv: cumStratInv, cumStratVal,
-      dcaInv: dca.invested, dcaBtcAdded: dca.btc,
-      cumDcaBtc: cumDcaBtc, cumDcaInv: cumDcaInv, cumDcaVal,
-      yep, winner: stratROI > dcaROI ? 'strat' : 'dca',
-      stratROI,
-      dcaROI,
-    };
-  }
-  return years;
+  return coreYearlyBacktest(DAILY_SERIES,{startDate,tiered,rules,amount,threshold:cbThresh});
 }
 
 function calcMonthlyTriggers(startDate) {
-  const months = Array.from({length:12}, (_,i) => ({month:i+1, triggers:0, totalInvested:0, drops:0}));
-  const eligible = DAILY_SERIES.filter(d => d.date >= startDate && d.pct != null);
-  for (const d of eligible) {
-    if (d.pct <= -cbThresh) {
-      const m = new Date(d.date + 'T00:00:00Z').getUTCMonth();
-      months[m].triggers++;
-      months[m].drops++;
-    }
-  }
-  return months;
+  return coreMonthlyTriggers(DAILY_SERIES,startDate,cbThresh);
 }
 
 function calcStrategyMonthlyROI(startDate, tiered, rules, amount) {
-  const months = Array.from({length:12}, (_,i) => ({month:i+1, stratReturns:[], dcaReturns:[]}));
-  const startYear = Math.max(parseInt(startDate.slice(0, 4)), 2017);
-  const endYear = parseInt(LATEST_DAILY.date.slice(0, 4));
-
-  for (let y = startYear; y <= endYear; y++) {
-    for (let m = 1; m <= 12; m++) {
-      const ms = String(m).padStart(2,'0');
-      const monthStart = `${y}-${ms}-01`;
-      const lastDay = new Date(y, m, 0).getDate();
-      const monthEnd = `${y}-${ms}-${lastDay}`;
-      const segStart = y === startYear && startDate > monthStart ? startDate : monthStart;
-      const segEnd = LATEST_DAILY.date < monthEnd ? LATEST_DAILY.date : monthEnd;
-      if (segStart > segEnd) continue;
-      const eligible = DAILY_SERIES.filter(d => d.date >= segStart && d.date <= segEnd && d.pct != null);
-      if (!eligible.length) continue;
-      const monthEndPrice = eligible[eligible.length - 1].close;
-      const strat = tiered ? calcTieredStats(eligible, rules) : calcBuyStats(eligible.filter(d => d.pct <= -cbThresh), amount);
-      const weeklyRows = buildWeeklyRowsRange(segStart, segEnd);
-      const dca = calcBuyStats(weeklyRows, amount);
-      const stratROI = strat.invested ? ((strat.btc * monthEndPrice) / strat.invested - 1) * 100 : 0;
-      const dcaROI = dca.invested ? ((dca.btc * monthEndPrice) / dca.invested - 1) * 100 : 0;
-      if (strat.invested) months[m-1].stratReturns.push(stratROI);
-      if (dca.invested) months[m-1].dcaReturns.push(dcaROI);
-    }
-  }
-  return months.map(mm => ({
-    month: mm.month,
-    stratAvg: mm.stratReturns.length ? mm.stratReturns.reduce((a,b)=>a+b,0) / mm.stratReturns.length : null,
-    dcaAvg: mm.dcaReturns.length ? mm.dcaReturns.reduce((a,b)=>a+b,0) / mm.dcaReturns.length : null,
-    stratCount: mm.stratReturns.length,
-    dcaCount: mm.dcaReturns.length,
-  }));
+  return coreMonthlyReturns(DAILY_SERIES,{startDate,tiered,rules,amount,threshold:cbThresh});
 }
 
 function calcBacktestDrawdowns(startDate, tiered, rules, amount) {
-  const MONTHLY = 30;
-  const sim = [];
-  let stratBtc = 0, stratInv = 0, dcaBtc = 0, dcaInv = 0;
-  let cursor = startDate;
-  while (cursor <= LATEST_DAILY.date) {
-    const segEnd = addDays(cursor, MONTHLY - 1);
-    const eligible = DAILY_SERIES.filter(d => d.date >= cursor && d.date <= segEnd && d.pct != null);
-    if (!eligible.length) { cursor = addDays(cursor, MONTHLY); continue; }
-    const strat = tiered ? calcTieredStats(eligible, rules) : calcBuyStats(eligible.filter(d => d.pct <= -cbThresh), amount);
-    const weeklyRows = buildWeeklyRowsRange(cursor, segEnd);
-    const dca = calcBuyStats(weeklyRows, amount);
-    stratBtc += strat.btc; stratInv += strat.invested;
-    dcaBtc += dca.btc; dcaInv += dca.invested;
-    const price = eligible[eligible.length - 1].close;
-    sim.push({ date: segEnd, stratVal: stratBtc * price, stratInv, dcaVal: dcaBtc * price, dcaInv });
-    cursor = addDays(segEnd, 1);
-  }
-
-  function findDrawdowns(values) {
-    let peak = values[0], maxDd = 0, peakAfterDd = values[0], count20 = 0; const periods = [];
-    for (const v of values) {
-      if (v >= peak) { peak = v; peakAfterDd = v; }
-      else {
-        const dd = (v - peak) / peak * 100;
-        if (dd < maxDd) { maxDd = dd; peakAfterDd = v; }
-        if (dd <= -20) count20++;
-      }
-    }
-    return { maxDd: maxDd ? Math.round(maxDd * 100) / 100 : 0, count20 };
-  }
-
-  return {
-    strat: findDrawdowns(sim.map(s => s.stratVal)),
-    dca: findDrawdowns(sim.map(s => s.dcaVal)),
-  };
+  return coreBacktestDrawdowns(DAILY_SERIES,{startDate,tiered,rules,amount,threshold:cbThresh});
 }
 
 function setLang(l){
