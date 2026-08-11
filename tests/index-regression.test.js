@@ -220,6 +220,7 @@ assertEqual(result.dailySignalCount.includes('1/5'), true, 'Daily scan should di
 assertEqual(result.savedQueryHtml.includes('BTC 收盘跌幅至少 8%'), true, 'Saved query should render a readable local shortcut');
 assertEqual(result.savedQueryStorage.includes('"coin":"BTC"'), true, 'Saved query should persist on the current device');
 assertEqual(result.cycleRulerHtml.includes('BTC 历史周期刻度尺'), true, 'Homepage should render the BTC historical cycle ruler');
+assertEqual(result.cycleRulerHtml.includes('cycle-range-label'), true, 'Cycle ruler should group crowded historical timing markers into one readable label');
 assertEqual(result.cycleRulerHtml.includes('363 / 376 / 411d'), true, 'Cycle ruler should show all three peak-to-bottom timing samples');
 assertEqual(result.cycleRulerHtml.includes('不是见底日期或逃顶日期预测'), true, 'Cycle ruler should explicitly reject date forecasting');
 assertEqual(result.cyclePeakDate, '2025-10-06', 'Cycle ruler should derive the latest BTC sample high from daily data');

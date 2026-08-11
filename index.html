@@ -87,29 +87,29 @@ button.daily-signal:hover{border-color:rgba(247,147,26,.5);background:rgba(247,1
 /* BTC CYCLE RULER */
 .cycle-ruler{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px}
 .cycle-ruler-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:16px}
-.cycle-ruler-title{font-size:16px;font-weight:800;margin-bottom:4px}
-.cycle-ruler-copy{font-size:11px;color:var(--ink3);line-height:1.55;max-width:610px}
-.cycle-ruler-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);white-space:nowrap;padding-top:2px}
+.cycle-ruler-title{font-size:17px;font-weight:800;margin-bottom:5px}
+.cycle-ruler-copy{font-size:12px;color:var(--ink2);line-height:1.6;max-width:610px}
+.cycle-ruler-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink2);white-space:nowrap;padding-top:2px}
 .cycle-ruler-metrics{display:grid;grid-template-columns:1.15fr .85fr 1fr;gap:1px;background:var(--border);border-radius:8px;overflow:hidden}
 .cycle-ruler-metric{background:rgba(255,255,255,.025);padding:12px 14px;min-width:0}
-.cycle-ruler-label{font-size:9px;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px}
-.cycle-ruler-value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:var(--ink);line-height:1.15}
+.cycle-ruler-label{font-size:11px;color:var(--ink2);letter-spacing:.04em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:6px}
+.cycle-ruler-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:var(--ink);line-height:1.15}
 .cycle-ruler-value.accent{color:var(--accent)}
 .cycle-ruler-value.negative{color:var(--red)}
-.cycle-ruler-sub{font-size:10px;color:var(--ink3);margin-top:4px;line-height:1.4}
+.cycle-ruler-sub{font-size:11px;color:var(--ink2);margin-top:5px;line-height:1.45}
 .cycle-track{position:relative;height:70px;margin:16px 4px 2px}
 .cycle-track-line{position:absolute;left:0;right:0;top:29px;height:1px;background:var(--border2)}
-.cycle-range{position:absolute;top:25px;height:9px;background:rgba(247,147,26,.24);border-left:1px solid var(--accent);border-right:1px solid var(--accent)}
+.cycle-range{position:absolute;top:25px;height:9px;background:rgba(247,147,26,.32);border-left:1px solid var(--accent);border-right:1px solid var(--accent)}
 .cycle-tick{position:absolute;top:22px;width:1px;height:15px;background:var(--ink2);transform:translateX(-50%)}
-.cycle-tick-label{position:absolute;top:42px;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);white-space:nowrap}
 .cycle-now{position:absolute;top:8px;width:2px;height:31px;background:var(--accent);transform:translateX(-50%)}
 .cycle-now::before{content:"";position:absolute;left:50%;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
-.cycle-scale-label{position:absolute;top:0;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);transform:translateX(-50%);white-space:nowrap;font-weight:700}
+.cycle-scale-label{position:absolute;top:0;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);transform:translateX(-50%);white-space:nowrap;font-weight:800}
+.cycle-range-label{position:absolute;right:0;top:43px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink2);white-space:nowrap;font-weight:700}
 .cycle-benchmarks{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:13px;border-top:1px solid var(--border)}
 .cycle-benchmark{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-width:0}
-.cycle-benchmark-label{font-size:10px;color:var(--ink3);line-height:1.45}
+.cycle-benchmark-label{font-size:11px;color:var(--ink2);line-height:1.5}
 .cycle-benchmark-value{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink2);font-weight:700;white-space:nowrap}
-.cycle-ruler-note{font-size:10px;color:var(--ink3);line-height:1.55;margin-top:12px}
+.cycle-ruler-note{font-size:11px;color:var(--ink2);line-height:1.6;margin-top:12px}
 
 /* QUERY */
 .qwrap{max-width:900px;margin:0 auto;padding:0 24px 60px}
@@ -376,13 +376,16 @@ footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;co
   .cycle-ruler{padding:12px}
   .cycle-ruler-head{margin-bottom:10px}
   .cycle-ruler-title{font-size:14px}
-  .cycle-ruler-copy{font-size:10px}
+  .cycle-ruler-copy{font-size:11px}
   .cycle-ruler-metrics{grid-template-columns:1fr 1fr}
   .cycle-ruler-metric:first-child{grid-column:1/3}
   .cycle-ruler-metric{padding:9px 10px}
-  .cycle-ruler-value{font-size:15px}
+  .cycle-ruler-label{font-size:10px}
+  .cycle-ruler-value{font-size:16px}
+  .cycle-ruler-sub{font-size:10px}
   .cycle-track{height:66px;margin:13px 2px 0}
-  .cycle-tick-label{font-size:8px}
+  .cycle-scale-label{font-size:10px}
+  .cycle-range-label{font-size:9px}
   .cycle-benchmark{align-items:flex-start}
   .cycle-benchmark-value{font-size:10px}
   .qcard{padding:12px}
@@ -996,8 +999,8 @@ function renderCycleRuler(){
   const pct = n => Math.max(2, Math.min(98, n / scaleMax * 100));
   const rangeLeft = pct(bearMin), rangeRight = pct(bearMax);
   const markerHtml = BTC_CYCLE_TIMING.bear.map(item => `
-    <span class="cycle-tick" style="left:${pct(item.days)}%" aria-hidden="true"></span>
-    <span class="cycle-tick-label" style="left:${pct(item.days)}%">${item.days}d</span>`).join('');
+    <span class="cycle-tick" style="left:${pct(item.days)}%" aria-hidden="true"></span>`).join('');
+  const markerDays = BTC_CYCLE_TIMING.bear.map(item => item.days).sort((a,b) => a-b).join(' / ');
   const drawdownText = Number.isFinite(ctx.drawdown) ? `${ctx.drawdown.toFixed(1)}%` : '-';
   host.innerHTML = `
     <div class="cycle-ruler-head">
@@ -1030,6 +1033,7 @@ function renderCycleRuler(){
       ${markerHtml}
       <span class="cycle-now" style="left:${pct(ctx.daysSincePeak)}%"></span>
       <span class="cycle-scale-label" style="left:${pct(ctx.daysSincePeak)}%">${zh?'当前':'NOW'} ${ctx.daysSincePeak}d</span>
+      <span class="cycle-range-label">${zh?'历史样本':'HISTORY'} ${markerDays}d</span>
     </div>
     <div class="cycle-benchmarks">
       <div class="cycle-benchmark"><span class="cycle-benchmark-label">${zh?'三轮顶部到底部':'Three peak-to-bottom samples'}</span><span class="cycle-benchmark-value">363 / 376 / 411d</span></div>
