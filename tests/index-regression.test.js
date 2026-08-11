@@ -9,6 +9,10 @@ const sitemap = fs.readFileSync('sitemap.xml', 'utf8');
 const toolFunction = fs.readFileSync('functions/tools/[slug].js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const serviceWorker = fs.readFileSync('sw.js', 'utf8');
+function readPngInfo(path) {
+  const bytes = fs.readFileSync(path);
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), colorType: bytes[25] };
+}
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
   .find(script => script.includes('function buildBtcData'));
@@ -404,11 +408,20 @@ assertEqual(toolFunction.includes('window.MYBTCBOX_PRESET='), true, 'Tool routes
 assertEqual(toolFunction.includes("url: canonical"), true, 'Each tool route should publish its own structured-data URL');
 assertEqual(toolFunction.includes('twitter:title'), true, 'Each tool route should publish route-specific Twitter metadata');
 assertEqual(manifest.display, 'standalone', 'Web app manifest should support a standalone home-screen experience');
-assertEqual(manifest.icons.some(icon => icon.sizes === 'any' && icon.purpose.includes('maskable')), true, 'Web app manifest should include an adaptive app icon');
+assertEqual(manifest.icons.some(icon => icon.sizes === '192x192' && icon.type === 'image/png'), true, 'Web app manifest should include the Chromium 192px PNG icon');
+assertEqual(manifest.icons.some(icon => icon.sizes === '512x512' && icon.type === 'image/png'), true, 'Web app manifest should include the Chromium 512px PNG icon');
+assertEqual(manifest.icons.every(icon => icon.purpose.includes('maskable')), true, 'Web app manifest icons should support adaptive launchers');
+for (const size of [192, 512]) {
+  const icon = readPngInfo(`app-icon-${size}.png`);
+  assertEqual(icon.width, size, `PWA ${size}px icon should have the declared width`);
+  assertEqual(icon.height, size, `PWA ${size}px icon should have the declared height`);
+  assertEqual(icon.colorType, 2, `PWA ${size}px icon should use non-transparent RGB pixels`);
+}
 assertEqual(manifest.shortcuts.length, 3, 'Installed app should expose three useful tool shortcuts');
 assertEqual(serviceWorker.includes("fetch(request)"), true, 'Service worker should try the network before cached data');
 assertEqual(serviceWorker.indexOf('fetch(request)') < serviceWorker.indexOf('caches.match(request)'), true, 'Service worker should not prefer stale cached daily data');
 assertEqual(html.includes('rel="manifest" href="/manifest.webmanifest"'), true, 'Homepage should link the web app manifest');
+assertEqual(html.includes('rel="apple-touch-icon" href="/app-icon-180.png"'), true, 'Homepage should provide an iOS home-screen icon');
 assertEqual(html.includes("navigator.serviceWorker.register('/sw.js')"), true, 'Homepage should register the service worker');
 
 const sentimentContext = createContext();
