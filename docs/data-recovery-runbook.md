@@ -16,7 +16,7 @@
 
 工作流任一步失败时，会创建或更新题为 `Automated crypto data update failed` 的 GitHub Issue，并附带失败运行链接。下一次完整成功后，工作流会留言并关闭该 Issue。
 
-独立的线上巡检每 6 小时读取 `https://www.mybtcbox.com/data/health.json`，检查 HTTP 内容类型、五种资产是否齐全、数据延迟、样本量和 SHA-256 字段。失败时创建或更新 `Published crypto data health check failed` Issue，恢复后自动留言并关闭。它能发现“仓库更新成功但线上部署或缓存仍异常”的情况。
+独立的线上巡检每 6 小时读取 `https://www.mybtcbox.com/data/health.json`，检查 HTTP 内容类型、五种资产是否齐全、数据延迟、样本量和 SHA-256 字段。健康清单、巡检脚本或巡检工作流推送时也立即检查，避免恢复后等待下一个 6 小时窗口。失败时创建或更新 `Published crypto data health check failed` Issue，恢复后自动留言并关闭。它能发现“仓库更新成功但线上部署或缓存仍异常”的情况。
 
 维护者仍需在 GitHub 账户中开启仓库 Issue 通知。Issue 是公开可追踪的异常记录，不得在其中粘贴令牌、Cookie 或其他凭据。
 

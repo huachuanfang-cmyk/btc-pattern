@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "data/health.json"
+      - "scripts/check-data-health.js"
+      - ".github/workflows/monitor-data-health.yml"
 
 permissions:
   contents: read
