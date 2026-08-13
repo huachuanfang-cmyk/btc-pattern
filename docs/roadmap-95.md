@@ -1,5 +1,7 @@
 # My BTC Box 9.5+ 路线图
 
+真实用户、回访和搜索收录的采集口径见 `docs/real-world-validation.md`，不得以自动测试或开发者自评替代。
+
 更新时间：2026-08-11
 
 本路线图服务于 `docs/quality-standard-95.md`。顺序由风险和用户价值决定，不以功能数量决定。
