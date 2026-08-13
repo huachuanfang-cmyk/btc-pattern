@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-08-13T09:56:37.017Z",
+  "primary_source": "Yahoo Finance UTC daily",
+  "reference_source": "Kraken UTC daily",
+  "tolerances": {
+    "close_pct": 3,
+    "high_low_pct": 5
+  },
+  "results": [
+    {
+      "coin": "BTC",
+      "date": "2026-08-12",
+      "closeDiffPct": 0.015,
+      "highDiffPct": 0.044,
+      "lowDiffPct": 0.006,
+      "primary": "BTC-USD",
+      "reference": "XBTUSD"
+    },
+    {
+      "coin": "ETH",
+      "date": "2026-08-12",
+      "closeDiffPct": 0.01,
+      "highDiffPct": 0.072,
+      "lowDiffPct": 0.071,
+      "primary": "ETH-USD",
+      "reference": "ETHUSD"
+    },
+    {
+      "coin": "SOL",
+      "date": "2026-08-12",
+      "closeDiffPct": 0.046,
+      "highDiffPct": 0.286,
+      "lowDiffPct": 0.083,
+      "primary": "SOL-USD",
+      "reference": "SOLUSD"
+    },
+    {
+      "coin": "DOGE",
+      "date": "2026-08-12",
+      "closeDiffPct": 0.038,
+      "highDiffPct": 0.086,
+      "lowDiffPct": 0.213,
+      "primary": "DOGE-USD",
+      "reference": "DOGEUSD"
+    },
+    {
+      "coin": "BNB",
+      "date": "2026-08-12",
+      "closeDiffPct": 0.015,
+      "highDiffPct": 0.067,
+      "lowDiffPct": 0.034,
+      "primary": "BNB-USD",
+      "reference": "BNBUSD"
+    }
+  ]
+}

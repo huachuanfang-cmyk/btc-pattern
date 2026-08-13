@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "source": "Yahoo Finance BTC-USD UTC daily candles",
+  "policy": "Exact OHLCV values require an explicit reviewed update when the upstream source revises history.",
+  "samples": [
+    {"date":"2017-01-01","open":963.65802002,"high":1003.08001709,"low":958.69897461,"close":998.32501221,"volume":147775008},
+    {"date":"2017-12-17","open":19475.80078125,"high":20089,"low":18974.09960938,"close":19140.80078125,"volume":13314599936},
+    {"date":"2020-03-12","open":7913.61621094,"high":7929.11621094,"low":4860.35400391,"close":4970.78808594,"volume":53980357243},
+    {"date":"2021-11-10","open":66953.3359375,"high":68789.625,"low":63208.11328125,"close":64995.23046875,"volume":48730828378},
+    {"date":"2022-11-21","open":16291.22363281,"high":16291.22363281,"low":15599.046875,"close":15787.28417969,"volume":37429485518},
+    {"date":"2024-03-14","open":73079.375,"high":73750.0703125,"low":68563.0234375,"close":71396.59375,"volume":59594605698},
+    {"date":"2025-10-06","open":123510.453125,"high":126198.0703125,"low":123196.046875,"close":124752.53125,"volume":72568881188}
+  ]
+}
