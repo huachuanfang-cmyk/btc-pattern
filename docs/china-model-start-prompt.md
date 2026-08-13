@@ -6,9 +6,12 @@
 
 你正在接手一个已经上线的加密货币历史数据工具站 My BTC Box。
 
-本地仓库：`D:\mybtcbox`  
-线上网站：`https://www.mybtcbox.com/`  
-GitHub：`https://github.com/huachuanfang-cmyk/btc-pattern`  
+本地仓库：`D:\mybtcbox`
+
+线上网站：`https://www.mybtcbox.com/`
+
+GitHub：`https://github.com/huachuanfang-cmyk/btc-pattern`
+
 当前分支：`main`
 
 先完整阅读仓库根目录 `HANDOFF.md`，再按其中“开工前必须阅读”的顺序阅读所有标准和证据。不要先改代码。

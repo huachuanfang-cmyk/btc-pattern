@@ -1,10 +1,15 @@
 # My BTC Box 工作交接
 
-交接时间：2026-08-13（Asia/Shanghai）  
-仓库：`D:\mybtcbox`  
-线上：`https://www.mybtcbox.com/`  
-GitHub：`https://github.com/huachuanfang-cmyk/btc-pattern`  
-分支：`main`  
+交接时间：2026-08-13（Asia/Shanghai）
+
+仓库：`D:\mybtcbox`
+
+线上：`https://www.mybtcbox.com/`
+
+GitHub：`https://github.com/huachuanfang-cmyk/btc-pattern`
+
+分支：`main`
+
 交接基线提交：`cc689ed`
 
 ## 1. 产品使命
@@ -174,4 +179,3 @@ npm run test:performance
 - 线上逐 URL 验证结果。
 - 未解决问题和没有执行的高风险事项。
 - `git status -sb` 原样输出。
-
