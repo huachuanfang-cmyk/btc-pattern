@@ -431,6 +431,7 @@ assertEqual(methodologyHtml.includes('SHA-256'), true, 'Methodology page should 
 assertEqual(methodologyHtml.includes('一组可以独立复算的真实样本'), true, 'Methodology page should include a worked reproducible example');
 assertEqual(methodologyHtml.includes('data/reproducible-example.json'), true, 'Methodology page should link the machine-readable worked example');
 assertEqual(methodologyHtml.includes('CoinLore'), true, 'Methodology page should disclose the live price fallback source');
+assertEqual(methodologyHtml.includes('"@type":"Dataset"'), true, 'Methodology page should identify the downloadable OHLCV collection as a Dataset');
 assertEqual(headers.includes('/data/*'), true, 'Hosting headers should cover published data files');
 assertEqual(headers.includes('max-age=0, must-revalidate'), true, 'Published daily data should not remain silently stale in browser cache');
 assertEqual(headers.includes('/sw.js'), true, 'Service worker updates should always be revalidated');

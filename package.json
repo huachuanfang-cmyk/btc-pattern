@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "node tests/update-data.test.js && node tests/data-health.test.js && node scripts/check-golden-samples.js && node scripts/check-reproducible-example.js && node tests/core.test.js && node tests/backtest-core.test.js && node tests/report-core.test.js && node tests/retention.test.js && node tests/market-proxy.test.js && node tests/index-regression.test.js && node scripts/check-architecture.js && node scripts/check-quality-scorecard.js",
+    "test": "node tests/update-data.test.js && node tests/data-health.test.js && node scripts/check-golden-samples.js && node scripts/check-reproducible-example.js && node scripts/check-structured-data.js && node tests/core.test.js && node tests/backtest-core.test.js && node tests/report-core.test.js && node tests/retention.test.js && node tests/market-proxy.test.js && node tests/index-regression.test.js && node scripts/check-architecture.js && node scripts/check-quality-scorecard.js",
     "health:check": "node scripts/check-data-health.js",
     "health:online": "node scripts/check-data-health.js --url https://www.mybtcbox.com/data/health.json",
     "quality:score": "node scripts/check-quality-scorecard.js",
