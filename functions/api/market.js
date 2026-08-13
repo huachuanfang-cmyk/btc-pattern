@@ -1,10 +1,12 @@
 const RESOURCES = {
   prices: {
     url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,dogecoin,binancecoin&vs_currencies=usd&include_24hr_change=true',
+    fallbackUrl: 'https://api.coinlore.net/api/ticker/?id=90,80,48543,2,2710',
     ttl: 60,
   },
   dominance: {
     url: 'https://api.coingecko.com/api/v3/global',
+    fallbackUrl: 'https://api.coinlore.net/api/global/',
     ttl: 300,
   },
   funding: {
@@ -16,6 +18,53 @@ const RESOURCES = {
     ttl: 300,
   },
 };
+
+const COINLORE_IDS = {
+  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', DOGE: 'dogecoin', BNB: 'binancecoin',
+};
+
+function normalizeFallback(resourceName, raw) {
+  if (resourceName === 'prices') {
+    if (!Array.isArray(raw)) throw new Error('Invalid fallback prices');
+    const normalized = {};
+    for (const item of raw) {
+      const id = COINLORE_IDS[item?.symbol];
+      const price = Number(item?.price_usd);
+      const change = Number(item?.percent_change_24h);
+      if (id && Number.isFinite(price)) normalized[id] = { usd: price, usd_24h_change: Number.isFinite(change) ? change : null };
+    }
+    if (Object.keys(normalized).length !== 5) throw new Error('Incomplete fallback prices');
+    return normalized;
+  }
+  if (resourceName === 'dominance') {
+    const row = Array.isArray(raw) ? raw[0] : null;
+    const btc = Number(row?.btc_d);
+    if (!Number.isFinite(btc)) throw new Error('Invalid fallback dominance');
+    return { data: { market_cap_percentage: { btc } } };
+  }
+  return raw;
+}
+
+async function fetchJson(url, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      headers: { Accept: 'application/json', 'User-Agent': 'MyBTCBox/1.0 market-data-cache' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const error = new Error('Upstream unavailable');
+      error.status = response.status;
+      throw error;
+    }
+    const contentType = response.headers.get('Content-Type') || '';
+    if (!contentType.includes('json')) throw new Error('Unexpected upstream response');
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 function json(body, status, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
@@ -44,28 +93,28 @@ export async function onRequestGet(context) {
     return response;
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
-  let upstream;
+  let data;
+  let source = new URL(resource.url).hostname;
+  let primaryError;
   try {
-    upstream = await fetch(resource.url, {
-      headers: { Accept: 'application/json', 'User-Agent': 'MyBTCBox/1.0 market-data-cache' },
-      signal: controller.signal,
-    });
+    data = await fetchJson(resource.url);
   } catch (error) {
-    const timedOut = error?.name === 'AbortError';
-    return json({ error: timedOut ? 'Market source timed out' : 'Market source unavailable' }, timedOut ? 504 : 502);
-  } finally {
-    clearTimeout(timeout);
+    primaryError = error;
+  }
+  if (data === undefined && resource.fallbackUrl) {
+    try {
+      data = normalizeFallback(resourceName, await fetchJson(resource.fallbackUrl));
+      source = new URL(resource.fallbackUrl).hostname;
+    } catch (fallbackError) {
+      return json({ error: 'Market sources unavailable', primaryStatus: primaryError?.status || null, fallbackStatus: fallbackError?.status || null }, 502);
+    }
+  }
+  if (data === undefined) {
+    const timedOut = primaryError?.name === 'AbortError';
+    return json({ error: timedOut ? 'Market source timed out' : 'Market source unavailable', upstreamStatus: primaryError?.status || null }, timedOut ? 504 : 502);
   }
 
-  if (!upstream.ok) return json({ error: 'Market source unavailable', upstreamStatus: upstream.status }, 502);
-  const contentType = upstream.headers.get('Content-Type') || '';
-  if (!contentType.includes('json')) return json({ error: 'Unexpected market source response' }, 502);
-
-  const body = await upstream.text();
-  try { JSON.parse(body); }
-  catch { return json({ error: 'Invalid market source response' }, 502); }
+  const body = JSON.stringify(data);
 
   const fetchedAt = new Date().toISOString();
   const response = new Response(body, {
@@ -76,6 +125,7 @@ export async function onRequestGet(context) {
       'X-Content-Type-Options': 'nosniff',
       'X-MyBTCBox-Cache': 'MISS',
       'X-MyBTCBox-Fetched-At': fetchedAt,
+      'X-MyBTCBox-Source': source,
     },
   });
   context.waitUntil(cache.put(cacheKey, response.clone()));

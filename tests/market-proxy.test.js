@@ -48,10 +48,28 @@ function createCache() {
 
   const emptyCache = createCache();
   global.caches = { default: emptyCache };
-  global.fetch = async () => new Response('rate limited', { status: 429, headers: { 'Content-Type': 'text/plain' } });
+  global.fetch = async url => {
+    if (String(url) === RESOURCES.prices.url) return new Response('rate limited', { status: 429, headers: { 'Content-Type': 'text/plain' } });
+    return new Response(JSON.stringify([
+      { symbol:'BTC', price_usd:'65000', percent_change_24h:'1.2' },
+      { symbol:'ETH', price_usd:'2000', percent_change_24h:'-1' },
+      { symbol:'SOL', price_usd:'80', percent_change_24h:'2' },
+      { symbol:'DOGE', price_usd:'0.08', percent_change_24h:'0.5' },
+      { symbol:'BNB', price_usd:'600', percent_change_24h:'-0.2' },
+    ]), { headers: { 'Content-Type': 'application/json' } });
+  };
+  const fallback = await onRequestGet({ request: context.request, waitUntil() {} });
+  assert.strictEqual(fallback.status, 200, 'A rate-limited primary source should fail over');
+  assert.strictEqual(fallback.headers.get('X-MyBTCBox-Source'), 'api.coinlore.net');
+  assert.strictEqual((await fallback.json()).bitcoin.usd, 65000);
+
+  global.fetch = async () => new Response('unavailable', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+  global.caches = { default: createCache() };
   const failure = await onRequestGet({ request: context.request, waitUntil() {} });
-  assert.strictEqual(failure.status, 502, 'Upstream rate limits should become a controlled gateway error');
-  assert.strictEqual((await failure.json()).upstreamStatus, 429);
+  assert.strictEqual(failure.status, 502, 'Two unavailable sources should become a controlled gateway error');
+  const failureBody = await failure.json();
+  assert.strictEqual(failureBody.primaryStatus, 503);
+  assert.strictEqual(failureBody.fallbackStatus, 503);
 
   global.fetch = realFetch;
   global.caches = realCaches;
