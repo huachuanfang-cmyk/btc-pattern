@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const {
   addDerivedFields,
   buildDailySummary,
+  buildReturnWindow,
   buildHealthManifest,
   keepCompletedUtcDays,
   utcDay,
@@ -67,9 +68,13 @@ const summary = buildDailySummary([{
 assertEqual(summary.coins.BTC.daily.length, 1, 'Daily summary should publish only the latest completed candle');
 assertEqual(summary.coins.BTC.daily[0].date, '2026-08-09', 'Daily summary date should match the full dataset');
 assertEqual(summary.coins.BTC.pre.rise['3'].count, 0, 'Daily summary event counts should be derived from full history');
+const returnWindow = buildReturnWindow([{coin:'BTC',daily:derivedRows}],now.toISOString(),2);
+assertEqual(returnWindow.coins.BTC.length,2,'Return window should keep the requested completed-day count');
+assertEqual(returnWindow.coins.BTC[1].date,'2026-08-09','Return window should end on the latest completed day');
 
 const publishedHealth = JSON.parse(fs.readFileSync('data/health.json', 'utf8'));
 const publishedSummary = JSON.parse(fs.readFileSync('data/daily-summary.json', 'utf8'));
+const publishedReturnWindow = JSON.parse(fs.readFileSync('data/return-window.json', 'utf8'));
 assertEqual(publishedHealth.assets.length, 5, 'Published health manifest should include all five assets');
 assertEqual(Object.keys(publishedSummary.coins).length, 5, 'Published daily summary should include all five assets');
 for (const asset of publishedHealth.assets) {
@@ -77,6 +82,8 @@ for (const asset of publishedHealth.assets) {
   assertEqual(asset.data_through, dataset.data_through, `${asset.coin} health date should match its dataset`);
   assertEqual(asset.rows, dataset.daily.length, `${asset.coin} health row count should match its dataset`);
   assertEqual(publishedSummary.coins[asset.coin].daily[0].date, dataset.data_through, `${asset.coin} summary should match its full dataset date`);
+  assertEqual(publishedReturnWindow.coins[asset.coin].at(-1).date, dataset.data_through, `${asset.coin} return window should match its full dataset date`);
+  assertEqual(publishedReturnWindow.coins[asset.coin].length, 30, `${asset.coin} return window should publish 30 completed days`);
   if (asset.sha256) {
     const expectedHash = crypto.createHash('sha256').update(JSON.stringify(dataset.daily)).digest('hex');
     assertEqual(asset.sha256, expectedHash, `${asset.coin} health checksum should match its published daily rows`);

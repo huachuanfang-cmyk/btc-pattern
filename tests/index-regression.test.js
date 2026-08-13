@@ -343,6 +343,7 @@ assertEqual(backtestPresetState.requestedBacktestAmount, 100, 'Backtest tool rou
 
 assertEqual(html.includes('id="pulse-score"'), false, 'Homepage should not include a proprietary market score');
 assertEqual(html.includes('id="daily-brief"'), true, 'Homepage should include the daily observation mount point');
+assertEqual(html.includes('data/return-window.js'), true, 'Homepage should load the lightweight returning-visitor window');
 assertEqual(html.includes('id="liq-status"'), false, 'Homepage should not include the large real-time market watch card');
 assertEqual(html.includes('id="heat-row"'), false, 'Homepage should not include the duplicate five-asset heat strip');
 assertEqual(html.includes('<div class="results" id="results">'), true, 'Historical results should start hidden until the user runs a query');

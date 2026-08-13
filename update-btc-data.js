@@ -233,6 +233,19 @@ function buildDailySummary(datasets, generatedAt = new Date().toISOString()) {
   return { generated_at:generatedAt, coins };
 }
 
+function buildReturnWindow(datasets, generatedAt = new Date().toISOString(), windowDays = 30) {
+  const coins = {};
+  for (const dataset of datasets) {
+    coins[dataset.coin] = dataset.daily.slice(-windowDays).map(row => ({
+      date: row.date,
+      pct: row.pct,
+      range_pct: pct(row.high, row.low),
+      low_to_close: row.low_to_close,
+    }));
+  }
+  return { generated_at:generatedAt, window_days:windowDays, coins };
+}
+
 async function buildCoinDataset(config) {
   const rawRows = await fetchYahooDaily(config.symbol);
   if (!rawRows.length) throw new Error(`${config.symbol}: no rows returned from Yahoo Finance.`);
@@ -293,6 +306,9 @@ async function main() {
   const summary = buildDailySummary(datasets, health.generated_at);
   fs.writeFileSync(path.join(OUT_DIR, 'daily-summary.json'), JSON.stringify(summary));
   fs.writeFileSync(path.join(OUT_DIR, 'daily-summary.js'), `window.CRYPTO_DAILY_SUMMARY=${JSON.stringify(summary)};\n`);
+  const returnWindow = buildReturnWindow(datasets, health.generated_at);
+  fs.writeFileSync(path.join(OUT_DIR, 'return-window.json'), JSON.stringify(returnWindow));
+  fs.writeFileSync(path.join(OUT_DIR, 'return-window.js'), `window.CRYPTO_RETURN_WINDOW=${JSON.stringify(returnWindow)};\n`);
 }
 
 if (require.main === module) {
@@ -307,6 +323,7 @@ module.exports = {
   addDerivedFields,
   buildHealthManifest,
   buildDailySummary,
+  buildReturnWindow,
   keepCompletedUtcDays,
   utcDay,
   utcDayDiff,

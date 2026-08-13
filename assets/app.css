@@ -37,6 +37,11 @@ header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;just
 .dash{max-width:900px;margin:-10px auto 26px;padding:0 24px}
 .daily-brief{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(360px,1fr);gap:22px;align-items:stretch;min-height:191px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:16px 18px}
 .daily-brief-main{min-width:0}
+.return-brief{grid-column:1/-1;display:grid;gap:10px;padding:13px 14px;background:rgba(247,147,26,.055);border:1px solid rgba(247,147,26,.24);border-radius:8px}
+.return-brief-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px}.return-brief-head div{display:flex;align-items:baseline;gap:8px}.return-brief-head span,.return-brief-grid span{color:var(--ink3);font-size:10px}.return-brief-head strong{font:850 13px/1.3 'JetBrains Mono',monospace;color:var(--accent)}.return-brief-head small{color:var(--ink3);font:10px/1.4 'JetBrains Mono',monospace}
+.return-brief-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.return-brief-grid>div{display:grid;gap:3px}.return-brief-grid b{color:var(--ink);font-size:12px;font-weight:750}
+.return-brief-matches{display:flex;flex-wrap:wrap;gap:7px}.return-brief-matches button{display:flex;align-items:center;gap:8px;min-height:44px;padding:7px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--bg3);color:var(--ink2);font:700 10px/1.25 'JetBrains Mono',monospace;cursor:pointer}.return-brief-matches button:hover{border-color:var(--accent)}.return-brief-matches button b{color:var(--accent)}
+.return-brief p{margin:0;color:var(--ink3);font-size:10px}
 .daily-brief-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:7px}
 .daily-brief-title{font-size:16px;font-weight:800}
 .daily-brief-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);white-space:nowrap}
@@ -378,6 +383,7 @@ footer a{color:var(--ink2);text-decoration:none}footer a:hover{color:var(--accen
   .hero-sub{font-size:12px}
   .hero-note{font-size:10px}
   .daily-brief{min-height:307px;padding:12px;border-left-width:2px}
+  .return-brief-head{display:grid;gap:4px}.return-brief-head div{justify-content:space-between}.return-brief-head small{white-space:normal}.return-brief-grid{grid-template-columns:1fr}.return-brief-matches{display:grid}.return-brief-matches button{justify-content:space-between;width:100%}
   .daily-brief-head{display:block}
   .daily-brief-date{display:block;margin-top:4px;white-space:normal}
   .daily-brief-copy{font-size:12px}

@@ -107,6 +107,11 @@ function dailyObservationContext(){
   return coreDailyObservationContext(COIN_DATA.BTC?.daily || []);
 }
 const DAILY_VISIT_KEY='btcPatternDailyVisit';
+let SESSION_PREVIOUS_DAILY_DATE=null;
+try{
+  const previousVisit=JSON.parse(localStorage.getItem(DAILY_VISIT_KEY)||'null');
+  if(typeof previousVisit?.lastDate==='string') SESSION_PREVIOUS_DAILY_DATE=previousVisit.lastDate;
+}catch(e){}
 let deferredInstallPrompt=null;
 let appInstalled=typeof window.matchMedia==='function' && window.matchMedia('(display-mode: standalone)').matches;
 if(typeof navigator!=='undefined' && navigator.standalone) appInstalled=true;
@@ -155,6 +160,16 @@ function savedQueryTriggered(item){
   const rows=(COIN_DATA[item?.coin] || DAILY_SUMMARY[item?.coin])?.daily || [];
   const latest=rows[rows.length-1];
   return queryMatchesLatest(latest,item);
+}
+function previousDailyVisitDate(){
+  return SESSION_PREVIOUS_DAILY_DATE;
+}
+function returnBriefContext(latestDate){
+  if(!window.BtcBoxReturnBrief||!window.CRYPTO_RETURN_WINDOW) return null;
+  return window.BtcBoxReturnBrief.build(previousDailyVisitDate(),latestDate,window.CRYPTO_RETURN_WINDOW.coins,SAVED_QUERIES);
+}
+function returnBriefHtml(brief,zh){
+  return window.BtcBoxReturnBrief?.render(brief,{lang:zh?'zh':'en',queries:SAVED_QUERIES,labels:SAVED_QUERIES.map(dailySavedQueryLabel)})||'';
 }
 function dailySavedQueryLabel(item){
   const labels=lang==='zh'
@@ -235,6 +250,7 @@ function renderDailyObservation(){
   const sentence = zh
     ? `BTC 最新完整日线${moveWord}${moveAbs}%，距样本高点回撤${Math.abs(ctx.drawdown).toFixed(1)}%；${changeCopy}，周期计时推进至第${ctx.daysSincePeak}天。`
     : `BTC's latest completed daily candle ${moveWord} ${moveAbs}%. Drawdown from the sample high is ${Math.abs(ctx.drawdown).toFixed(1)}%. ${changeCopy}. The cycle clock is now at day ${ctx.daysSincePeak}.`;
+  const returnBrief=returnBriefContext(ctx.latest.date);
   const habit=dailyHabitContext(ctx.latest.date);
   const savedRows=dailySavedQueryRows();
   const habitText=habit.savedCount
@@ -264,6 +280,7 @@ function renderDailyObservation(){
         <strong class="daily-brief-value">${ctx.daysSincePeak}${zh?'天':'d'}</strong>
       </div>
     </div>
+    ${returnBriefHtml(returnBrief,zh)}
     ${savedRows.length ? `<div class="daily-saved" aria-label="${zh?'我的观察条件':'My saved conditions'}">
       <span class="daily-saved-label">${zh?'我的条件':'My conditions'}</span>
       <div class="daily-saved-list">${savedRows.map(row => `<button type="button" class="daily-saved-item ${row.triggered?'triggered':''}" onclick="applySavedQuery(${row.index})"><span>${row.label}</span><b>${row.triggered?(zh?'已触发':'triggered'):(zh?'未触发':'quiet')}</b></button>`).join('')}</div>

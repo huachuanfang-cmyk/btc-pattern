@@ -67,6 +67,32 @@ test('daily observation and historical query remain usable', async ({ page }) =>
   expect(errors).toEqual([]);
 });
 
+test('returning visitors see completed-candle changes without a forecast', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('btcPatternDailyVisit',JSON.stringify({lastDate:'2026-08-10',streak:1,totalDays:1}));
+    localStorage.setItem('btcPatternSavedQueries',JSON.stringify([
+      {coin:'DOGE',type:'rise',threshold:3},
+      {coin:'DOGE',type:'drop',threshold:3}
+    ]));
+  });
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  const brief=page.locator('.return-brief');
+  await expect(brief).toBeVisible();
+  await expect(brief).toContainText('上次来访后');
+  await expect(brief).toContainText('2 根新日线');
+  await expect(brief).toContainText('不预测下一步');
+  await expect(brief.locator('button')).toHaveCount(2);
+  for(const button of await brief.locator('button').all()) expect((await button.boundingBox()).height).toBeGreaterThanOrEqual(44);
+  await page.evaluate(()=>renderDailyObservation());
+  await expect(page.locator('.return-brief')).toContainText('2 根新日线');
+  await expectNoHorizontalOverflow(page);
+});
+
+test('first visits do not show an invented return summary', async ({ page }) => {
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  await expect(page.locator('.return-brief')).toHaveCount(0);
+});
+
 test('live market failure falls back to completed daily data', async ({ page }) => {
   await page.route('**/api/market?resource=prices', route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"unavailable"}' }));
   await page.goto('/', { waitUntil: 'domcontentloaded' });

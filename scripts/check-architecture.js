@@ -9,7 +9,9 @@ const limits={
   'assets/backtest-core.js':14_000,
   'assets/report-core.js':10_000,
   'assets/retention.js':6_000,
+  'assets/return-brief.js':6_000,
   'data/daily-summary.js':8_000,
+  'data/return-window.js':20_000,
 };
 
 for(const [file,limit] of Object.entries(limits)){
@@ -39,6 +41,8 @@ assert(app.includes("fetch(`/api/market?resource="), 'Controller must use the sa
 assert(app.includes('DAILY_SUMMARY'), 'Controller must use the lightweight daily summary for first-view signals');
 assert(!html.includes('googletagmanager.com'), 'Homepage must not load analytics before explicit consent');
 assert(html.includes('/assets/retention.js'), 'Homepage must use the isolated retention privacy module');
+assert(html.includes('/assets/return-brief.js'), 'Homepage must isolate return-brief calculations from the main controller');
+assert(html.includes('data/return-window.js'), 'Homepage must use the lightweight completed-candle return window');
 
 console.table(Object.entries(limits).map(([file,limit])=>({file,bytes:fs.statSync(file).size,limit,usage:`${(fs.statSync(file).size/limit*100).toFixed(1)}%`})));
 console.log('Architecture budgets and public API contracts passed.');
