@@ -189,3 +189,19 @@ test('daily share falls back with a clear clipboard failure message', async ({ p
   await expect(page.locator('#toast')).toContainText('复制失败，请使用浏览器分享菜单');
   await expect(page.locator('#toast')).toHaveClass(/show/);
 });
+
+test('methodology example remains readable and exposes reproducible data', async ({ page }) => {
+  await page.goto('/methodology.html', { waitUntil:'domcontentloaded' });
+  await expect(page.getByRole('heading',{name:'一组可以独立复算的真实样本'})).toBeVisible();
+  await expect(page.locator('.example-row')).toHaveCount(6);
+  await expect(page.locator('.example')).toContainText('未来 30 日结果');
+  await expect(page.locator('.example')).toContainText('-10.61%');
+  const box=await page.locator('.example').boundingBox();
+  const viewport=page.viewportSize();
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x+box.width).toBeLessThanOrEqual(viewport.width);
+  const response=await page.request.get('/data/reproducible-example.json');
+  expect(response.ok()).toBeTruthy();
+  const example=await response.json();
+  expect(example.outputs.intraday_range_pct).toBe(7.57);
+});

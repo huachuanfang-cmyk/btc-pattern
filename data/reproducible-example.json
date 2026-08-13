@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "asset": "BTC",
+  "symbol": "BTC-USD",
+  "source": "Yahoo Finance UTC daily candles",
+  "event_date": "2024-03-14",
+  "inputs": {
+    "previous_close": 73083.5,
+    "high": 73750.0703125,
+    "low": 68563.0234375,
+    "close": 71396.59375,
+    "next_1_close": 69403.7734375,
+    "next_7_close": 65491.390625,
+    "next_30_close": 63821.47265625
+  },
+  "outputs": {
+    "close_change_pct": -2.31,
+    "intraday_range_pct": 7.57,
+    "low_to_close_pct": 4.13,
+    "next_1_pct": -2.79,
+    "next_7_pct": -8.27,
+    "next_30_pct": -10.61
+  },
+  "rounding": "Calculate with unrounded source values, then round display values to 2 decimals."
+}

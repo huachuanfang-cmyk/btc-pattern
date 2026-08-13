@@ -41,6 +41,11 @@
     .source,.formula{padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px}
     .source p,.formula p{margin:5px 0 0;color:var(--ink2);font-size:13px}
     .formula code{display:block;margin-top:9px;color:var(--accent);font-family:Consolas,"SFMono-Regular",monospace;font-size:12px;white-space:normal}
+    .example{margin-top:18px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .example-head{padding:16px 18px;background:var(--bg3)}.example-head p{margin:4px 0 0;color:var(--ink2);font-size:13px}
+    .example-row{display:grid;grid-template-columns:1.1fr 1.6fr .7fr;gap:14px;padding:11px 18px;border-top:1px solid var(--border);font-size:13px}
+    .example-row code{color:var(--ink2);white-space:normal}.example-row strong{color:var(--accent);text-align:right}
+    .example-links{padding:14px 18px;border-top:1px solid var(--border);font-size:12px;color:var(--ink2)}
     .rules{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:18px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
     .rule{padding:15px;background:var(--bg2)}.rule+.rule{border-left:1px solid var(--border)}
     .rule strong{display:block;margin-bottom:3px}.rule span{color:var(--ink2);font-size:12px}
@@ -52,6 +57,7 @@
       .asset-row .coin{grid-area:coin}.asset-row .range{grid-area:range;color:var(--ink2)}.asset-row .through{grid-area:through;color:var(--ink3);font-size:10px}.asset-row .count{grid-area:count;color:var(--ink3);font-size:10px;text-align:right}.asset-row .asset-state{grid-area:state;text-align:right}
       .asset-row .through::before{content:"截止 "}.asset-row .count::after{content:" 条日线"}
       .source-grid,.formula-grid,.rules{grid-template-columns:1fr}.rule+.rule{border-left:0;border-top:1px solid var(--border)}
+      .example-row{grid-template-columns:1fr auto}.example-row code{grid-column:1/-1;grid-row:2}.example-row strong{text-align:right}
     }
   </style>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"My BTC Box 数据来源与计算方法","url":"https://www.mybtcbox.com/methodology.html","description":"公开数据来源、更新状态、健康判断规则与指标公式。"}</script>
@@ -81,9 +87,24 @@
       <p>价格指标尽量使用统一日线来源，避免把不同交易所和不同时间边界的数据混在同一次计算中。</p>
       <div class="source-grid">
         <div class="source"><h3>历史OHLCV</h3><p>Yahoo Finance 的币种美元日线。开盘、最高、最低、收盘和成交量来自同一数据集。</p></div>
-        <div class="source"><h3>实时价格</h3><p>CoinGecko API，约60秒刷新。实时价格只用于页面快照，不替代完整日线计算。</p></div>
+        <div class="source"><h3>实时价格</h3><p>优先使用 CoinGecko，限流或异常时降级到 CoinLore；页面公开当前来源。实时值只用于快照，不替代完整日线计算。</p></div>
         <div class="source"><h3>BTC周期日期</h3><p>历史周期时间样本参考 Bitstamp BTC/USD UTC日线研究；当前周期价格仍使用Yahoo Finance。</p></div>
         <div class="source"><h3>成交量说明</h3><p>展示的是Yahoo Finance来源成交量，不代表全球全部交易所的总成交量。</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>一组可以独立复算的真实样本</h2>
+      <p>以下使用 BTC-USD 2024-03-14 UTC 日线。先用未四舍五入的公开 OHLCV 计算，最后保留两位小数；因此应与网站显示一致。</p>
+      <div class="example">
+        <div class="example-head"><h3>已知输入</h3><p>前收 73,083.50 · 最高 73,750.0703125 · 最低 68,563.0234375 · 收盘 71,396.59375</p></div>
+        <div class="example-row"><span>收盘涨跌幅</span><code>(71,396.59375 / 73,083.50 - 1) × 100%</code><strong>-2.31%</strong></div>
+        <div class="example-row"><span>日内振幅</span><code>(73,750.0703125 / 68,563.0234375 - 1) × 100%</code><strong>7.57%</strong></div>
+        <div class="example-row"><span>最低到收盘回升</span><code>(71,396.59375 / 68,563.0234375 - 1) × 100%</code><strong>4.13%</strong></div>
+        <div class="example-row"><span>未来 1 日结果</span><code>(69,403.7734375 / 71,396.59375 - 1) × 100%</code><strong>-2.79%</strong></div>
+        <div class="example-row"><span>未来 7 日结果</span><code>(65,491.390625 / 71,396.59375 - 1) × 100%</code><strong>-8.27%</strong></div>
+        <div class="example-row"><span>未来 30 日结果</span><code>(63,821.47265625 / 71,396.59375 - 1) × 100%</code><strong>-10.61%</strong></div>
+        <div class="example-links">复核文件：<a href="data/reproducible-example.json">精简输入与结果 JSON</a> · <a href="data/btc.daily.json">完整 BTC 日线 JSON</a>。仓库测试会逐项比对输入、日期偏移和输出，源数据修订时不会静默产生不一致。</div>
       </div>
     </section>
 
