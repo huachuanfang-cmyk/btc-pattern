@@ -4,7 +4,7 @@
 
 ## 正常更新链路
 
-1. GitHub Actions 每天 02:30 UTC 运行 `update-btc-data.js`。
+1. GitHub Actions 每天 02:30 UTC 运行 `update-btc-data.js`；更新脚本、日线 JSON、健康清单或工作流修复推送时也立即运行一次恢复验证。
 2. 脚本从 Yahoo Finance 获取五个交易对的 UTC 日线，只保留已完成日线。
 3. 更新过程检查日期重复、日期连续、OHLC 范围、成交量和数值有效性。
 4. `npm test` 检查数据、关键计算、页面回归和质量计分卡。

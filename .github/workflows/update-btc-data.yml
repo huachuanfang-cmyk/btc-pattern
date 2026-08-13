@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "30 2 * * *"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "update-btc-data.js"
+      - "data/*.daily.json"
+      - "data/health.json"
+      - ".github/workflows/update-btc-data.yml"
 
 permissions:
   contents: write
