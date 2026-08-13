@@ -478,6 +478,7 @@ assertEqual(html.includes('src="/assets/app.js"'), true, 'Homepage should load t
 assertEqual(html.includes('src="data/daily-summary.js"'), true, 'Homepage should load the lightweight five-asset daily summary');
 assertEqual(dailySummary.includes('CRYPTO_DAILY_SUMMARY'), true, 'Daily summary should expose its stable browser namespace');
 assertEqual(html.includes('html2canvas.min.js'), false, 'Homepage should not load the report renderer before a download request');
+assertEqual(html.includes('fonts.googleapis.com'), false, 'Homepage should use stable local system fonts without a render-blocking font request');
 assertEqual(appScript.includes('function loadReportRenderer()'), true, 'Application controller should lazy-load the report renderer');
 for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/backtest-core.js', '/assets/report-core.js', '/assets/app.js']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache ${asset}`);
