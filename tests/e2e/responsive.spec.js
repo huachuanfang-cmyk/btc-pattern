@@ -153,3 +153,39 @@ test('report renderer loads only when PNG download is requested', async ({ page 
   await expect.poll(() => rendererRequests).toBe(1);
   await expect(page.locator('#dl-btn')).toContainText('已下载');
 });
+
+test('report download produces a readable PNG artifact', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'One real long-PNG render avoids redundant parallel browser memory pressure');
+  await page.route('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', route => route.fulfill({
+    status:200,
+    contentType:'application/javascript',
+    path:require.resolve('html2canvas/dist/html2canvas.min.js'),
+  }));
+  await page.goto('/?kind=event&asset=btc&type=drop&threshold=8', { waitUntil:'domcontentloaded' });
+  await page.getByRole('button', { name:'查询历史规律 →' }).click();
+  await page.getByRole('button', { name:'生成报告卡片' }).click();
+  const downloadPromise=page.waitForEvent('download');
+  await page.locator('#dl-btn').click();
+  const download=await downloadPromise;
+  const stream=await download.createReadStream();
+  const chunks=[];
+  for await(const chunk of stream) chunks.push(chunk);
+  const png=Buffer.concat(chunks);
+  expect(png.subarray(1,4).toString()).toBe('PNG');
+  const width=png.readUInt32BE(16);
+  const height=png.readUInt32BE(20);
+  expect(width).toBeGreaterThanOrEqual(850);
+  expect(height).toBeGreaterThan(width);
+  expect(png.length).toBeGreaterThan(100_000);
+});
+
+test('daily share falls back with a clear clipboard failure message', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator,'share',{value:undefined,configurable:true});
+    Object.defineProperty(navigator,'clipboard',{value:{writeText:()=>Promise.reject(new Error('denied'))},configurable:true});
+  });
+  await page.goto('/', { waitUntil:'domcontentloaded' });
+  await page.getByRole('button',{name:'分享今日观察'}).click();
+  await expect(page.locator('#toast')).toContainText('复制失败，请使用浏览器分享菜单');
+  await expect(page.locator('#toast')).toHaveClass(/show/);
+});
