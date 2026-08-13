@@ -205,3 +205,22 @@ test('methodology example remains readable and exposes reproducible data', async
   const example=await response.json();
   expect(example.outputs.intraday_range_pct).toBe(7.57);
 });
+
+test('analytics stays off by default and requires explicit consent', async ({ page }) => {
+  let analyticsRequests=0;
+  await page.route('https://www.googletagmanager.com/**',route=>{
+    analyticsRequests++;
+    route.fulfill({status:200,contentType:'application/javascript',body:''});
+  });
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  expect(analyticsRequests).toBe(0);
+  await page.goto('/privacy.html',{waitUntil:'domcontentloaded'});
+  await expect(page.locator('#privacy-status')).toContainText('默认');
+  const box=await page.locator('.panel').boundingBox();
+  expect(box.x+box.width).toBeLessThanOrEqual(page.viewportSize().width);
+  await page.locator('#allow').click();
+  await expect(page.locator('#privacy-status')).toContainText('已开启');
+  await expect.poll(()=>analyticsRequests).toBe(1);
+  await page.locator('#deny').click();
+  await expect(page.locator('#privacy-status')).toContainText('已关闭');
+});

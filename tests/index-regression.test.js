@@ -441,6 +441,7 @@ assertEqual(robots.includes('Sitemap: https://www.mybtcbox.com/sitemap.xml'), tr
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/</loc>'), true, 'Sitemap should include the core tool homepage');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/methodology.html</loc>'), true, 'Sitemap should include the public methodology page');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/status.html</loc>'), true, 'Sitemap should include the public data status page');
+assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/privacy.html</loc>'), true, 'Sitemap should include privacy and analytics controls');
 assertEqual(sitemap.includes('<loc>https://www.mybtcbox.com/tools/</loc>'), true, 'Sitemap should include the public tool directory');
 assertEqual(statusHtml.includes('id="status-summary"'), true, 'Status page should expose an accessible live summary');
 assertEqual(statusHtml.includes('/data/health.json'), true, 'Status page should link the machine-readable health manifest');

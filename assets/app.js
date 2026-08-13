@@ -174,6 +174,7 @@ function dailyHabitContext(latestDate){
   const visit=updateDailyVisit(latestDate);
   const savedCount=Array.isArray(SAVED_QUERIES) ? SAVED_QUERIES.length : 0;
   const triggeredCount=savedCount ? SAVED_QUERIES.filter(savedQueryTriggered).length : 0;
+  if(window.BtcBoxPrivacy) window.BtcBoxPrivacy.recordVisit({latestDate,savedCount,installed:appInstalled});
   return {...visit,savedCount,triggeredCount};
 }
 function dailyObservationSharePayload(){

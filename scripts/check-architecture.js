@@ -8,6 +8,7 @@ const limits={
   'assets/core.js':16_000,
   'assets/backtest-core.js':14_000,
   'assets/report-core.js':10_000,
+  'assets/retention.js':6_000,
   'data/daily-summary.js':8_000,
 };
 
@@ -36,6 +37,8 @@ assert(!html.includes('html2canvas.min.js'), 'Report renderer must remain lazy-l
 assert(!app.includes('mybtcbox-proxy.huachuanfang.workers.dev'), 'Controller must not restore the retired arbitrary proxy');
 assert(app.includes("fetch(`/api/market?resource="), 'Controller must use the same-origin market contract');
 assert(app.includes('DAILY_SUMMARY'), 'Controller must use the lightweight daily summary for first-view signals');
+assert(!html.includes('googletagmanager.com'), 'Homepage must not load analytics before explicit consent');
+assert(html.includes('/assets/retention.js'), 'Homepage must use the isolated retention privacy module');
 
 console.table(Object.entries(limits).map(([file,limit])=>({file,bytes:fs.statSync(file).size,limit,usage:`${(fs.statSync(file).size/limit*100).toFixed(1)}%`})));
 console.log('Architecture budgets and public API contracts passed.');

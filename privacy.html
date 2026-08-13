@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>隐私与数据设置 | My BTC Box</title>
+  <meta name="description" content="查看并控制 My BTC Box 的本地存储和匿名访问统计。默认不启用分析。">
+  <link rel="canonical" href="https://www.mybtcbox.com/privacy.html">
+  <style>
+    :root{color-scheme:dark;--bg:#080b10;--card:#10151d;--line:#263041;--ink:#e2e8f0;--muted:#94a3b8;--accent:#f7931a;--green:#10b981}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 Arial,"Microsoft YaHei",sans-serif}header{height:64px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px}a{color:var(--accent)}main{max-width:760px;margin:auto;padding:54px 22px 80px}h1{font-size:clamp(30px,6vw,46px);line-height:1.15;margin:0 0 14px}h2{font-size:20px;margin:34px 0 10px}.lead,p,li{color:var(--muted)}.panel{margin:28px 0;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:10px}.status{font-weight:800;color:var(--green);margin-bottom:12px}.actions{display:flex;flex-wrap:wrap;gap:10px}button{min-height:44px;border:1px solid var(--line);border-radius:7px;padding:0 16px;background:#171e29;color:var(--ink);font-weight:800;cursor:pointer}button.primary{background:var(--accent);color:#090b0f;border-color:var(--accent)}code{color:var(--ink)}footer{text-align:center;padding:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+  </style>
+  <script src="/assets/retention.js"></script>
+</head>
+<body><header><strong>MY BTC BOX</strong><a href="/">返回工具首页</a></header><main>
+  <h1>隐私与数据设置</h1><p class="lead">分析统计默认关闭。核心查询、报告和每日观察无需开启分析，也无需注册账户。</p>
+  <div class="panel"><div class="status" id="privacy-status">正在读取设置</div><div class="actions"><button class="primary" id="allow">开启匿名统计</button><button id="deny">保持关闭 / 撤销</button></div></div>
+  <h2>本设备保存什么</h2><p>保存的查询条件、界面语言、连续观察天数、行情短时缓存和分析选择保存在浏览器 <code>localStorage</code>。这些查询明细不会上传到 My BTC Box 服务器。</p>
+  <h2>主动开启后上报什么</h2><p>仅在第 0、1、7、30 天首次回访时发送匿名里程碑、是否以独立应用运行、保存条件数量区间（0、1-2、3-5）和数据是否为当日完整日线。不会发送钱包地址、查询阈值、币种偏好、报告内容或精确访问历史。</p>
+  <h2>第三方与撤销</h2><p>匿名统计使用 Google Analytics。只有点击“开启匿名统计”后才加载其脚本。随时点击“保持关闭 / 撤销”可阻止后续统计；关闭不会影响任何工具功能。</p>
+</main><footer>© 2026 My BTC Box · 历史数据参考，不预测涨跌</footer>
+<script>
+  const status=document.getElementById('privacy-status');
+  function render(){status.textContent=BtcBoxPrivacy.consent()==='granted'?'匿名统计已开启，可随时撤销':'匿名统计已关闭（默认）';}
+  document.getElementById('allow').onclick=()=>{BtcBoxPrivacy.setConsent('granted');render();};
+  document.getElementById('deny').onclick=()=>{BtcBoxPrivacy.setConsent('denied');render();};
+  render();
+</script></body></html>
