@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-11",
+  "updated": "2026-08-13",
   "target": 9.5,
   "standard": "docs/quality-standard-95.md",
   "scoring": "Each dimension has 20 evidence-backed checks worth 0.5 points each.",
@@ -13,7 +13,7 @@
     {"id":"correctness","name":"数据正确性","baseline":8,"current":9,"evidence":["tests/update-data.test.js","tests/core.test.js","tests/backtest-core.test.js","tests/index-regression.test.js","docs/evidence/correctness-2026-08-11.md","docs/evidence/backtest-core-2026-08-11.md"],"nextMilestone":"增加上游数据交叉抽查和不可变黄金样本"},
     {"id":"retention","name":"用户粘性","baseline":5,"current":8,"evidence":["index.html","assets/app.js","assets/app.css","manifest.webmanifest","sw.js","tests/index-regression.test.js","tests/e2e/responsive.spec.js","docs/evidence/retention-2026-08-11.md"],"nextMilestone":"完成隐私友好的次日、7日和30日回访衡量，并验证主动订阅的开启、撤销和失败降级"},
     {"id":"seo","name":"SEO获客","baseline":5,"current":8.5,"evidence":["index.html","tools/index.html","assets/tools.css","methodology.html","robots.txt","sitemap.xml","functions/tools/[slug].js","tests/index-regression.test.js","tests/e2e/responsive.spec.js","docs/evidence/seo-2026-08-11.md"],"nextMilestone":"完成搜索平台收录、Core Web Vitals、结构化数据监控和30天自然搜索证据"},
-    {"id":"data-operations","name":"数据运维","baseline":6,"current":8,"evidence":[".github/workflows/update-btc-data.yml",".github/workflows/monitor-data-health.yml","scripts/check-data-health.js","tests/data-health.test.js","data/health.json","status.html","docs/data-recovery-runbook.md","docs/evidence/data-operations-2026-08-11.md"],"nextMilestone":"完成一次真实告警闭环、30分钟恢复演练和30天可用率记录"},
+    {"id":"data-operations","name":"数据运维","baseline":6,"current":8.5,"evidence":[".github/workflows/update-btc-data.yml",".github/workflows/monitor-data-health.yml","scripts/check-data-health.js","tests/data-health.test.js","tests/market-proxy.test.js","tests/e2e/responsive.spec.js","functions/api/market.js","data/health.json","status.html","docs/data-recovery-runbook.md","docs/evidence/data-operations-2026-08-11.md"],"nextMilestone":"完成真实GitHub告警Issue开关闭环和30天可用率记录"},
     {"id":"extensibility","name":"代码扩展性","baseline":5,"current":9,"evidence":["index.html","assets/app.css","assets/core.js","assets/backtest-core.js","assets/report-core.js","assets/app.js","tests/core.test.js","tests/backtest-core.test.js","tests/report-core.test.js","tests/index-regression.test.js","docs/evidence/extensibility-2026-08-11.md","docs/evidence/backtest-core-2026-08-11.md","docs/evidence/report-core-2026-08-11.md"],"nextMilestone":"建立模块体积、接口和复杂度门禁"}
   ]
 }
