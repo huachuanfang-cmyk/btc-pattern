@@ -93,6 +93,7 @@ function createContext(startDate = '2017-01-01', pageWindow = {}) {
       setItem(key, value) { storage.set(key, String(value)); },
       removeItem(key) { storage.delete(key); },
     },
+    URL,
     URLSearchParams,
     Date,
     Math,
@@ -103,26 +104,30 @@ function createContext(startDate = '2017-01-01', pageWindow = {}) {
     parseInt,
     parseFloat,
     setTimeout() {},
+    clearTimeout() {},
     setInterval() {},
     requestAnimationFrame(cb) { cb(); },
     fetch: async (url = '') => {
       const href = String(url);
-      if (href.includes('simple/price')) {
-        return { ok: true, json: async () => ({
+      const resource = href.includes('/api/market') ? new URL(href, 'https://www.mybtcbox.com').searchParams.get('resource') : '';
+      const response = body => ({ ok: true, headers:{ get(){ return 'MISS'; } }, json: async () => body });
+      if (resource === 'prices') {
+        return response({
           bitcoin: { usd: 100000, usd_24h_change: 2.5 },
           ethereum: { usd: 3500, usd_24h_change: -1.2 },
           solana: { usd: 180, usd_24h_change: 4.2 },
           dogecoin: { usd: 0.11, usd_24h_change: -3.4 },
           binancecoin: { usd: 650, usd_24h_change: 0.6 },
-        }) };
+        });
       }
-      if (href.includes('funding-rate')) {
-        return { ok: true, json: async () => ({ code: '0', data: [{ fundingRate: '0.00002166' }] }) };
+      if (resource === 'funding') {
+        return response({ code: '0', data: [{ fundingRate: '0.00002166' }] });
       }
-      if (href.includes('long-short-account-ratio')) {
-        return { ok: true, json: async () => ({ code: '0', data: [['1778985300000', '1.43']] }) };
+      if (resource === 'long-short') {
+        return response({ code: '0', data: [['1778985300000', '1.43']] });
       }
-      return { ok: true, json: async () => ({ market_data: { current_price: { usd: 100000 }, price_change_percentage_24h: 0 } }) };
+      if (resource === 'dominance') return response({ data:{ market_cap_percentage:{ btc:55.2 } } });
+      return response({ market_data: { current_price: { usd: 100000 }, price_change_percentage_24h: 0 } });
     },
     html2canvas: () => Promise.resolve({ toDataURL() { return ''; } }),
   };
@@ -180,6 +185,10 @@ COIN_DATA.BTC = {...BTC_DATA, daily:[...BTC_DATA.daily.slice(0,-1), {...btcLast,
 renderDailySignals();
 const dailySignalHtml = document.getElementById('daily-signal-list').innerHTML;
 const dailySignalCount = document.getElementById('daily-scan-count').textContent;
+const expectedDailySignalCount = COIN_ORDER.filter(code => {
+  const signal=latestSignalForData(COIN_DATA[code]);
+  return signal && signal.kind!=='none';
+}).length;
 COIN_DATA.BTC = BTC_DATA;
 activeCoin = 'BTC';
 qtype = 'drop';
@@ -191,6 +200,9 @@ renderCycleRuler();
 const cycleRulerHtml = document.getElementById('cycle-ruler').innerHTML;
 const cycleClock = btcCycleContext();
 const cycleStage = btcCycleStageComparisons(cycleClock.daysSincePeak);
+const firstStagePeak = BTC_DATA.daily.find(row => row.date==='2021-11-10');
+const firstStageTarget = BTC_DATA.daily.find(row => row.date===utcAddDays('2021-11-10',cycleClock.daysSincePeak));
+const firstStageExpectedDrawdown = firstStagePeak && firstStageTarget ? (firstStageTarget.close/(firstStagePeak.high||firstStagePeak.close)-1)*100 : null;
 renderDailyObservation();
 const dailyBriefHtml = document.getElementById('daily-brief').innerHTML;
 const dailyBriefContext = dailyObservationContext();
@@ -220,6 +232,7 @@ run();
   syntheticWickKind: syntheticWickSignal.kind,
   dailySignalHtml,
   dailySignalCount,
+  expectedDailySignalCount,
   savedQueryHtml,
   savedQueryStorage,
   cycleRulerHtml,
@@ -234,6 +247,7 @@ run();
   cycleDaysSincePeak: cycleClock.daysSincePeak,
   cycleExpectedDays: utcDayDiff(cycleClock.peak.date, cycleClock.latest.date),
   cycleStage,
+  firstStageExpectedDrawdown,
   tickerSymbol: document.getElementById('ticker-symbol').textContent,
   tickerPrice: document.getElementById('tp').textContent,
   heroTitle: document.getElementById('hero-title').innerHTML,
@@ -253,7 +267,7 @@ assertEqual(/^\d{4}-\d{2}-\d{2}$/.test(result.latestSignalDate), true, 'Latest s
 assertEqual(result.syntheticRangeKind, 'range', 'Latest signal should detect a completed daily range event');
 assertEqual(result.syntheticWickKind, 'wick', 'Latest signal should detect a completed daily wick event');
 assertEqual(result.dailySignalHtml.includes("openDailySignal('BTC','drop',8)"), true, 'Triggered daily signal should open the matching historical query');
-assertEqual(result.dailySignalCount.includes('1/5'), true, 'Daily scan should disclose how many assets triggered');
+assertEqual(result.dailySignalCount.includes(`${result.expectedDailySignalCount}/5`), true, 'Daily scan should disclose the independently counted triggered assets');
 assertEqual(result.savedQueryHtml.includes('BTC 收盘跌幅至少 8%'), true, 'Saved query should render a readable local shortcut');
 assertEqual(result.savedQueryStorage.includes('"coin":"BTC"'), true, 'Saved query should persist on the current device');
 assertEqual(result.cycleRulerHtml.includes('BTC 历史周期刻度尺'), true, 'Homepage should render the BTC historical cycle ruler');
@@ -262,7 +276,9 @@ assertEqual(result.cycleRulerHtml.includes('363 / 376 / 411d'), true, 'Cycle rul
 assertEqual(result.cycleRulerHtml.includes('不是见底日期或逃顶日期预测'), true, 'Cycle ruler should explicitly reject date forecasting');
 assertEqual(result.cyclePeakDate, '2025-10-06', 'Cycle ruler should derive the latest BTC sample high from daily data');
 assertEqual(result.cycleDaysSincePeak, result.cycleExpectedDays, 'Cycle clock should use completed UTC daily candles');
-assertEqual(result.cycleRulerHtml.includes('距历史最早触底样本还有 56 天'), true, 'Cycle ruler should explain the distance to the earliest historical sample');
+const earliestHistoricalBottomDays = 363;
+const remainingToEarliest = earliestHistoricalBottomDays - result.cycleDaysSincePeak;
+assertEqual(result.cycleRulerHtml.includes(remainingToEarliest > 0 ? `距历史最早触底样本还有 ${remainingToEarliest} 天` : `已超过历史最早触底样本 ${Math.abs(remainingToEarliest)} 天`), true, 'Cycle ruler should explain the live distance to the earliest historical sample');
 assertEqual(result.dailyBriefHtml.includes('今日观察'), true, 'Homepage should render the daily observation summary');
 assertEqual(result.dailyBriefHtml.includes('回撤较前一日'), true, 'Daily observation should compare drawdown with the prior completed candle');
 assertEqual(result.dailyBriefHtml.includes(`周期计时推进至第${result.cycleDaysSincePeak}天`), true, 'Daily observation should advance with the completed cycle clock');
@@ -281,7 +297,7 @@ assertEqual(result.dailySharePayload.url.includes('view=daily'), true, 'Daily ob
 assertEqual(result.dailySharePayload.url.includes(result.latestSignalDate), true, 'Daily observation share URL should preserve the data date');
 assertEqual(result.dailySharePayload.text.includes('不预测涨跌'), true, 'Daily observation share copy should retain the forecasting boundary');
 assertEqual(result.cycleStage.length, 2, 'Same-stage comparison should include two verifiable prior cycles');
-assertEqual(Number(result.cycleStage[0].drawdown.toFixed(1)), -70.5, 'Previous cycle day-aligned drawdown should match source daily data');
+assertEqual(Number(result.cycleStage[0].drawdown.toFixed(8)), Number(result.firstStageExpectedDrawdown.toFixed(8)), 'Previous cycle day-aligned drawdown should match an independent source-row calculation');
 assertEqual(result.tickerSymbol, 'DOGE', 'Top ticker should follow selected asset');
 assertEqual(result.tickerPrice, '$0.1100', 'Top ticker should use shared live price data for selected asset');
 assertEqual(result.heroTitle.includes('狗狗币'), true, 'Hero title should follow the selected asset');
@@ -367,11 +383,13 @@ const reportYears = reportYearly(reportRows());
 const reportMonths = reportSeasonality(reportRows());
 const reportExt = reportExtremes(reportRows());
 const bestMonth = rmaxBy(reportMonths, m => m.avg ?? -999);
+const currentCycleDays = btcCycleContext().daysSincePeak;
+const currentStageRows = btcCycleStageComparisons(currentCycleDays);
 ({
   hasCycleTable: reportHtml.includes('价格周期摘要（口径见说明）') && reportHtml.includes('C4 ▶') && reportHtml.includes('恢复天数'),
   hasMethodLabels: reportHtml.includes('样本期最低价') && reportHtml.includes('2026 YTD') && reportHtml.includes('有效样本 427'),
   hasCycleTimingDisclosure: reportHtml.includes('BTC 历史周期刻度尺') && reportHtml.includes('363-411d') && reportHtml.includes('不是见底日期或逃顶日期预测'),
-  hasStageComparison: reportHtml.includes('第 307 天同阶段回撤') && reportHtml.includes('2021-2022') && reportHtml.includes('-70.5%') && reportHtml.includes('不提前展示未来结果'),
+  hasStageComparison: reportHtml.includes('第 '+currentCycleDays+' 天同阶段回撤') && currentStageRows.every(row => reportHtml.includes(row.label) && reportHtml.includes(row.drawdown.toFixed(1)+'%')) && reportHtml.includes('不提前展示未来结果'),
   omitsTautologicalRecovery: !reportHtml.includes('96.3%') && reportHtml.includes('回升至少 1%'),
   drop3Count: BTC_DATA.pre.drop['3'].count,
   drop3NextDayShare: BTC_DATA.pre.drop['3'].up1_pct,
@@ -382,6 +400,7 @@ const bestMonth = rmaxBy(reportMonths, m => m.avg ?? -999);
   bestMonth: bestMonth.month,
   bestMonthReturn: Number(bestMonth.avg.toFixed(1)),
   totalReturn: Number(reportExt.totalReturn.toFixed(1)),
+  expectedTotalReturn: Number(((BTC_DATA.daily[BTC_DATA.daily.length-1].close/BTC_DATA.daily[0].close-1)*100).toFixed(1)),
   logosHaveLabels: Object.values(COIN_LOGOS).every(svg => svg.includes('aria-label') && svg.includes('viewBox="0 0 32 32"')),
 });
 `, context);
@@ -399,7 +418,7 @@ assertEqual(reportUi.annual2024, 121.1, '2024 return should use the prior year-e
 assertEqual(reportUi.annual2026Label, '2026 YTD', 'Latest partial year should be labeled YTD');
 assertEqual(reportUi.bestMonth, 10, 'Best calendar month should use compounded monthly returns');
 assertEqual(reportUi.bestMonthReturn, 18.2, 'Best calendar month should report average monthly return');
-assertEqual(reportUi.totalReturn, 6395.4, 'Total return should start at the first available close');
+assertEqual(reportUi.totalReturn, reportUi.expectedTotalReturn, 'Total return should start at the first available close and end at the latest completed close');
 assertEqual(reportUi.logosHaveLabels, true, 'Coin snapshot logos should use labeled 32x32 SVGs');
 assertEqual(html.includes('id="st-health"'), true, 'Homepage should expose the current dataset health');
 assertEqual(html.includes('href="methodology.html"'), true, 'Homepage should link to the data methodology page');

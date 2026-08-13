@@ -25,19 +25,19 @@ async function stubExternalData(page) {
     contentType: 'application/json',
     body: JSON.stringify({ data: [{ value: '50', value_classification: 'Neutral' }] }),
   }));
-  await page.route('https://mybtcbox-proxy.huachuanfang.workers.dev/**', route => {
-    const target = decodeURIComponent(new URL(route.request().url()).searchParams.get('url') || '');
+  await page.route('**/api/market?resource=*', route => {
+    const target = new URL(route.request().url()).searchParams.get('resource') || '';
     let body = {};
-    if (target.includes('/simple/price')) body = {
+    if (target === 'prices') body = {
       bitcoin: { usd: 64845, usd_24h_change: -0.09 },
       ethereum: { usd: 3500, usd_24h_change: -0.36 },
       solana: { usd: 76.21, usd_24h_change: 0.32 },
       dogecoin: { usd: 0.11, usd_24h_change: -1.61 },
       binancecoin: { usd: 650, usd_24h_change: 0.22 },
     };
-    else if (target.includes('/global')) body = { data: { market_cap_percentage: { btc: 55.2 } } };
-    else if (target.includes('funding-rate')) body = { code: '0', data: [{ fundingRate: '0.00001' }] };
-    else if (target.includes('long-short-account-ratio')) body = { code: '0', data: [['0', '1.1']] };
+    else if (target === 'dominance') body = { data: { market_cap_percentage: { btc: 55.2 } } };
+    else if (target === 'funding') body = { code: '0', data: [{ fundingRate: '0.00001' }] };
+    else if (target === 'long-short') body = { code: '0', data: [['0', '1.1']] };
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
   });
 }
@@ -65,6 +65,25 @@ test('daily observation and historical query remain usable', async ({ page }) =>
   await expect(page.locator('.daily-saved-item')).toContainText('BTC 跌 8%');
   expect((await page.locator('.daily-saved-item').boundingBox()).height).toBeGreaterThanOrEqual(44);
   expect(errors).toEqual([]);
+});
+
+test('live market failure falls back to completed daily data', async ({ page }) => {
+  await page.route('**/api/market?resource=prices', route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"unavailable"}' }));
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#live-price-status')).toContainText('已回退完整日线');
+  await expect(page.locator('#tp')).not.toHaveText('-');
+  await expect(page.locator('#daily-brief')).toContainText('今日观察');
+  await expectNoHorizontalOverflow(page);
+});
+
+test('recent successful market data survives a temporary outage', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#live-price-status')).toContainText('本站缓存实时行情');
+  const livePrice = await page.locator('#tp').textContent();
+  await page.route('**/api/market?resource=prices', route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"unavailable"}' }));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#live-price-status')).toContainText('最近成功行情');
+  await expect(page.locator('#tp')).toHaveText(livePrice);
 });
 
 test('conditional backtest and tiered mode remain usable', async ({ page }) => {

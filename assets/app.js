@@ -54,7 +54,8 @@ const PAGE_PRESET = window.MYBTCBOX_PRESET || {};
 const savedCoin = localStorage.getItem('btcPatternCoin');
 const urlCoin = (PAGE_PARAMS.get('asset') || PAGE_PRESET.asset || '').toUpperCase();
 const requestedCoin = COIN_ORDER.includes(urlCoin) ? urlCoin : COIN_ORDER.includes(savedCoin) ? savedCoin : 'BTC';
-const PX = 'https://mybtcbox-proxy.huachuanfang.workers.dev/api?url=';
+const MARKET_SNAPSHOT_KEY='mybtcboxMarketSnapshotV1';
+const MARKET_SNAPSHOT_MAX_AGE=15*60*1000;
 let activeCoin = 'BTC';
 let BTC_DAILY_RAW = RAW_COINS[activeCoin];
 function fmtPrice(value){
@@ -691,6 +692,17 @@ function renderTopTicker(){
       ? now.toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'})+' 北京时间'
       : now.toUTCString().slice(17,25)+' UTC';
   }
+  renderLiveDataStatus();
+}
+function renderLiveDataStatus(){
+  const el=document.getElementById('live-price-status');
+  if(!el) return;
+  const state=MARKET_LIVE_STATE.prices;
+  const zh=lang==='zh';
+  if(state==='live') el.textContent=zh?'本站缓存实时行情 · 约60秒':'Site-cached live market · about 60s';
+  else if(state==='cached') el.textContent=zh?'最近成功行情 · 最长15分钟':'Last successful market data · up to 15m';
+  else if(state==='daily') el.textContent=zh?'实时源暂不可用 · 已回退完整日线':'Live source unavailable · completed daily fallback';
+  else el.textContent=zh?'实时行情读取中':'Loading live market data';
 }
 function renderMarketDashboard(){
   renderTopTicker();
@@ -699,8 +711,7 @@ function renderMarketDashboard(){
 async function updateMarketDashboard(){
   const seq = ++liveRefreshSeq;
   try{
-    const ids = COIN_ORDER.map(c => COINGECKO_IDS[c]).join(',');
-    const d = await fetchProxyJson(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+    const d = await fetchMarketJson('prices');
     if(seq !== liveRefreshSeq) return;
     COIN_ORDER.forEach(code => {
       const item = d[COINGECKO_IDS[code]];
@@ -710,9 +721,12 @@ async function updateMarketDashboard(){
     });
     MARKET_LIVE_STATE.prices = 'live';
     MARKET_LIVE_STATE.lastUpdated = new Date().toISOString();
+    saveMarketSnapshot();
     renderTopTicker();
   }catch(e){
-    MARKET_LIVE_STATE.prices = 'unavailable';
+    const restored=restoreMarketSnapshot();
+    MARKET_LIVE_STATE.prices = restored ? 'cached' : 'daily';
+    renderTopTicker();
   }
   try{ await ensureAllCoinData(); }catch(e){}
   if(seq !== liveRefreshSeq) return;
@@ -2075,10 +2089,25 @@ function tickH(){
 }
 setInterval(tickH,1000); tickH();
 
-async function fetchProxyJson(url){
-  const res = await fetch(PX + encodeURIComponent(url));
-  if(!res.ok) throw new Error('proxy ' + res.status);
-  return res.json();
+function saveMarketSnapshot(){
+  try{ localStorage.setItem(MARKET_SNAPSHOT_KEY,JSON.stringify({savedAt:Date.now(),prices:MARKET_PRICES})); }catch(e){}
+}
+function restoreMarketSnapshot(){
+  try{
+    const snapshot=JSON.parse(localStorage.getItem(MARKET_SNAPSHOT_KEY) || 'null');
+    if(!snapshot?.savedAt || Date.now()-snapshot.savedAt>MARKET_SNAPSHOT_MAX_AGE || !snapshot.prices) return false;
+    MARKET_PRICES={...MARKET_PRICES,...snapshot.prices};
+    return true;
+  }catch(e){ return false; }
+}
+async function fetchMarketJson(resource){
+  const controller=typeof AbortController==='function' ? new AbortController() : null;
+  const timeout=setTimeout(() => controller?.abort(),7000);
+  try{
+    const res=await fetch(`/api/market?resource=${encodeURIComponent(resource)}`,controller?{signal:controller.signal}:undefined);
+    if(!res.ok) throw new Error('market ' + res.status);
+    return res.json();
+  }finally{ clearTimeout(timeout); }
 }
 function fundingColor(rate){
   return rate > 0.05 ? '#ef4444' : rate > 0.015 ? '#f97316' : rate < -0.01 ? '#60a5fa' : '#10b981';
@@ -2099,7 +2128,7 @@ function setMetricUnavailable(id, title){
 async function updateMarketSentiment(){
   const out = { fundingRate:null, lsRatio:null };
   try{
-    const fd = await fetchProxyJson('https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USDT-SWAP');
+    const fd = await fetchMarketJson('funding');
     const rate = parseFloat(fd?.data?.[0]?.fundingRate) * 100;
     const el = document.getElementById('tfr');
     if(el && Number.isFinite(rate)){
@@ -2117,7 +2146,7 @@ async function updateMarketSentiment(){
   }
 
   try{
-    const ld = await fetchProxyJson('https://www.okx.com/api/v5/rubik/stat/contracts/long-short-account-ratio?ccy=BTC');
+    const ld = await fetchMarketJson('long-short');
     const ratio = parseFloat(ld?.data?.[0]?.[1]);
     const el = document.getElementById('tls');
     if(el && Number.isFinite(ratio)){
@@ -2146,9 +2175,9 @@ async function updateMarketSentiment(){
       el.title = lang==='zh'?'恐惧贪婪指数: '+label:'Fear & Greed: '+label;
     }else{ setMetricUnavailable('tfg', '-'); }
   }catch(e){ setMetricUnavailable('tfg', '-'); }
-  // BTC Dominance uses the same proxy as prices to avoid browser CORS variance.
+  // BTC dominance uses the same-origin cached market endpoint.
   try{
-    const domD = await fetchProxyJson('https://api.coingecko.com/api/v3/global');
+    const domD = await fetchMarketJson('dominance');
     const el = document.getElementById('tdom');
     const btcDom = domD?.data?.market_cap_percentage?.btc;
     if(el && Number.isFinite(btcDom)){
