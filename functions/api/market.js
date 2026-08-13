@@ -58,9 +58,9 @@ async function fetchJson(url, timeoutMs = 6000) {
       error.status = response.status;
       throw error;
     }
-    const contentType = response.headers.get('Content-Type') || '';
-    if (!contentType.includes('json')) throw new Error('Unexpected upstream response');
-    return await response.json();
+    const text = await response.text();
+    try { return JSON.parse(text); }
+    catch { throw new Error('Invalid upstream JSON'); }
   } finally {
     clearTimeout(timeout);
   }
