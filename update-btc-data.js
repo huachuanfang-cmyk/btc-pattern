@@ -213,6 +213,26 @@ function buildHealthManifest(datasets, generatedAt = new Date().toISOString()) {
   };
 }
 
+function buildDailySummary(datasets, generatedAt = new Date().toISOString()) {
+  const count = (rows, predicate) => rows.reduce((total, row) => total + (predicate(row) ? 1 : 0), 0);
+  const coins = {};
+  for (const dataset of datasets) {
+    const rows = dataset.daily;
+    const latest = rows[rows.length - 1];
+    const thresholds = [3, 5, 8];
+    const stats = type => Object.fromEntries(thresholds.map(threshold => [String(threshold), {
+      count: count(rows, row => type === 'drop' ? row.pct <= -threshold : type === 'rise' ? row.pct >= threshold : pct(row.high, row.low) >= threshold),
+    }]));
+    coins[dataset.coin] = {
+      data_through: dataset.data_through,
+      daily: [{ date:latest.date, close:latest.close, high:latest.high, low:latest.low, pct:latest.pct, range_pct:pct(latest.high,latest.low), low_to_close:latest.low_to_close }],
+      pre: { drop:stats('drop'), rise:stats('rise'), range:stats('range') },
+      wick: { pre:Object.fromEntries([5,8].map(threshold => [String(threshold), { count:count(rows,row => row.low_to_close >= threshold) }])) },
+    };
+  }
+  return { generated_at:generatedAt, coins };
+}
+
 async function buildCoinDataset(config) {
   const rawRows = await fetchYahooDaily(config.symbol);
   if (!rawRows.length) throw new Error(`${config.symbol}: no rows returned from Yahoo Finance.`);
@@ -270,6 +290,9 @@ async function main() {
   const health = buildHealthManifest(datasets);
   fs.writeFileSync(path.join(OUT_DIR, 'health.json'), JSON.stringify(health));
   fs.writeFileSync(path.join(OUT_DIR, 'health.js'), `window.CRYPTO_DATA_HEALTH=${JSON.stringify(health)};\n`);
+  const summary = buildDailySummary(datasets, health.generated_at);
+  fs.writeFileSync(path.join(OUT_DIR, 'daily-summary.json'), JSON.stringify(summary));
+  fs.writeFileSync(path.join(OUT_DIR, 'daily-summary.js'), `window.CRYPTO_DAILY_SUMMARY=${JSON.stringify(summary)};\n`);
 }
 
 if (require.main === module) {
@@ -283,6 +306,7 @@ module.exports = {
   START_DATE,
   addDerivedFields,
   buildHealthManifest,
+  buildDailySummary,
   keepCompletedUtcDays,
   utcDay,
   utcDayDiff,

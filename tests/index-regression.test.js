@@ -11,6 +11,7 @@ const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const serviceWorker = fs.readFileSync('sw.js', 'utf8');
 const statusHtml = fs.readFileSync('status.html', 'utf8');
 const statusScript = fs.readFileSync('assets/status.js', 'utf8');
+const dailySummary = fs.readFileSync('data/daily-summary.js', 'utf8');
 const toolsHtml = fs.readFileSync('tools/index.html', 'utf8');
 const toolsStyles = fs.readFileSync('assets/tools.css', 'utf8');
 const coreScript = fs.readFileSync('assets/core.js', 'utf8');
@@ -474,12 +475,17 @@ assertEqual(html.includes('src="/assets/core.js"'), true, 'Homepage should load 
 assertEqual(html.includes('src="/assets/backtest-core.js"'), true, 'Homepage should load the independently testable backtest core');
 assertEqual(html.includes('src="/assets/report-core.js"'), true, 'Homepage should load the independently testable report core');
 assertEqual(html.includes('src="/assets/app.js"'), true, 'Homepage should load the extracted application controller');
+assertEqual(html.includes('src="data/daily-summary.js"'), true, 'Homepage should load the lightweight five-asset daily summary');
+assertEqual(dailySummary.includes('CRYPTO_DAILY_SUMMARY'), true, 'Daily summary should expose its stable browser namespace');
+assertEqual(html.includes('html2canvas.min.js'), false, 'Homepage should not load the report renderer before a download request');
+assertEqual(appScript.includes('function loadReportRenderer()'), true, 'Application controller should lazy-load the report renderer');
 for (const asset of ['/assets/app.css', '/assets/core.js', '/assets/backtest-core.js', '/assets/report-core.js', '/assets/app.js']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache ${asset}`);
 }
 for (const asset of ['/status.html', '/assets/status.css', '/assets/status.js', '/data/health.js']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache status resource ${asset}`);
 }
+assertEqual(serviceWorker.includes("'/data/daily-summary.js'"), true, 'Offline shell should cache the lightweight daily summary');
 for (const asset of ['/tools/', '/assets/tools.css']) {
   assertEqual(serviceWorker.includes(`'${asset}'`), true, `Offline shell should cache tool directory resource ${asset}`);
 }

@@ -8,6 +8,7 @@
     "health:online": "node scripts/check-data-health.js --url https://www.mybtcbox.com/data/health.json",
     "quality:score": "node scripts/check-quality-scorecard.js",
     "test:e2e": "playwright test",
+    "test:performance": "node scripts/check-performance.js",
     "update:crypto": "node update-btc-data.js",
     "update:btc": "node update-btc-data.js"
   },

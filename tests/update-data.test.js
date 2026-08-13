@@ -2,6 +2,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const {
   addDerivedFields,
+  buildDailySummary,
   buildHealthManifest,
   keepCompletedUtcDays,
   utcDay,
@@ -60,12 +61,22 @@ assertEqual(health.assets[0].lag_days, 1, 'Health manifest should expose source 
 assertEqual(health.assets[0].status, 'healthy', 'One-day source lag should be healthy');
 assertEqual(health.status, 'healthy', 'Manifest should aggregate healthy asset states');
 
+const summary = buildDailySummary([{
+  coin:'BTC', data_through:'2026-08-09', daily:derivedRows,
+}], now.toISOString());
+assertEqual(summary.coins.BTC.daily.length, 1, 'Daily summary should publish only the latest completed candle');
+assertEqual(summary.coins.BTC.daily[0].date, '2026-08-09', 'Daily summary date should match the full dataset');
+assertEqual(summary.coins.BTC.pre.rise['3'].count, 0, 'Daily summary event counts should be derived from full history');
+
 const publishedHealth = JSON.parse(fs.readFileSync('data/health.json', 'utf8'));
+const publishedSummary = JSON.parse(fs.readFileSync('data/daily-summary.json', 'utf8'));
 assertEqual(publishedHealth.assets.length, 5, 'Published health manifest should include all five assets');
+assertEqual(Object.keys(publishedSummary.coins).length, 5, 'Published daily summary should include all five assets');
 for (const asset of publishedHealth.assets) {
   const dataset = JSON.parse(fs.readFileSync(`data/${asset.coin.toLowerCase()}.daily.json`, 'utf8'));
   assertEqual(asset.data_through, dataset.data_through, `${asset.coin} health date should match its dataset`);
   assertEqual(asset.rows, dataset.daily.length, `${asset.coin} health row count should match its dataset`);
+  assertEqual(publishedSummary.coins[asset.coin].daily[0].date, dataset.data_through, `${asset.coin} summary should match its full dataset date`);
   if (asset.sha256) {
     const expectedHash = crypto.createHash('sha256').update(JSON.stringify(dataset.daily)).digest('hex');
     assertEqual(asset.sha256, expectedHash, `${asset.coin} health checksum should match its published daily rows`);

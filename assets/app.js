@@ -1,4 +1,5 @@
 const RAW_COINS = window.CRYPTO_DAILY_DATA?.coins || {};
+const DAILY_SUMMARY = window.CRYPTO_DAILY_SUMMARY?.coins || {};
 const {
   btcCycleContext: coreBtcCycleContext,
   buildMarketData: buildBtcData,
@@ -151,7 +152,7 @@ function updateDailyVisit(latestDate){
   return state;
 }
 function savedQueryTriggered(item){
-  const rows=COIN_DATA[item?.coin]?.daily || [];
+  const rows=(COIN_DATA[item?.coin] || DAILY_SUMMARY[item?.coin])?.daily || [];
   const latest=rows[rows.length-1];
   return queryMatchesLatest(latest,item);
 }
@@ -576,7 +577,7 @@ function renderDailySignals(){
   const host=document.getElementById('daily-signal-list');
   const countEl=document.getElementById('daily-scan-count');
   if(!host || !countEl) return;
-  const rows=COIN_ORDER.map(code => ({code, signal:latestSignalForData(COIN_DATA[code])}));
+  const rows=COIN_ORDER.map(code => ({code, signal:latestSignalForData(COIN_DATA[code] || DAILY_SUMMARY[code])}));
   const triggered=rows.filter(row => row.signal && row.signal.kind!=='none').length;
   countEl.textContent=lang==='zh' ? `${triggered}/5 个币种触发` : `${triggered}/5 assets triggered`;
   host.innerHTML=rows.map(({code,signal}) => {
@@ -728,7 +729,6 @@ async function updateMarketDashboard(){
     MARKET_LIVE_STATE.prices = restored ? 'cached' : 'daily';
     renderTopTicker();
   }
-  try{ await ensureAllCoinData(); }catch(e){}
   if(seq !== liveRefreshSeq) return;
   renderMarketDashboard();
 }
@@ -2007,7 +2007,22 @@ function fallbackCopy(text){
   toast(lang==='zh'?'链接已复制':'Link copied');
 }
 
-function dlRpt(){
+let html2canvasPromise=null;
+function loadReportRenderer(){
+  if(typeof window.html2canvas==='function') return Promise.resolve(window.html2canvas);
+  if(html2canvasPromise) return html2canvasPromise;
+  html2canvasPromise=new Promise((resolve,reject) => {
+    const script=document.createElement('script');
+    script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.crossOrigin='anonymous';
+    script.referrerPolicy='no-referrer';
+    script.onload=() => typeof window.html2canvas==='function' ? resolve(window.html2canvas) : reject(new Error('Report renderer unavailable'));
+    script.onerror=() => reject(new Error('Report renderer failed to load'));
+    document.head.appendChild(script);
+  }).catch(error => { html2canvasPromise=null; throw error; });
+  return html2canvasPromise;
+}
+async function dlRpt(){
   const btn = document.getElementById('dl-btn');
   if(!btn) return;
   const origHTML = btn.innerHTML;
@@ -2015,8 +2030,9 @@ function dlRpt(){
   btn.disabled = true;
 
   const card = document.getElementById('rcard');
-  // 临时让卡片字体内联，确保html2canvas能渲染
-  html2canvas(card, {
+  try{
+  const render=await loadReportRenderer();
+  const canvas=await render(card, {
     backgroundColor: '#08090f',
     scale: 2.5,
     useCORS: true,
@@ -2027,7 +2043,7 @@ function dlRpt(){
       const el = doc.getElementById('rcard');
       el.style.fontFamily = 'Arial, sans-serif';
     }
-  }).then(canvas => {
+  });
     const link = document.createElement('a');
     const today = new Date().toISOString().slice(0,10);
     link.download = 'mybtcbox-' + activeCoin.toLowerCase() + '-' + today + '.png';
@@ -2038,12 +2054,12 @@ function dlRpt(){
     btn.innerHTML = lang==='zh' ? '✓ 已下载' : '✓ Downloaded';
     btn.disabled = false;
     setTimeout(()=>{ btn.innerHTML = origHTML; }, 2000);
-  }).catch(err => {
+  }catch(err){
     console.error('html2canvas error:', err);
     btn.innerHTML = origHTML;
     btn.disabled = false;
     toast(lang==='zh' ? '请截图保存报告卡片' : 'Please screenshot the report card');
-  });
+  }
 }
 
 // ── HISTORY BAR INIT ──

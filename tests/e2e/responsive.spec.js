@@ -137,3 +137,19 @@ test('historical report stays readable inside the viewport', async ({ page }) =>
   expect(modal.x).toBeGreaterThanOrEqual(0);
   expect(errors).toEqual([]);
 });
+
+test('report renderer loads only when PNG download is requested', async ({ page }) => {
+  let rendererRequests=0;
+  await page.route('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', route => {
+    rendererRequests += 1;
+    route.fulfill({ status:200, contentType:'application/javascript', body:'window.html2canvas=async function(){const c=document.createElement("canvas");c.width=2;c.height=2;return c;};' });
+  });
+  await page.goto('/?kind=event&asset=btc&type=drop&threshold=8', { waitUntil:'domcontentloaded' });
+  expect(rendererRequests).toBe(0);
+  await page.getByRole('button', { name:'查询历史规律 →' }).click();
+  await page.getByRole('button', { name:'生成报告卡片' }).click();
+  expect(rendererRequests).toBe(0);
+  await page.locator('#dl-btn').click();
+  await expect.poll(() => rendererRequests).toBe(1);
+  await expect(page.locator('#dl-btn')).toContainText('已下载');
+});
