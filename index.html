@@ -329,8 +329,9 @@
 </div>
 
 <!-- MODAL -->
-<div class="overlay" id="overlay" onclick="closeOuter(event)">
-  <div class="modal">
+<div class="overlay" id="overlay" aria-hidden="true" onclick="closeOuter(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="report-dialog-title" aria-describedby="report-dialog-note">
+    <h2 class="sr-only" id="report-dialog-title" data-i="reportDialogTitle">Data observation report</h2>
     <div id="rcard"></div>
     <div class="mactions">
       <button class="mbtn primary" id="dl-btn" onclick="dlRpt()">⬇ <span data-i="mdl">Download PNG</span></button>
@@ -339,7 +340,7 @@
       <button class="mbtn sec" onclick="copyLink()" data-i="mcopy">📋 Copy Link</button>
       <button class="mbtn sec" onclick="closeModal()" data-i="mclose">Close</button>
     </div>
-    <p style="font-size:11px;color:var(--ink3);margin-top:10px;text-align:center" data-i="mnote">Click "Download PNG" to save the report card as an image.</p>
+    <p id="report-dialog-note" style="font-size:11px;color:var(--ink3);margin-top:10px;text-align:center" data-i="mnote">Click "Download PNG" to save the report card as an image.</p>
   </div>
 </div>
 

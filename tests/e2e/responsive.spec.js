@@ -164,6 +164,75 @@ test('historical report stays readable inside the viewport', async ({ page }) =>
   expect(errors).toEqual([]);
 });
 
+test('keyboard focus, control targets, and report dialog remain accessible', async ({ page }) => {
+  await page.goto('/?kind=event&asset=btc&type=drop&threshold=8', { waitUntil:'domcontentloaded' });
+
+  const unnamedButtons = await page.locator('button:visible').evaluateAll(buttons => buttons
+    .filter(button => !(button.getAttribute('aria-label') || button.textContent.trim()))
+    .length);
+  expect(unnamedButtons).toBe(0);
+
+  const controls = page.locator('.lbtn:visible,.tb:visible,.qsel:visible,.save-query-btn:visible,.rpt-btn:visible');
+  for (const control of await controls.all()) {
+    const box = await control.boundingBox();
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  const contrastResults = await controls.evaluateAll(elements => {
+    const rgb = value => (value.match(/[\d.]+/g) || []).slice(0,3).map(Number);
+    const luminance = value => {
+      const channels = rgb(value).map(channel => {
+        const unit = channel / 255;
+        return unit <= .04045 ? unit / 12.92 : ((unit + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+    };
+    const background = element => {
+      let node = element;
+      while (node) {
+        const value = getComputedStyle(node).backgroundColor;
+        if (value && !value.endsWith(', 0)')) return value;
+        node = node.parentElement;
+      }
+      return 'rgb(8, 11, 16)';
+    };
+    return elements.map(element => {
+      const foreground = getComputedStyle(element).color;
+      const back = background(element);
+      const lighter = Math.max(luminance(foreground), luminance(back));
+      const darker = Math.min(luminance(foreground), luminance(back));
+      return { label:element.textContent.trim(), ratio:(lighter + .05) / (darker + .05) };
+    });
+  });
+  for (const result of contrastResults) expect(result.ratio, result.label).toBeGreaterThanOrEqual(4.5);
+
+  const primary = page.getByRole('button', { name:'查询历史规律 →' });
+  await primary.focus();
+  const focusStyle = await primary.evaluate(element => {
+    const style = getComputedStyle(element);
+    return { width:parseFloat(style.outlineWidth), style:style.outlineStyle };
+  });
+  expect(focusStyle.style).not.toBe('none');
+  expect(focusStyle.width).toBeGreaterThanOrEqual(2);
+
+  await primary.click();
+  const trigger = page.getByRole('button', { name:'生成报告卡片' });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name:'数据观察报告' });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator('#dl-btn')).toBeFocused();
+
+  const close = dialog.getByRole('button', { name:'关闭' });
+  await close.focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#dl-btn')).toBeFocused();
+  await page.locator('#dl-btn').focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+});
+
 test('report renderer loads only when PNG download is requested', async ({ page }) => {
   let rendererRequests=0;
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', route => {

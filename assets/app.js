@@ -415,7 +415,7 @@ en:{
   stHealth:'Data health',stAsset:'Asset',stThrough:'Dataset through',stChecked:'Last checked',stSource:'Source',
   methodLink:'View data sources and calculation methods →',methodFoot:'Data & methodology',
   disc:'Historical data only. Not investment advice. Past patterns ≠ future results. Crypto is highly volatile. Always make your own decisions.',
-  mshare:'X Share',mdl:'Download PNG',mclose:'Close',mcopy:'📋 Copy Link',
+  mshare:'X Share',mdl:'Download PNG',mclose:'Close',mcopy:'📋 Copy Link',reportDialogTitle:'Data observation report',
   mnote:'Download PNG to save · Screenshot to share',
   foot:'Facts only · You decide · Yahoo Finance OHLCV',
 
@@ -478,7 +478,7 @@ zh:{
   stHealth:'数据健康',stAsset:'当前币种',stThrough:'数据截止',stChecked:'上次检查',stSource:'数据源',
   methodLink:'查看数据来源与计算方法 →',methodFoot:'数据与方法',
   disc:'仅供历史数据参考，不构成投资建议。历史规律不代表未来走势。加密货币风险极高。请自行判断，谨慎决策。',
-  mshare:'X 分享',mdl:'下载 PNG',mclose:'关闭',mcopy:'📋 复制链接',
+  mshare:'X 分享',mdl:'下载 PNG',mclose:'关闭',mcopy:'📋 复制链接',reportDialogTitle:'数据观察报告',
   mnote:'点击下载PNG保存报告 · 截图可直接分享',
   foot:'只看数据 · 自己判断 · 数据：Yahoo Finance OHLCV',
 
@@ -530,6 +530,7 @@ function loadSavedQueries(){
 let SAVED_QUERIES=loadSavedQueries();
 let allRows=[], shown=20;
 let shareText='';
+let modalReturnFocus=null;
 const SITE_URL='https://www.mybtcbox.com';
 const OG_VERSION='20260514';
 function shareUrl(kind='event',ref='x'){
@@ -1725,7 +1726,7 @@ function openReport(){
     ? `刚刚用 My BTC Box 查了一下：当 ${activeCoin} 单日${shareMoveZh}至少 ${thresh}% 时，历史上发生了 ${stats.count} 次。样本内次日收涨比例 ${stats.up1_pct}%，30日后收涨比例 ${stats.up30_pct}%。历史比例不代表未来概率：${shareUrl('event')}`
     : `Just checked My BTC Box: when ${activeCoin} ${shareMoveEn} at least ${thresh}%, it happened ${stats.count} times. Historical positive share: next day ${stats.up1_pct}%, 30 days ${stats.up30_pct}%. Past shares are not future probabilities: ${shareUrl('event')}`;
 
-  document.getElementById('overlay').classList.add('show');
+  showReportDialog();
 }
 function calcStratROI(stratVal, stratInv){ return stratInv ? ((stratVal / stratInv - 1) * 100) : 0; }
 function fpShort(v){ return v == null || !Number.isFinite(v) ? '-' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
@@ -1979,10 +1980,44 @@ function openBacktestReport(){
   shareText = zh
     ? `刚刚用 My BTC Box 回测了 ${activeCoin} 的条件买入策略：\n${ruleText}\n区间 ${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel} 累计币数 ${tx('cb-btc')} · 收益率 ${tx('cb-roi')}\n定投 ${tx('cb-dca-btc')} · 收益率 ${tx('cb-dca-roi')}\n过去 ${yearlyTotal} 年跑赢定投 ${yearlyWins} 年（${stratWinRate}%）\n\n历史回测数据，不是投资建议。你会怎么调策略？${shareUrl('backtest')}`
     : `Backtested ${activeCoin} conditional buying vs weekly DCA:\n${ruleText}\n${startDay.date} → ${LATEST_DAILY.date}\n\n${stratLabel}: ${tx('cb-btc')} · ROI ${tx('cb-roi')}\nDCA: ${tx('cb-dca-btc')} · ROI ${tx('cb-dca-roi')}\n\nBeat DCA in ${yearlyWins}/${yearlyTotal}yrs (${stratWinRate}%). Past data only. Tweak the strategy: ${shareUrl('backtest')}`;
-  document.getElementById('overlay').classList.add('show');
+  showReportDialog();
 }
-function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+function reportDialogFocusables(){
+  const dialog=document.querySelector('#overlay .modal');
+  return dialog?[...dialog.querySelectorAll('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(element=>!element.disabled&&element.getClientRects().length):[];
+}
+function showReportDialog(){
+  const overlay=document.getElementById('overlay');
+  modalReturnFocus=document.activeElement;
+  overlay.setAttribute('aria-hidden','false');
+  overlay.classList.add('show');
+  requestAnimationFrame(()=>reportDialogFocusables()[0]?.focus());
+}
+function closeModal(){
+  const overlay=document.getElementById('overlay');
+  if(!overlay.classList.contains('show')) return;
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  const target=modalReturnFocus;
+  modalReturnFocus=null;
+  if(target?.isConnected) target.focus();
+}
 function closeOuter(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
+document.addEventListener('keydown',event=>{
+  const overlay=document.getElementById('overlay');
+  if(!overlay?.classList.contains('show')) return;
+  if(event.key==='Escape'){
+    event.preventDefault();
+    closeModal();
+    return;
+  }
+  if(event.key!=='Tab') return;
+  const focusable=reportDialogFocusables();
+  if(!focusable.length) return;
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
 function shareX(){ window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(shareText),'_blank','width=620,height=560'); }
 function shareWeibo(){
   var kind=shareText.includes('回测')?'backtest':'event';

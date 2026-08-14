@@ -70,6 +70,7 @@ function createContext(startDate = '2017-01-01', pageWindow = {}) {
 
   const document = {
     getElementById,
+    addEventListener() {},
     querySelector() { return null; },
     querySelectorAll(selector) {
       if (selector === '#cb-thresh-btns .tb' || selector === '.tb') {
