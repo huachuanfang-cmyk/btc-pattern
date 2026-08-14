@@ -57,3 +57,5 @@
 - 所有结果写入 `docs/evidence/`，评分变动同时更新 `quality-scorecard.json`。
 
 30天观察使用空白模板 `docs/templates/weekly-evidence-template.csv`，字段口径和合格分母规则见 `docs/templates/weekly-evidence-guide.md`。每周只追加真实聚合结果，不得预填或回填推测数据。
+
+当前观察窗口与空白周账本见 `docs/evidence/30-day-observation-2026-08-14.md` 和 `docs/evidence/30-day-observation-2026-08-14.csv`。首次完整30天复核不得早于2026-09-13 UTC。
