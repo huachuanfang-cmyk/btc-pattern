@@ -55,3 +55,5 @@
 - 未达到观察窗口时保持当前分数，不按功能数量加分。
 - 自动测试证明“系统能够测”，真实数据证明“用户确实使用”。两者不可互换。
 - 所有结果写入 `docs/evidence/`，评分变动同时更新 `quality-scorecard.json`。
+
+30天观察使用空白模板 `docs/templates/weekly-evidence-template.csv`，字段口径和合格分母规则见 `docs/templates/weekly-evidence-guide.md`。每周只追加真实聚合结果，不得预填或回填推测数据。
