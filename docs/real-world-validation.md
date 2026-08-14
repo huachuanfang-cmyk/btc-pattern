@@ -25,6 +25,8 @@
 
 建议记录字段：日期、参与者编号、是否首次访问、10 秒原话、定位是否通过、任务、完成时间、是否完成、卡点。不得记录姓名、钱包地址或联系方式。
 
+空白记录模板见 `docs/templates/user-test-template.csv`，现场填写说明见 `docs/templates/user-test-guide.md`。模板只能记录真实测试，不得预填示例参与者冒充证据。
+
 ## 二、匿名回访观察
 
 只有用户在 `/privacy.html` 主动开启后才进入统计。GA 事件名为 `retention_milestone`，允许字段只有：
