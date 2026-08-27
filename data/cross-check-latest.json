@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-08-26T03:30:23.028Z",
+  "checked_at": "2026-08-27T12:56:26.391Z",
   "primary_source": "Yahoo Finance UTC daily",
   "reference_source": "Kraken UTC daily",
   "tolerances": {
@@ -9,46 +9,46 @@
   "results": [
     {
       "coin": "BTC",
-      "date": "2026-08-24",
-      "closeDiffPct": 0.002,
-      "highDiffPct": 0.011,
-      "lowDiffPct": 0.003,
+      "date": "2026-08-26",
+      "closeDiffPct": 0.024,
+      "highDiffPct": 0.024,
+      "lowDiffPct": 0.014,
       "primary": "BTC-USD",
       "reference": "XBTUSD"
     },
     {
       "coin": "ETH",
-      "date": "2026-08-24",
-      "closeDiffPct": 0.035,
-      "highDiffPct": 0.033,
-      "lowDiffPct": 0.048,
+      "date": "2026-08-26",
+      "closeDiffPct": 0.033,
+      "highDiffPct": 0.001,
+      "lowDiffPct": 0.018,
       "primary": "ETH-USD",
       "reference": "ETHUSD"
     },
     {
       "coin": "SOL",
-      "date": "2026-08-24",
-      "closeDiffPct": 0.433,
-      "highDiffPct": 0.34,
-      "lowDiffPct": 0.069,
+      "date": "2026-08-26",
+      "closeDiffPct": 0.095,
+      "highDiffPct": 0.134,
+      "lowDiffPct": 0.236,
       "primary": "SOL-USD",
       "reference": "SOLUSD"
     },
     {
       "coin": "DOGE",
-      "date": "2026-08-24",
-      "closeDiffPct": 0.225,
-      "highDiffPct": 0.171,
-      "lowDiffPct": 0.444,
+      "date": "2026-08-26",
+      "closeDiffPct": 0.018,
+      "highDiffPct": 0.071,
+      "lowDiffPct": 0.118,
       "primary": "DOGE-USD",
       "reference": "DOGEUSD"
     },
     {
       "coin": "BNB",
-      "date": "2026-08-24",
-      "closeDiffPct": 0.093,
-      "highDiffPct": 0.104,
-      "lowDiffPct": 0.018,
+      "date": "2026-08-26",
+      "closeDiffPct": 0.024,
+      "highDiffPct": 0.044,
+      "lowDiffPct": 0.15,
       "primary": "BNB-USD",
       "reference": "BNBUSD"
     }
